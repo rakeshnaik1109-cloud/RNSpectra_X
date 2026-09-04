@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RNSpectraX — Raman &amp; Spectral Plotter and Analytics Suite</title>
+<meta name="description" content="RNSpectraX is a browser-based Raman, SERS and XY analysis suite: cosmic-ray despiking, baseline correction, smoothing, group averaging with SD/SEM bands, peak assignment and curve fitting. Your data never leaves your machine."/>
+<meta name="author" content="Rakesh Naik and Sachin Kumar Srivastava"/>
+<meta name="theme-color" content="#16101f"/>
+<link rel="canonical" href="https://rakeshnaik.github.io/rnspectrax/"/>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>
+
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="RNSpectraX — Raman &amp; Spectral Plotter and Analytics Suite"/>
+<meta property="og:description" content="Despike, baseline-correct, smooth, average, assign peaks and fit curves. Runs entirely client-side."/>
+<meta property="og:url" content="https://rakeshnaik.github.io/rnspectrax/"/>
+<meta name="twitter:card" content="summary_large_image"/>
+
+<script>
+/* Set the workspace theme before first paint so there is no flash. */
+(function(){try{var t=localStorage.getItem('rnspx_theme');
+if(t==='dark'||(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches))
+document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+</script>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] },
+    showProcessingMessages: false,
+    messageStyle: "none"
+  });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/MathJax.js?config=TeX-AMS-MML_SVG"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link href="css/style.css" rel="stylesheet"/>
+<link href="css/layout.css" rel="stylesheet"/>
+
+<style>
+/* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
+   stylesheets — topbar, mode-selector, section-title, and grid/field
+   sizing now live once, in css/style.css, as the single source of truth. */
+
+.control-panel-inner { padding: 0; }
+
+#spectrumControls { display:grid; grid-template-columns:1fr; gap:10px; padding:12px 16px; }
+
+.plot-empty-state {
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  color: var(--faint); text-align:center; padding:40px; border:2px dashed var(--border); border-radius: var(--radius-lg); min-height:300px;
+}
+.plot-empty-state svg { margin-bottom:12px; opacity:.4; }
+.plot-empty-state h3 { font-size:16px; font-weight:700; margin-bottom:6px; color: var(--muted); }
+.plot-empty-state p  { font-size:13px; line-height:1.5; }
+
+.plot-panel .peak-table-wrap { margin:0; }
+
+.control-panel .grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.control-panel .field input,
+.control-panel .field select,
+.control-panel .field textarea { padding: 7px 9px; }
+
+.mode-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  background: var(--accent-soft); color: var(--accent); border-radius:6px;
+  padding:2px 10px; font-size:11px; font-weight:700;
+  border:1px solid var(--accent-soft-border);
+}
+
+.panel-sep { height:1px; background: var(--border); margin: 0 16px; }
+
+.baseline-color-row { display:flex; align-items:center; gap:10px; padding:10px 16px 0; }
+.baseline-color-row label { font-size:12px; font-weight:700; color: var(--muted); min-width:130px; }
+
+.err-style-pills { display:flex; gap:0; border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+.err-pill { padding:5px 12px; font-size:11px; font-weight:700; border:none; cursor:pointer; background: var(--surface-2); color: var(--muted); border-right:1px solid var(--border); transition:all .13s; }
+.err-pill:last-child { border-right:none; }
+.err-pill.active { background: var(--accent); color:#fff; }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#oceanMode">Skip to the workspace</a>
+
+<header class="app-topbar">
+  <div class="app-topbar-inner">
+
+    <div class="topbar-brand">
+      <h1 class="app-logo">RNSpectra<span>X</span>™</h1>
+      <span class="app-tag">Raman &amp; Spectral Plotter and Analytics Suite</span>
+    </div>
+
+    <div class="mode-selector" role="tablist" aria-label="Workspace mode">
+      <button class="mode-btn active" id="modeOcean" role="tab" aria-selected="true"  onclick="setMode('ocean')">① Raman / Spectral Text Data</button>
+      <button class="mode-btn"        id="modeXY"    role="tab" aria-selected="false" onclick="setMode('xy')">② Other Plots (XY + Fitting)</button>
+    </div>
+
+    <div class="topbar-utils">
+      <a class="chrome-link is-home" data-home-link href="../index.html" title="Rakesh Naik — research homepage">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 7l6-5 6 5v6.5a1 1 0 0 1-1 1H9.5V10h-3v4.5H3a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span class="chrome-link-text">Rakesh Naik</span>
+      </a>
+      <a class="chrome-link" href="docs/USER_MANUAL.md" title="User manual">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h6l4 4v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span class="chrome-link-text">Manual</span>
+      </a>
+      <button class="chrome-icon-btn" id="themeToggle" onclick="toggleWorkspaceTheme()" aria-label="Switch workspace theme">
+        <svg class="icon-when-light" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.5 9.7A5.6 5.6 0 0 1 6.3 2.5a5.6 5.6 0 1 0 7.2 7.2z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <svg class="icon-when-dark" width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.1" stroke="currentColor" stroke-width="1.4"/><path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1m11-5l-1.1 1.1M5.1 10.9L4 12m8 0l-1.1-1.1M5.1 5.1L4 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+      <button class="chrome-icon-btn" onclick="toggleShortcutSheet()" aria-label="Show keyboard shortcuts">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="1.2" y="3.6" width="13.6" height="8.8" rx="1.6" stroke="currentColor" stroke-width="1.3"/><path d="M4 6.4h.01M6.4 6.4h.01M8.8 6.4h.01M11.2 6.4h.01M4.6 9.4h6.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+  </div>
+</header>
+
+<div class="app-shell">
+
+  <div id="oceanMode">
+    <div class="workspace layout-left">
+
+      <div class="control-panel" id="oceanControlPanel">
+
+        <div class="control-panel-header">
+          <span class="panel-mode-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M4 6h4M6 4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Raman / Spectral Controls
+          </span>
+          <button class="panel-collapse-x" onclick="toggleDockCollapse()" title="Collapse panel">✕</button>
+        </div>
+
+        <div class="control-panel-inner">
+
+          <div class="quick-nav">
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecData')">① Data</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecProcess')">② Process</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecAverage')">③ Average</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecStyle')">④ Style &amp; Export</button>
+          </div>
+
+          <!-- ① DATA INPUT -->
+          <div class="section-card" id="oceanSecData">
+            <div class="section-title">① Data Input</div>
+            <div class="info-box">Auto-detects Ocean Optics, Horiba/LabSpec, Renishaw WiRE, Bruker, WITec, JCAMP-DX, or plain 2-column.</div>
+            <input type="file" id="fileInput" multiple accept=".txt,.csv,.dat,.asc,.spc,.dpt,.jdx,.dx,.tsv" style="display:none">
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">+ Add Files</button>
+              <button class="btn btn-outline btn-sm" onclick="clearAllOceanFiles()">✕ Clear</button>
+              <button class="btn btn-accent-blue btn-sm" onclick="runComprehensiveComparisonEngine('ocean')">🔍 Compare</button>
+            </div>
+            <span id="status" style="font-size:12px;color:var(--muted)">No files loaded</span>
+            <div id="oceanFileList" style="display:none;margin-top:10px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px;">Loaded files</div>
+              <div id="oceanFileChips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            </div>
+            <div class="field" style="margin-top:12px;"><label>Plot Mode</label>
+              <select id="avgMode">
+                <option value="individual" selected>Individual spectra</option>
+                <option value="groups">Group averages</option>
+                <option value="grandavg">Grand average (all)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ② PREPROCESSING PIPELINE -->
+          <div class="section-card" id="oceanSecProcess">
+            <div class="section-title">② Preprocessing Pipeline</div>
+
+            <!-- 2a. Despiking -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Despiking (Cosmic Ray)</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="info-box">Detects cosmic-ray spikes via modified Z-score and interpolates them out.</div>
+              <div class="grid">
+                <div class="field"><label>Method</label>
+                  <select id="despikeType" onchange="updateDespikeParams()">
+                    <option value="none">None</option>
+                    <option value="zscore">Modified Z-Score</option>
+                    <option value="whitaker">Whitaker-Hayes</option>
+                  </select>
+                </div>
+                <div class="field" id="dsThreshWrap" style="display:none"><label>Z Threshold</label><input type="number" id="dsThresh" value="6" min="2" step="0.5"/></div>
+                <div class="field" id="dsWinWrap"    style="display:none"><label>Repair Window</label><input type="number" id="dsWin"    value="3" min="1" max="15" step="1"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- 2b. Baseline Correction -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Baseline Correction</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Method</label>
+                  <select id="baselineType" onchange="updateBaselineParams()">
+                    <option value="none">None</option>
+                    <option value="linear">Linear (2-point)</option>
+                    <option value="poly">Polynomial Fit</option>
+                    <option value="rubberband">Rubber Band</option>
+                    <option value="rolling_ball">Rolling Ball</option>
+                  </select>
+                </div>
+                <div class="field" id="blParam1Wrap" style="display:none"><label id="blParam1Label">Poly Order</label><input type="number" id="blParam1" value="3" min="1" max="10"/></div>
+                <div class="field" id="blParam2Wrap" style="display:none"><label id="blParam2Label">Ball Radius (pts)</label><input type="number" id="blParam2" value="50" min="5" max="500"/></div>
+                <div class="field" id="blLinX1Wrap"  style="display:none"><label>Start X (cm⁻¹)</label><input type="number" id="blLinX1" value="400"/></div>
+                <div class="field" id="blLinX2Wrap"  style="display:none"><label>End X (cm⁻¹)</label><input type="number" id="blLinX2" value="1800"/></div>
+              </div>
+              <div class="grid" style="margin-top:10px;">
+                <div class="field"><label>Overlay Color</label><input type="color" id="baselineColor" value="#ff3b30"/></div>
+                <div class="field"><label>Overlay Width</label><input type="number" id="baselineWidth" value="1.5" min="0.5" max="8" step="0.5"/></div>
+                <div class="field"><label>Opacity</label><input type="range" id="baselineOpacity" value="0.8" min="0.1" max="1" step="0.05"/></div>
+                <div class="field"><label>Line Style</label>
+                  <select id="baselineDash">
+                    <option value="solid">Solid</option>
+                    <option value="dash" selected>Dashed</option>
+                    <option value="dot">Dotted</option>
+                    <option value="dashdot">Dash Dot</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- 2c. Smoothing -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Smoothing</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Method</label>
+                  <select id="smoothType" onchange="updateSmoothParams()">
+                    <option value="none">None</option>
+                    <option value="moving_avg">Moving Average</option>
+                    <option value="savgol">Savitzky-Golay</option>
+                    <option value="gaussian">Gaussian</option>
+                    <option value="median">Median Filter</option>
+                  </select>
+                </div>
+                <div class="field" id="smParam1Wrap" style="display:none"><label id="smParam1Label">Window (pts)</label><input type="number" id="smParam1" value="5" min="3" step="2"/></div>
+                <div class="field" id="smParam2Wrap" style="display:none"><label id="smParam2Label">Poly Order</label><input type="number" id="smParam2" value="2" min="1" max="5"/></div>
+                <div class="field" id="smParam3Wrap" style="display:none"><label id="smParam3Label">Sigma</label><input type="number" id="smParam3" value="2" min="0.5" step="0.5"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- 2d. Normalization -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Normalization</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="field">
+                <label>Method</label>
+                <select id="normType">
+                  <option value="none">None</option>
+                  <option value="max">Max</option>
+                  <option value="minmax">Min-Max</option>
+                  <option value="area">Area</option>
+                  <option value="vector">Vector</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ AVERAGING & ERROR BARS -->
+          <div class="section-card" id="oceanSecAverage">
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">③ Averaging &amp; Error Bars</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:500px">
+              <div style="height:10px"></div>
+              <div class="info-box">Assign each file a <b>Group</b> name in its card on the right. Group averages overlays ±SD or ±SEM bands.</div>
+              <div class="grid">
+                <div class="field"><label>Error — Y</label>
+                  <select id="errBarY">
+                    <option value="none">None</option>
+                    <option value="sd">± Std. Deviation</option>
+                    <option value="sem">± SEM</option>
+                  </select>
+                </div>
+                <div class="field"><label>Error — X</label>
+                  <select id="errBarX">
+                    <option value="none">None</option>
+                    <option value="sd">± SD</option>
+                    <option value="sem">± SEM</option>
+                  </select>
+                </div>
+                <div class="field"><label>Error Style</label>
+                  <select id="errBarStyle">
+                    <option value="bars">Capped Bars</option>
+                    <option value="band">Shaded Band</option>
+                    <option value="both">Bars + Band</option>
+                    <option value="none">Hide</option>
+                  </select>
+                </div>
+                <div class="field"><label>Band Opacity</label><input type="range" id="bandOpacity" value="0.20" min="0.05" max="0.80" step="0.05"/></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ④ PLOT SETTINGS & DISPLAY -->
+          <div class="section-card" id="oceanSecStyle">
+            <div class="section-title">④ Plot Settings &amp; Display</div>
+
+            <!-- Axes & Labels -->
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Axes &amp; Labels</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:400px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Plot Title</label><input type="text" id="title" value="Average Spectrum" title="LaTeX: wrap the WHOLE title in one $...$ pair, e.g. $\text{Average Spectrum}$ — mixing plain text and $...$ in the same title is not supported by Plotly."/></div>
+                <div class="field"><label>X Label</label><input type="text" id="xlabel" value="Raman Shift (cm⁻¹)" title="LaTeX: wrap the WHOLE label in one $...$ pair, e.g. $\text{Raman Shift }\Delta\nu\text{ (cm}^{-1}\text{)}$ — mixing plain text and $...$ is not supported by Plotly for axis titles."/></div>
+                <div class="field"><label>Y Label</label><input type="text" id="ylabel" value="Intensity (a.u.)" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for any plain-text portions."/></div>
+                <div class="field"><label>X Min (cm⁻¹)</label><input type="number" id="xmin" value="400"/></div>
+                <div class="field"><label>X Max (cm⁻¹)</label><input type="number" id="xmax" value="1800"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Trace Appearance -->
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Trace Appearance</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:320px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Line Width</label><input type="number" id="linewidth" value="2" min="0.5" step="0.5"/></div>
+                <div class="field"><label>Y Offset / trace</label><input type="number" id="yOffset" value="0" step="0.1"/></div>
+                <div class="field"><label>X Offset / trace</label><input type="number" id="xOffset" value="0" step="1"/></div>
+                <div class="field"><label>Avg Color</label><input type="color" id="avgColor" value="#0f172a"/></div>
+                <div class="field"><label>Avg Legend Name</label><input type="text" id="avgLegendName" placeholder="Grand Average (n=..)" title="Leave blank to auto-show the sample count" onchange="if(document.getElementById('plot-wrapper').data) plotSpectrum();"/></div>
+              </div>
+              <div class="toggles" style="margin-top:10px;flex-wrap:wrap;gap:10px;">
+                <label class="toggle-item"><input type="checkbox" id="cascadeOffset">Cascade Offset</label>
+                <label class="toggle-item"><input type="checkbox" id="showOriginal">Show Original</label>
+                <label class="toggle-item"><input type="checkbox" id="showBaseline">Show Baseline Overlay</label>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Figure Size & Font -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Figure Size &amp; Font</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Journal Preset</label>
+                  <select id="journalPreset" onchange="applyJournalPreset('')"></select>
+                </div>
+                <div class="field"><label>Font Family</label>
+                  <select id="fontFamily" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="auto" selected>Auto (Georgia/Arial Black)</option>
+                    <option value="times">Times New Roman</option>
+                    <option value="arial">Arial</option>
+                    <option value="helvetica">Helvetica</option>
+                    <option value="calibri">Calibri</option>
+                    <option value="cambria">Cambria</option>
+                    <option value="georgia">Georgia</option>
+                    <option value="liberation_serif">Liberation Serif</option>
+                    <option value="liberation_sans">Liberation Sans</option>
+                    <option value="cmu">Computer Modern (LaTeX-style)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Fig Width (px)</label><input type="number" id="figWidth" value="1000" min="300" step="50"/></div>
+                <div class="field"><label>Fig Height (px)</label><input type="number" id="figHeight" value="600" min="200" step="50"/></div>
+                <div class="field"><label>Export DPI</label><input type="number" id="exportDPI" value="300" min="72" step="50" title="Physical figure size stays the same; higher DPI raises exported pixel resolution for print."/></div>
+                <div class="field"><label>Title Size</label><input type="number" id="titleSize" value="22" min="8"/></div>
+                <div class="field"><label>Axis Label</label><input type="number" id="labelSize" value="18" min="8"/></div>
+                <div class="field"><label>Tick Size</label><input type="number" id="tickSize" value="13" min="6"/></div>
+                <div class="field"><label>Legend Size</label><input type="number" id="legendSize" value="12" min="6"/></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;">
+                <label class="toggle-item"><input type="checkbox" id="boldTitle" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Title</label>
+                <label class="toggle-item"><input type="checkbox" id="boldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Axis Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="boldTick" onchange="triggerInteractiveReplotStyleOnly('ocean')">Tick Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="boldLegend" onchange="triggerInteractiveReplotStyleOnly('ocean')">Legend</label>
+              </div>
+              <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
+                Font Family applies everywhere for consistency; Bold is independent per element. Title/Axis Labels/Legend get true bold text; Tick Labels use a heavier typeface since Plotly auto-generates their text (no bold property available there).
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Legend Position & Box Style -->
+            <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin-top:4px;">
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
+              <div class="field">
+                <label>X (Left ↔ Right)</label>
+                <div class="slider-container">
+                  <input type="range" id="legendX" min="0" max="1.2" step="0.02" value="0.98" oninput="updateLegendSlidersText();triggerInteractiveReplotStyleOnly('ocean');">
+                  <span id="legendX_val">0.98</span>
+                </div>
+              </div>
+              <div class="field" style="margin-top:8px">
+                <label>Y (Bottom ↔ Top)</label>
+                <div class="slider-container">
+                  <input type="range" id="legendY" min="-0.3" max="1.1" step="0.02" value="0.98" oninput="updateLegendSlidersText();triggerInteractiveReplotStyleOnly('ocean');">
+                  <span id="legendY_val">0.98</span>
+                </div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">▢ Legend Box Style</div>
+              <div class="grid">
+                <div class="field"><label>Box Type</label>
+                  <select id="legendBoxStyle" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="box" selected>Bordered Box</option>
+                    <option value="filled">Filled (No Border)</option>
+                    <option value="transparent">Transparent (No Box)</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+                <div class="field"><label>Orientation</label>
+                  <select id="legendOrientation" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="v" selected>Vertical</option>
+                    <option value="h">Horizontal</option>
+                  </select>
+                </div>
+                <div class="field"><label>Background</label><input type="color" id="legendBgColor" value="#ffffff" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Bg Opacity</label><input type="range" id="legendBgOpacity" min="0" max="1" step="0.05" value="0.85" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Border Color</label><input type="color" id="legendBorderColor" value="#94a3b8" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Border Width</label><input type="number" id="legendBorderWidth" value="1" min="0" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+              </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:10px;line-height:1.5;">
+                ✎ Click directly on a legend entry's <b>text</b> (not its color swatch) to rename it in place, or drag the whole legend box to reposition it. Clicking the swatch/line still toggles that trace's visibility. The plot title and axis labels are click-to-edit too — click right on the text on the chart.
+              </div>
+              <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%;" onclick="resetLegendNames('ocean')">↺ Reset Legend Names</button>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Advanced Axis, Grid & Scientific Notation -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Axis Frame, Grid &amp; Notation</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>X Axis Frame</label>
+                  <select id="xFrame" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="none">Hidden</option>
+                    <option value="one" selected>Bottom Only</option>
+                    <option value="both">Bottom + Top (Box)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Y Axis Frame</label>
+                  <select id="yFrame" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="none">Hidden</option>
+                    <option value="one" selected>Left Only</option>
+                    <option value="both">Left + Right (Box)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Tick Direction</label>
+                  <select id="tickDir" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="outside" selected>Outside</option>
+                    <option value="inside">Inside</option>
+                    <option value="">None</option>
+                  </select>
+                </div>
+                <div class="field"><label>Grid Color</label><input type="color" id="gridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="yStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>X Notation</label>
+                  <select id="xNotation" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="auto" selected>Auto</option>
+                    <option value="power">Scientific (×10ⁿ)</option>
+                    <option value="si">SI Prefix (k, M)</option>
+                    <option value="plain">Plain Numbers</option>
+                    <option value="e">Exponential (e+n)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Y Notation</label>
+                  <select id="yNotation" onchange="triggerInteractiveReplotStyleOnly('ocean')">
+                    <option value="auto" selected>Auto</option>
+                    <option value="power">Scientific (×10ⁿ)</option>
+                    <option value="si">SI Prefix (k, M)</option>
+                    <option value="plain">Plain Numbers</option>
+                    <option value="e">Exponential (e+n)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Y Scale Divisor</label><input type="number" id="yDivisor" value="1" min="0.0001" step="any" onchange="if(document.getElementById('plot-wrapper').data) plotSpectrum();" title="e.g. 1000 to show 5000 as 5, with ×10³ auto-added to the Y label"/></div>
+                <div class="field"><label>Y Min</label><input type="number" id="ymin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Y Max</label><input type="number" id="ymax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+              </div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-top:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xGrid" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">X Grid Lines</label>
+                <label class="toggle-item"><input type="checkbox" id="yGrid" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Y Grid Lines</label>
+                <label class="toggle-item"><input type="checkbox" id="xMinorTicks" onchange="triggerInteractiveReplotStyleOnly('ocean')">X Minor Ticks</label>
+                <label class="toggle-item"><input type="checkbox" id="yMinorTicks" onchange="triggerInteractiveReplotStyleOnly('ocean')">Y Minor Ticks</label>
+                <label class="toggle-item"><input type="checkbox" id="xZeroLine" onchange="triggerInteractiveReplotStyleOnly('ocean')">X=0 Line</label>
+                <label class="toggle-item"><input type="checkbox" id="yZeroLine" onchange="triggerInteractiveReplotStyleOnly('ocean')">Y=0 Line</label>
+              </div>
+              <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
+                Tip: Raman baselines that hover near zero can create a stray dark line at Y=0 — that line is <b>off by default</b> here; tick "Y=0 Line" to bring it back.
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Scale Bar (non-axis-reading indicator) -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Scale Bar (Data-Accurate)</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="toggles" style="margin-bottom:10px;">
+                <label class="toggle-item"><input type="checkbox" id="scaleBarOn" onchange="triggerInteractiveReplotStyleOnly('ocean')">Show Scale Bar</label>
+              </div>
+              <div class="grid">
+                <div class="field"><label>Bar Length (Y data units)</label><input type="number" id="scaleBarLen" value="100" oninput="triggerInteractiveReplotStyleOnly('ocean')" title="Real intensity units — the bar is drawn to genuinely span this much of the Y axis"/></div>
+                <div class="field"><label>Label Text (optional)</label><input type="text" id="scaleBarLabel" placeholder="Auto: shows the number" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Horizontal Position (0-1)</label><input type="number" id="scaleBarX" value="0.05" min="0" max="1" step="0.01" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Vertical Position (0-1 of data range)</label><input type="number" id="scaleBarY" value="0.1" min="0" max="0.95" step="0.01" oninput="triggerInteractiveReplotStyleOnly('ocean')" title="0 = bottom of the visible Y range, 1 = top"/></div>
+              </div>
+              <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
+                The bar is drawn against the real Y axis, so its length is genuinely proportional to your data (not just a label) — useful when you'd rather show "this much = N counts" than print Y-axis numbers at all.
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Inset Plot (zoom into a wavenumber region) -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Inset Plot (Zoom Region)</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                <label class="toggle-item"><input type="checkbox" id="insetOn" onchange="triggerInteractiveReplotStyleOnly('ocean')">Show Inset</label>
+                <label class="toggle-item"><input type="checkbox" id="insetBorder" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Border Box</label>
+                <label class="toggle-item"><input type="checkbox" id="insetHighlight" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Highlight Source Region</label>
+              </div>
+              <div class="grid">
+                <div class="field"><label>Region X Min (cm⁻¹)</label><input type="number" id="insetXmin" placeholder="e.g. 1550" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Region X Max (cm⁻¹)</label><input type="number" id="insetXmax" placeholder="e.g. 1700" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Inset Title</label><input type="text" id="insetTitle" placeholder="optional" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Background</label><input type="color" id="insetBg" value="#ffffff" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Position X (0-1)</label><input type="number" id="insetX0" value="0.55" min="0" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Position Y (0-1)</label><input type="number" id="insetY0" value="0.55" min="0" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Width (0-1)</label><input type="number" id="insetW" value="0.38" min="0.1" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Height (0-1)</label><input type="number" id="insetH" value="0.38" min="0.1" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+              </div>
+              <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
+                Leave Region X Min/Max blank to inset the full spectrum (rarely useful) — set a narrow window (e.g. the Amide I band) to zoom into it. Position/size are figure-fraction coordinates (0 = left/bottom edge, 1 = right/top edge).
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Peak Detection & Guide Lines -->
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Peak Detection &amp; Guide Lines</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:360px">
+              <div style="height:10px"></div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+                <label class="toggle-item"><input type="checkbox" id="showPeaks" checked onchange="togglePeakSectionVisibility()">Detect Peaks</label>
+                <label class="toggle-item"><input type="checkbox" id="commonLabelsOnly">Common Only</label>
+                <label class="toggle-item"><input type="checkbox" id="showPeakGuides" checked>Peak Guides</label>
+              </div>
+              <div class="grid">
+                <div class="field"><label>Peak Match ±cm⁻¹</label><input type="number" id="oceanTolerance" value="5" min="1"/></div>
+                <div class="field"><label>Label Spacing</label><input type="number" id="labelSpacing" value="70" min="1" step="1"/></div>
+                <div class="field"><label>Max Labels</label><input type="number" id="maxPeakLabels" value="30" min="1" step="1"/></div>
+                <div class="field"><label>Guide Color</label><input type="color" id="guideLineColor" value="#666666"/></div>
+                <div class="field"><label>Guide Width</label><input type="range" id="guideLineWidth" value="1.5" min="0.5" max="5" step="0.5"/></div>
+                <div class="field"><label>Guide Opacity</label><input type="range" id="guideLineOpacity" value="0.6" min="0.1" max="1" step="0.05"/></div>
+                <div class="field"><label>Guide Style</label>
+                  <select id="guideLineDash">
+                    <option value="solid">Solid</option>
+                    <option value="dash" selected>Dashed</option>
+                    <option value="dot">Dotted</option>
+                    <option value="dashdot">Dash Dot</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑤ PER-FILE CONTROLS -->
+          <div id="spectraPanel" style="display:none;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--hint);padding:12px 16px 6px;">⑤ Per-File: Label · Color · Group</div>
+            <div id="spectrumControls"></div>
+          </div>
+
+        </div><div class="panel-actions">
+          <button class="btn btn-primary" onclick="plotSpectrum()" style="flex:1">▶ Plot</button>
+          <div class="download-group">
+            <button class="btn btn-secondary" onclick="downloadPlot()">↓ Image</button>
+            <select id="downloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="downloadPlottedData()">↓ Plotted CSV</button>
+          <button class="btn btn-green btn-sm" onclick="downloadProcessingStages()" title="One CSV per file: Raw, Despiked, Baseline, Baseline-Corrected, Smoothed, Normalized">↓ Stage-by-Stage Data</button>
+        </div>
+
+      </div><div class="plot-panel" id="oceanPlotPanel">
+
+        <div class="annot-toolbar" id="oceanAnnotToolbar" style="display:none;flex-wrap:wrap;row-gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="addTextAnnotation('ocean')" title="Add a draggable text box">🅣 Text</button>
+          <button class="btn btn-outline btn-sm" onclick="addArrowAnnotation('ocean')" title="Add a draggable arrow (drag the head/tail to point at anything)">↗ Arrow</button>
+          <select id="annotFontFamily" title="Font for new text/arrow labels" style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);">
+            <option value="auto">Font: Auto</option>
+            <option value="times">Times New Roman</option>
+            <option value="arial">Arial</option>
+            <option value="helvetica">Helvetica</option>
+            <option value="calibri">Calibri</option>
+            <option value="cambria">Cambria</option>
+            <option value="georgia">Georgia</option>
+          </select>
+          <input type="number" id="annotFontSize" value="13" min="6" max="72" title="Font size (px) for new text/arrow labels" style="width:52px;font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);">
+          <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="annotBold">Bold</label>
+          <select id="annotBoxStyle" title="Text box background" style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);">
+            <option value="filled">Filled box</option>
+            <option value="transparent">Transparent</option>
+          </select>
+          <span style="font-size:11px;color:var(--hint);padding:0 4px;">Box/Circle/Erase: ▭ ○ ✕ in chart toolbar →</span>
+          <input type="color" id="annotColor" value="#dc2626" title="Color for new text/arrow annotations" style="margin-left:auto;">
+          <button class="btn btn-secondary btn-sm" onclick="clearCustomAnnotations('ocean')" title="Remove all text/arrows/shapes you've added">🗑 Clear</button>
+        </div>
+
+        <div class="plot-empty-state" id="oceanEmptyState">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="4" y="44" width="56" height="2" rx="1" fill="#64748b"/><polyline points="4,44 18,20 30,32 42,16 60,44" stroke="#64748b" stroke-width="2.5" fill="none" stroke-linejoin="round"/><circle cx="18" cy="20" r="3" fill="#2563eb"/><circle cx="30" cy="32" r="3" fill="#16a34a"/><circle cx="42" cy="16" r="3" fill="#dc2626"/></svg>
+          <h3>Load spectral files to begin</h3>
+          <p>Add .txt, .csv, .dat, .asc, .spc, .jdx or any plain 2-column file<br>from the controls panel. Supports Ocean Optics, Horiba, Renishaw, Bruker, WITec &amp; JCAMP-DX.</p>
+        </div>
+
+        <div id="plot-wrapper" style="display:none;"></div>
+
+        <div class="peak-table-wrap" id="peakTableSection" style="display:none">
+          <div class="collapsible-header open" onclick="toggleSection(this)">
+            <h3 style="margin:0">🔬 Raman Band Assignments &amp; Peak Controls</h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="collapsible-body" style="max-height:800px; overflow-y:auto; margin-top:12px;">
+            <table class="peak-table" id="peakTable">
+              <thead><tr><th>#</th><th>Peak (cm⁻¹)</th><th>Intensity</th><th>Vibration Mode</th><th>Assignment</th><th>Actions</th></tr></thead>
+              <tbody id="peakTableBody"></tbody>
+            </table>
+            <div class="peak-dl-group">
+              <button class="btn btn-outline btn-sm" onclick="addCustomOceanPeakRow()">+ Custom Peak</button>
+              <button class="btn btn-primary btn-sm" onclick="replotWithModifiedPeaks()">🔄 Update Markers</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadPeaksTxt()" style="margin-left:auto;">↓ .txt</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadPeaksPdf()">↓ PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="peak-table-wrap" id="oceanComparisonSection" style="display:none;border-color:var(--accent-soft-border);background:var(--accent-soft);">
+          <div class="collapsible-header open" onclick="toggleSection(this)" style="color:var(--accent); margin-bottom: 12px;">
+            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+              <span>📊 Cross-File Comparative Peak Analyzer</span>
+              <span class="chevron">▼</span>
+            </h3>
+          </div>
+          <div class="collapsible-body" style="max-height:800px; overflow-y:auto;">
+            <div style="display:flex; gap:6px; justify-content: flex-end; margin-bottom: 12px;">
+              <button class="btn btn-outline btn-sm" onclick="downloadComparisonReport('txt','ocean')">↓ .txt</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadComparisonReport('pdf','ocean')">↓ PDF</button>
+            </div>
+            <div class="comp-tabs">
+              <button class="comp-btn active" id="oceanCommonTabBtn" onclick="switchComparisonSubTab('common','ocean')">Common Peaks</button>
+              <button class="comp-btn" id="oceanDistinctTabBtn" onclick="switchComparisonSubTab('distinct','ocean')">Distinct / Unique</button>
+            </div>
+            <table class="peak-table">
+              <thead><tr id="oceanCompTableHeader"><th>Wavenumber</th><th>Avg Intensity</th><th>Source Count</th></tr></thead>
+              <tbody id="oceanComparisonTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div></div></div><div id="xyMode" class="hidden">
+    <div class="workspace layout-left">
+
+      <div class="control-panel" id="xyControlPanel">
+        <div class="control-panel-header">
+          <span class="panel-mode-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 11L5 5l3 4L11 1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            XY Plot + Fitting Controls
+          </span>
+          <button class="panel-collapse-x" onclick="toggleDockCollapse()" title="Collapse panel">✕</button>
+        </div>
+
+        <div class="control-panel-inner">
+
+          <div class="quick-nav">
+            <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecData')">① Data</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecProcess')">② Process</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecFit')">③ Fitting</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecStyle')">④ Style &amp; Export</button>
+          </div>
+
+          <!-- ① DATA INPUT -->
+          <div class="section-card" id="xySecData">
+            <div class="section-title">① Data Input</div>
+            <div class="field">
+              <label>Data Type <span class="data-type-badge" id="xyTypeBadge">General XY</span></label>
+              <select id="xyDataType" onchange="updateXYHints()">
+                <option value="general">General XY</option>
+                <option value="ftir">FTIR Spectrum</option>
+                <option value="uv">UV-Vis Spectrum</option>
+                <option value="xrd">XRD Pattern</option>
+                <option value="fluorescence">Fluorescence</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="info-box" style="margin-top:10px">
+              X Y pairs — optional 3rd col = Y error, 4th = X error. Fitter reports R², all coefficients.
+            </div>
+
+            <div class="xy-tabs" style="margin-top:12px;">
+              <button class="xy-tab active" id="tabCSV"  onclick="setXYTab('csv')">CSV / Paste</button>
+              <button class="xy-tab"        id="tabCols" onclick="setXYTab('cols')">Columns</button>
+              <button class="xy-tab"        id="tabFile" onclick="setXYTab('file')">Upload File</button>
+            </div>
+
+            <div id="xyInputCSV">
+              <div class="field"><label>X Values (comma/space)</label><textarea id="xyXvals" placeholder="100, 200, 300 ..."></textarea></div>
+              <div class="field"><label>Y Values</label><textarea id="xyYvals" placeholder="0.1, 0.45, 0.89 ..."></textarea></div>
+              <div class="field"><label>Y Error (optional)</label><textarea id="xyYerr" placeholder="0.02, 0.03 ..."></textarea></div>
+              <div class="field"><label>X Error (optional)</label><textarea id="xyXerr" placeholder="optional"></textarea></div>
+              <div class="grid" style="margin-top:8px;">
+                <div class="field"><label>Label</label><input type="text" id="xyName1" value="Dataset 1"/></div>
+                <div class="field"><label>Color</label><input type="color" id="xyColor1" value="#2563eb"/></div>
+              </div>
+              <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addXYDataset()">+ Add Dataset</button>
+              <div id="extraXYDatasets"></div>
+            </div>
+
+            <div id="xyInputCols" class="hidden">
+              <div class="field"><label>Paste: X Y [Yerr] [Xerr] per line</label>
+                <textarea id="xyColText" rows="8" placeholder="100  0.12  0.01&#10;200  0.45  0.02&#10;..."></textarea>
+              </div>
+              <div class="field"><label>Label</label><input type="text" id="xyColName" value="Dataset 1"/></div>
+            </div>
+
+            <div id="xyInputFile" class="hidden">
+              <input type="file" id="xyFileInput" multiple accept=".csv,.txt,.dat,.tsv" style="display:none">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('xyFileInput').click()">+ Add Files</button>
+                <button class="btn btn-outline btn-sm" onclick="clearAllXYFiles()">✕ Clear</button>
+                <button class="btn btn-accent-blue btn-sm" onclick="runComprehensiveComparisonEngine('xy')">🔍 Compare</button>
+              </div>
+              <span id="xyFileStatus" style="font-size:12px;color:var(--muted)">No files</span>
+              <div id="xyFileChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;"></div>
+              <div id="xyFileCards" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
+            </div>
+          </div>
+
+          <!-- ② PREPROCESSING PIPELINE -->
+          <div class="section-card" id="xySecProcess">
+            <div class="section-title">② Preprocessing Pipeline</div>
+
+            <!-- 2a. Smoothing -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Smoothing</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Method</label>
+                  <select id="xySmoothType" onchange="updateXYSmoothParams()">
+                    <option value="none">None</option>
+                    <option value="moving_avg">Moving Average</option>
+                    <option value="savgol">Savitzky-Golay</option>
+                    <option value="gaussian">Gaussian</option>
+                    <option value="median">Median</option>
+                  </select>
+                </div>
+                <div class="field" id="xySmP1Wrap" style="display:none"><label id="xySmP1Label">Window (pts)</label><input type="number" id="xySmP1" value="5" min="3" step="2"/></div>
+                <div class="field" id="xySmP2Wrap" style="display:none"><label id="xySmP2Label">Poly Order</label><input type="number" id="xySmP2" value="2" min="1" max="5"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- 2b. Normalization -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Normalization</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="field">
+                <label>Method</label>
+                <select id="xyNorm">
+                  <option value="none">None</option>
+                  <option value="max">Max</option>
+                  <option value="minmax">Min-Max</option>
+                  <option value="area">Area</option>
+                  <option value="vector">Vector</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ CURVE FITTING & REGRESSION -->
+          <div class="section-card" id="xySecFit">
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">③ Curve Fitting &amp; Regression</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:500px">
+              <div style="height:10px"></div>
+              <div class="info-box">Fits the first dataset (or all if "Fit all" is on). Reports R², adjusted R², all coefficients, residual sum of squares.</div>
+              <div class="grid">
+                <div class="field"><label>Fit Model</label>
+                  <select id="fitModel" onchange="updateFitParams()">
+                    <option value="none">None</option>
+                    <option value="linear">Linear (y=ax+b)</option>
+                    <option value="poly">Polynomial</option>
+                    <option value="exp">Exponential</option>
+                    <option value="power">Power</option>
+                    <option value="log">Logarithmic</option>
+                    <option value="gaussian">Gaussian peak</option>
+                    <option value="lorentzian">Lorentzian peak</option>
+                  </select>
+                </div>
+                <div class="field" id="fitOrderWrap" style="display:none"><label>Poly Order</label><input type="number" id="fitOrder" value="2" min="2" max="6"/></div>
+                <div class="field" style="display:none;"><label>Fit Color</label><input type="color" id="fitColor" value="#dc2626"/></div>
+              </div>
+              <div class="toggles" style="margin-top:8px;">
+                <label class="toggle-item"><input type="checkbox" id="fitAll">Fit all datasets</label>
+                <label class="toggle-item"><input type="checkbox" id="fitShowEq" checked>Show equation</label>
+              </div>
+              <div id="fitResultBox"></div>
+            </div>
+          </div>
+
+          <!-- ④ PLOT SETTINGS & DISPLAY -->
+          <div class="section-card" id="xySecStyle">
+            <div class="section-title">④ Plot Settings &amp; Display</div>
+
+            <!-- Axes & Labels -->
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Axes &amp; Labels</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:360px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field" style="grid-column:span 2"><label>Title</label><input type="text" id="xyTitle" value="Spectrum" title="LaTeX: wrap the WHOLE title in one $...$ pair (mixing plain text and $...$ is not supported by Plotly for titles)."/></div>
+                <div class="field"><label>X Label</label><input type="text" id="xyXlabel" value="Wavenumber (cm⁻¹)" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for plain-text portions."/></div>
+                <div class="field"><label>Y Label</label><input type="text" id="xyYlabel" value="Intensity (a.u.)" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for plain-text portions."/></div>
+                <div class="field"><label>X Min</label><input type="number" id="xyXmin" placeholder="Auto"/></div>
+                <div class="field"><label>X Max</label><input type="number" id="xyXmax" placeholder="Auto"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Trace Appearance -->
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Trace Appearance</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:300px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Line Width</label><input type="number" id="xyLinewidth" value="2" min="0.5" step="0.5"/></div>
+                <div class="field"><label>Y Offset / trace</label><input type="number" id="xyYOffset" value="0" step="0.1"/></div>
+                <div class="field"><label>X Offset / trace</label><input type="number" id="xyXOffset" value="0" step="1"/></div>
+              </div>
+              <div class="toggles" style="margin-top:10px;flex-wrap:wrap;gap:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyInvertX">Invert X</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBarMode">Bar Plot</label>
+                <label class="toggle-item"><input type="checkbox" id="xyScatter">Scatter</label>
+                <label class="toggle-item"><input type="checkbox" id="xyShowErr" checked>Show Error</label>
+                <label class="toggle-item"><input type="checkbox" id="xyFill">Fill Under</label>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Figure Size & Font -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Figure Size &amp; Font</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Journal Preset</label>
+                  <select id="xyJournalPreset" onchange="applyJournalPreset('xy')"></select>
+                </div>
+                <div class="field"><label>Font Family</label>
+                  <select id="xyFontFamily" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="auto" selected>Auto (Georgia/Arial Black)</option>
+                    <option value="times">Times New Roman</option>
+                    <option value="arial">Arial</option>
+                    <option value="helvetica">Helvetica</option>
+                    <option value="calibri">Calibri</option>
+                    <option value="cambria">Cambria</option>
+                    <option value="georgia">Georgia</option>
+                    <option value="liberation_serif">Liberation Serif</option>
+                    <option value="liberation_sans">Liberation Sans</option>
+                    <option value="cmu">Computer Modern (LaTeX-style)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Fig Width (px)</label><input type="number" id="xyFigWidth" value="1000" min="300" step="50"/></div>
+                <div class="field"><label>Fig Height (px)</label><input type="number" id="xyFigHeight" value="600" min="200" step="50"/></div>
+                <div class="field"><label>Export DPI</label><input type="number" id="xyExportDPI" value="300" min="72" step="50"/></div>
+                <div class="field"><label>Title Size</label><input type="number" id="xyTitleSize" value="22" min="8"/></div>
+                <div class="field"><label>Axis Label</label><input type="number" id="xyLabelSize" value="18" min="8"/></div>
+                <div class="field"><label>Tick Size</label><input type="number" id="xyTickSize" value="13" min="6"/></div>
+                <div class="field"><label>Legend Size</label><input type="number" id="xyLegendSize" value="12" min="6"/></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyBoldTitle" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Title</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBoldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Axis Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBoldTick" onchange="triggerInteractiveReplotStyleOnly('xy')">Tick Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBoldLegend" onchange="triggerInteractiveReplotStyleOnly('xy')">Legend</label>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Legend Position & Box Style -->
+            <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin-top:4px;">
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
+              <div class="field">
+                <label>X (Left ↔ Right)</label>
+                <div class="slider-container">
+                  <input type="range" id="xyLegendX" min="0" max="1.2" step="0.02" value="0.98" oninput="updateXYLegendSlidersText();triggerInteractiveReplotStyleOnly('xy');">
+                  <span id="xyLegendX_val">0.98</span>
+                </div>
+              </div>
+              <div class="field" style="margin-top:8px">
+                <label>Y (Bottom ↔ Top)</label>
+                <div class="slider-container">
+                  <input type="range" id="xyLegendY" min="-0.3" max="1.1" step="0.02" value="0.98" oninput="updateXYLegendSlidersText();triggerInteractiveReplotStyleOnly('xy');">
+                  <span id="xyLegendY_val">0.98</span>
+                </div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">▢ Legend Box Style</div>
+              <div class="grid">
+                <div class="field"><label>Box Type</label>
+                  <select id="xyLegendBoxStyle" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="box" selected>Bordered Box</option>
+                    <option value="filled">Filled (No Border)</option>
+                    <option value="transparent">Transparent (No Box)</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+                <div class="field"><label>Orientation</label>
+                  <select id="xyLegendOrientation" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="v" selected>Vertical</option>
+                    <option value="h">Horizontal</option>
+                  </select>
+                </div>
+                <div class="field"><label>Background</label><input type="color" id="xyLegendBgColor" value="#ffffff" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Bg Opacity</label><input type="range" id="xyLegendBgOpacity" min="0" max="1" step="0.05" value="0.85" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Border Color</label><input type="color" id="xyLegendBorderColor" value="#94a3b8" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Border Width</label><input type="number" id="xyLegendBorderWidth" value="1" min="0" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+              </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:10px;line-height:1.5;">
+                ✎ Click directly on a legend entry's <b>text</b> (not its color swatch) to rename it in place, or drag the whole legend box to reposition it. Clicking the swatch/line still toggles that trace's visibility. The plot title and axis labels are click-to-edit too — click right on the text on the chart.
+              </div>
+              <button class="btn btn-secondary btn-sm" style="margin-top:8px;width:100%;" onclick="resetLegendNames('xy')">↺ Reset Legend Names</button>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Advanced Axis, Grid & Scientific Notation -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Axis Frame, Grid &amp; Notation</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>X Axis Frame</label>
+                  <select id="xyXFrame" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="none">Hidden</option>
+                    <option value="one" selected>Bottom Only</option>
+                    <option value="both">Bottom + Top (Box)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Y Axis Frame</label>
+                  <select id="xyYFrame" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="none">Hidden</option>
+                    <option value="one" selected>Left Only</option>
+                    <option value="both">Left + Right (Box)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Tick Direction</label>
+                  <select id="xyTickDir" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="outside" selected>Outside</option>
+                    <option value="inside">Inside</option>
+                    <option value="">None</option>
+                  </select>
+                </div>
+                <div class="field"><label>Grid Color</label><input type="color" id="xyGridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xyXStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="xyYStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>X Notation</label>
+                  <select id="xyXNotation" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="auto" selected>Auto</option>
+                    <option value="power">Scientific (×10ⁿ)</option>
+                    <option value="si">SI Prefix (k, M)</option>
+                    <option value="plain">Plain Numbers</option>
+                    <option value="e">Exponential (e+n)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Y Notation</label>
+                  <select id="xyYNotation" onchange="triggerInteractiveReplotStyleOnly('xy')">
+                    <option value="auto" selected>Auto</option>
+                    <option value="power">Scientific (×10ⁿ)</option>
+                    <option value="si">SI Prefix (k, M)</option>
+                    <option value="plain">Plain Numbers</option>
+                    <option value="e">Exponential (e+n)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Y Scale Divisor</label><input type="number" id="xyYDivisor" value="1" min="0.0001" step="any" onchange="if(document.getElementById('xy-plot-wrapper').data) plotXY();"/></div>
+                <div class="field"><label>Y Min</label><input type="number" id="xyYmin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Y Max</label><input type="number" id="xyYmax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+              </div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-top:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyXGrid" checked onchange="triggerInteractiveReplotStyleOnly('xy')">X Grid Lines</label>
+                <label class="toggle-item"><input type="checkbox" id="xyYGrid" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Y Grid Lines</label>
+                <label class="toggle-item"><input type="checkbox" id="xyXMinorTicks" onchange="triggerInteractiveReplotStyleOnly('xy')">X Minor Ticks</label>
+                <label class="toggle-item"><input type="checkbox" id="xyYMinorTicks" onchange="triggerInteractiveReplotStyleOnly('xy')">Y Minor Ticks</label>
+                <label class="toggle-item"><input type="checkbox" id="xyXZeroLine" onchange="triggerInteractiveReplotStyleOnly('xy')">X=0 Line</label>
+                <label class="toggle-item"><input type="checkbox" id="xyYZeroLine" onchange="triggerInteractiveReplotStyleOnly('xy')">Y=0 Line</label>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Scale Bar (data-accurate indicator) -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Scale Bar (Data-Accurate)</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="toggles" style="margin-bottom:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyScaleBarOn" onchange="triggerInteractiveReplotStyleOnly('xy')">Show Scale Bar</label>
+              </div>
+              <div class="grid">
+                <div class="field"><label>Bar Length (Y data units)</label><input type="number" id="xyScaleBarLen" value="100" oninput="triggerInteractiveReplotStyleOnly('xy')" title="Real Y-axis units — the bar is drawn to genuinely span this much of the Y axis"/></div>
+                <div class="field"><label>Label Text (optional)</label><input type="text" id="xyScaleBarLabel" placeholder="Auto: shows the number" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Horizontal Position (0-1)</label><input type="number" id="xyScaleBarX" value="0.05" min="0" max="1" step="0.01" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Vertical Position (0-1 of data range)</label><input type="number" id="xyScaleBarY" value="0.1" min="0" max="0.95" step="0.01" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Inset Plot (zoom into a region) -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Inset Plot (Zoom Region)</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyInsetOn" onchange="triggerInteractiveReplotStyleOnly('xy')">Show Inset</label>
+                <label class="toggle-item"><input type="checkbox" id="xyInsetBorder" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Border Box</label>
+                <label class="toggle-item"><input type="checkbox" id="xyInsetHighlight" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Highlight Source Region</label>
+              </div>
+              <div class="grid">
+                <div class="field"><label>Region X Min</label><input type="number" id="xyInsetXmin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Region X Max</label><input type="number" id="xyInsetXmax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Inset Title</label><input type="text" id="xyInsetTitle" placeholder="optional" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Background</label><input type="color" id="xyInsetBg" value="#ffffff" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Position X (0-1)</label><input type="number" id="xyInsetX0" value="0.55" min="0" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Position Y (0-1)</label><input type="number" id="xyInsetY0" value="0.55" min="0" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Width (0-1)</label><input type="number" id="xyInsetW" value="0.38" min="0.1" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Height (0-1)</label><input type="number" id="xyInsetH" value="0.38" min="0.1" max="0.9" step="0.01" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+              </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- Peak Detection -->
+            <div class="collapsible-header open" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Peak Detection</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:180px">
+              <div style="height:10px"></div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+                <label class="toggle-item"><input type="checkbox" id="xyShowPeaks" checked onchange="toggleXyPeakSectionVisibility()">Detect Peaks</label>
+              </div>
+              <div class="grid">
+                <div class="field"><label>Peak Match Window</label><input type="number" id="xyTolerance" value="5" min="1"/></div>
+              </div>
+            </div>
+          </div>
+
+        </div><div class="panel-actions">
+          <button class="btn btn-primary" onclick="plotXY()" style="flex:1">▶ Plot</button>
+          <div class="download-group">
+            <button class="btn btn-secondary" onclick="downloadXYPlot()">↓ Image</button>
+            <select id="xyDownloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
+          </div>
+          <button class="btn btn-green btn-sm" onclick="downloadXYData()">↓ CSV</button>
+          <button class="btn btn-green btn-sm" onclick="downloadFitParams()">↓ Fit</button>
+        </div>
+
+      </div><div class="plot-panel" id="xyPlotPanel">
+
+        <div class="annot-toolbar" id="xyAnnotToolbar" style="display:none;flex-wrap:wrap;row-gap:6px;">
+          <button class="btn btn-outline btn-sm" onclick="addTextAnnotation('xy')" title="Add a draggable text box">🅣 Text</button>
+          <button class="btn btn-outline btn-sm" onclick="addArrowAnnotation('xy')" title="Add a draggable arrow (drag the head/tail to point at anything)">↗ Arrow</button>
+          <select id="xyAnnotFontFamily" title="Font for new text/arrow labels" style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);">
+            <option value="auto">Font: Auto</option>
+            <option value="times">Times New Roman</option>
+            <option value="arial">Arial</option>
+            <option value="helvetica">Helvetica</option>
+            <option value="calibri">Calibri</option>
+            <option value="cambria">Cambria</option>
+            <option value="georgia">Georgia</option>
+          </select>
+          <input type="number" id="xyAnnotFontSize" value="13" min="6" max="72" title="Font size (px) for new text/arrow labels" style="width:52px;font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);">
+          <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="xyAnnotBold">Bold</label>
+          <select id="xyAnnotBoxStyle" title="Text box background" style="font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);">
+            <option value="filled">Filled box</option>
+            <option value="transparent">Transparent</option>
+          </select>
+          <span style="font-size:11px;color:var(--hint);padding:0 4px;">Box/Circle/Erase: ▭ ○ ✕ in chart toolbar →</span>
+          <input type="color" id="xyAnnotColor" value="#dc2626" title="Color for new text/arrow annotations" style="margin-left:auto;">
+          <button class="btn btn-secondary btn-sm" onclick="clearCustomAnnotations('xy')" title="Remove all text/arrows/shapes you've added">🗑 Clear</button>
+        </div>
+
+        <div class="plot-empty-state" id="xyEmptyState">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="4" y="44" width="56" height="2" rx="1" fill="#64748b"/><circle cx="14" cy="36" r="3.5" fill="#2563eb"/><circle cx="26" cy="22" r="3.5" fill="#16a34a"/><circle cx="40" cy="30" r="3.5" fill="#dc2626"/><circle cx="52" cy="16" r="3.5" fill="#7c3aed"/><path d="M14 36 L52 16" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
+          <h3>Enter or upload XY data to begin</h3>
+          <p>Paste X/Y values, upload a CSV, or enter column-format data.<br>Supports optional Y-error and X-error columns for error bars.</p>
+        </div>
+
+        <div id="xy-plot-wrapper" style="display:none;background:white;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);"></div>
+
+        <div class="peak-table-wrap" id="xyPeakTableSection" style="display:none">
+          <div class="collapsible-header open" onclick="toggleSection(this)">
+            <h3 style="margin:0">📊 Individual Peak Coordinates</h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="collapsible-body" style="max-height:800px; overflow-y:auto; margin-top:12px;">
+            <table class="peak-table" id="xyPeakTable">
+              <thead><tr><th>#</th><th>Peak X</th><th>Intensity Y</th><th>Notes</th><th>Actions</th></tr></thead>
+              <tbody id="xyPeakTableBody"></tbody>
+            </table>
+            <div class="peak-dl-group">
+              <button class="btn btn-outline btn-sm" onclick="addCustomXyPeakRow()">+ Custom Peak</button>
+              <button class="btn btn-primary btn-sm" onclick="replotWithModifiedXyPeaks()">🔄 Update Markers</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadXYPeaksTxt()" style="margin-left:auto;">↓ .txt</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadXYPeaksPdf()">↓ PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="peak-table-wrap" id="xyComparisonSection" style="display:none;border-color:var(--accent-soft-border);background:var(--accent-soft);">
+          <div class="collapsible-header open" onclick="toggleSection(this)" style="color:var(--accent); margin-bottom: 12px;">
+            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+              <span>📊 Cross-File Comparative Peak Analyzer</span>
+              <span class="chevron">▼</span>
+            </h3>
+          </div>
+          <div class="collapsible-body" style="max-height:800px; overflow-y:auto;">
+            <div style="display:flex; gap:6px; justify-content: flex-end; margin-bottom: 12px;">
+              <button class="btn btn-outline btn-sm" onclick="downloadComparisonReport('txt','xy')">↓ .txt</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadComparisonReport('pdf','xy')">↓ PDF</button>
+            </div>
+            <div class="comp-tabs">
+              <button class="comp-btn active" id="xyCommonTabBtn" onclick="switchComparisonSubTab('common','xy')">Common Peaks</button>
+              <button class="comp-btn" id="xyDistinctTabBtn" onclick="switchComparisonSubTab('distinct','xy')">Distinct / Unique</button>
+            </div>
+            <table class="peak-table">
+              <thead><tr id="xyCompTableHeader"><th>X</th><th>Avg Y</th><th>Source Count</th></tr></thead>
+              <tbody id="xyComparisonTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div></div></div><footer class="app-footer">
+    <strong>RNSpectraX™ v3.1</strong> — Rakesh Naik &amp; Sachin Kumar Srivastava,
+    Centre for Photonics and Quantum Communication Technology, IIT Roorkee.<br/>
+    Every calculation runs in this browser tab; no spectrum is uploaded anywhere.
+    · <a data-home-link href="../index.html">Rakesh Naik — homepage</a>
+    · <a href="docs/USER_MANUAL.md">Manual</a>
+    · © 2026 All rights reserved.
+  </footer></div>
+
+</div><script src="js/config.js"></script>
+<script src="js/core/state.js"></script>
+<script src="js/core/utils.js"></script>
+<script src="js/core/advancedLayout.js"></script>
+<script src="js/io/parser.js"></script>
+<script src="js/io/fileLoader.js"></script>
+<script src="js/io/exporter.js"></script>
+
+<script src="js/processing/despike.js"></script>
+<script src="js/processing/baseline.js"></script>
+<script src="js/processing/smoothing.js"></script>
+<script src="js/plotting/averaging.js"></script>
+<script src="js/plotting/plotting.js"></script>
+<script src="js/plotting/xyPlot.js"></script>
+<script src="js/plotting/comparison.js"></script>
+<script src="js/analysis/peaks.js"></script>
+<script src="js/analysis/fitting.js"></script>
+<script src="js/ui/sidebar.js"></script>
+<script src="js/ui/layout.js"></script>
+<script src="js/ui/theme.js"></script>
+<script src="js/ui/workspaceExtras.js"></script>
+<script src="js/ui/session.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  setMode('ocean');
+  Object.defineProperty(window, '_layout', { get: () => localStorage.getItem('rnspx_layout') || 'left' });
+  populateJournalPresetSelect('journalPreset');
+  populateJournalPresetSelect('xyJournalPreset');
+});
+</script>
+
+
+
+
+<!-- Keyboard reference -->
+<div class="rx-modal" id="shortcutSheet" role="dialog" aria-modal="true" aria-labelledby="shortcutSheetTitle">
+  <div class="rx-modal-card">
+    <div class="rx-modal-head">
+      <h2 id="shortcutSheetTitle">Keyboard shortcuts</h2>
+      <button class="rx-modal-close" onclick="toggleShortcutSheet(false)" aria-label="Close">✕</button>
+    </div>
+    <div class="rx-modal-body">
+      <div class="rx-kbd-group">
+        <h3>Workspace dock</h3>
+        <div class="rx-kbd-row"><span>Dock the panel left</span><kbd>Ctrl</kbd> <kbd>1</kbd></div>
+        <div class="rx-kbd-row"><span>Dock the panel right</span><kbd>Ctrl</kbd> <kbd>2</kbd></div>
+        <div class="rx-kbd-row"><span>Dock the panel top</span><kbd>Ctrl</kbd> <kbd>3</kbd></div>
+        <div class="rx-kbd-row"><span>Dock the panel bottom</span><kbd>Ctrl</kbd> <kbd>4</kbd></div>
+        <div class="rx-kbd-row"><span>Collapse or restore the panel</span><kbd>Ctrl</kbd> <kbd>\\</kbd></div>
+      </div>
+      <div class="rx-kbd-group">
+        <h3>General</h3>
+        <div class="rx-kbd-row"><span>Open this sheet</span><kbd>?</kbd></div>
+        <div class="rx-kbd-row"><span>Close this sheet</span><kbd>Esc</kbd></div>
+        <div class="rx-kbd-row"><span>Load spectra</span><span style="color:var(--muted)">drop files anywhere on the window</span></div>
+      </div>
+      <div class="rx-kbd-group">
+        <h3>Session</h3>
+        <div class="rx-kbd-row">
+          <span>Your processing settings are remembered on this device.</span>
+          <button class="btn btn-outline btn-sm" onclick="clearWorkspaceSession()">Clear saved settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

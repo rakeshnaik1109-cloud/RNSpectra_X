@@ -1,0 +1,406 @@
+/* ═══════════════════════════════════════════════════════════
+   RNSpectraX™ — layout.css
+   Professional workspace dock system (structure + overrides that
+   must win the cascade — colors here are kept in sync with the
+   token system defined in style.css's :root)
+═══════════════════════════════════════════════════════════ */
+
+.workspace {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  width: 100%;
+  position: relative;
+  height: calc(100vh - 120px);
+  min-height: 480px;
+}
+
+.workspace.layout-left  { flex-direction: row; }
+.workspace.layout-right { flex-direction: row-reverse; }
+.workspace.layout-top    { flex-direction: column; }
+.workspace.layout-bottom { flex-direction: column-reverse; }
+
+/* ══════════════════════════════════
+   CONTROL PANEL
+══════════════════════════════════ */
+.control-panel {
+  flex: 0 0 auto;
+  width: 360px;
+  min-width: 240px;
+  max-width: 600px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e4e6ef);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(20,22,31,.05));
+  transition: width 0.25s ease, min-width 0.25s ease, opacity 0.2s ease, height 0.25s ease;
+  position: relative;
+}
+
+.control-panel-inner {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong, #d3d6e5) transparent;
+}
+.control-panel-inner::-webkit-scrollbar { width: 5px; }
+.control-panel-inner::-webkit-scrollbar-thumb { background: var(--border-strong, #d3d6e5); border-radius: 3px; }
+
+.panel-actions {
+  flex-shrink: 0;
+  background: var(--surface, #fff);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border, #e4e6ef);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspace.layout-top    .control-panel,
+.workspace.layout-bottom .control-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 320px;
+  max-height: 520px;
+}
+
+.control-panel.panel-collapsed {
+  width: 0 !important;
+  min-width: 0 !important;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.workspace.layout-top    .control-panel.panel-collapsed,
+.workspace.layout-bottom .control-panel.panel-collapsed {
+  height: 0 !important;
+  max-height: 0 !important;
+}
+
+/* ══════════════════════════════════
+   PLOT PANEL
+══════════════════════════════════ */
+.plot-panel {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  background: var(--surface-2, #f3f4f9);
+  border: 1px solid var(--border, #e4e6ef);
+  border-radius: var(--radius-lg, 16px);
+  overflow: auto;
+}
+
+.plot-panel #plot-wrapper,
+.plot-panel #xy-plot-wrapper {
+  min-height: 200px;
+  border-radius: var(--radius, 11px);
+  border: 1px solid var(--border, #e4e6ef);
+  background: #fff;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(20,22,31,.07));
+}
+
+/* ══════════════════════════════════
+   RESIZE HANDLE
+══════════════════════════════════ */
+.workspace-resizer {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 10;
+  position: relative;
+}
+.workspace-resizer:hover,
+.workspace-resizer:active {
+  background: var(--accent-soft, #eef0fe);
+}
+
+.resizer-vertical { width: 10px; cursor: ew-resize; min-height: 60px; }
+.resizer-vertical::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 3px; height: 44px; background: var(--border-strong, #d3d6e5); border-radius: 3px;
+  transition: background 0.15s, height 0.15s;
+}
+.resizer-vertical:hover::before { background: var(--accent, #4338ca); height: 60px; }
+
+.resizer-horizontal { height: 10px; width: 100%; cursor: ns-resize; min-width: 60px; }
+.resizer-horizontal::before {
+  content: '';
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  height: 3px; width: 44px; background: var(--border-strong, #d3d6e5); border-radius: 3px;
+  transition: background 0.15s, width 0.15s;
+}
+.resizer-horizontal:hover::before { background: var(--accent, #4338ca); width: 60px; }
+
+.resizer-dots { display: none; }
+
+/* ══════════════════════════════════
+   LAYOUT TOOLBAR
+══════════════════════════════════ */
+.layout-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  padding: 8px 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e4e6ef);
+  border-radius: var(--radius, 11px);
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(20,22,31,.05));
+  flex-wrap: wrap;
+}
+
+.layout-toolbar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--faint, #9a9eb0);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  margin-right: 2px;
+}
+
+.layout-btn-group {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border, #e4e6ef);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface, #fff);
+}
+
+.layout-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-right: 1px solid var(--border, #e4e6ef);
+  background: var(--surface, #fff);
+  color: var(--muted, #6b7080);
+  cursor: pointer;
+  transition: background 0.13s, color 0.13s;
+  white-space: nowrap;
+}
+.layout-btn:last-child { border-right: none; }
+.layout-btn:hover:not(.active) { background: var(--accent-soft, #eef0fe); color: var(--accent, #4338ca); }
+.layout-btn.active { background: var(--accent, #4338ca); color: var(--on-accent, #fff); }
+.layout-btn svg { flex-shrink: 0; }
+
+.layout-divider { width: 1px; height: 26px; background: var(--border, #e4e6ef); margin: 0 4px; }
+
+.layout-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border, #e4e6ef);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: var(--muted, #6b7080);
+  cursor: pointer;
+  transition: all 0.13s;
+  white-space: nowrap;
+}
+.layout-collapse-btn:hover { background: #fffbeb; border-color: var(--warning, #d97706); color: #92400e; }
+.layout-collapse-btn.collapsed { background: var(--accent-soft, #eef0fe); border-color: var(--accent-soft-border, #c8cdfa); color: var(--accent, #4338ca); }
+
+.layout-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border, #e4e6ef);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--faint, #9a9eb0);
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.13s;
+}
+.layout-reset-btn:hover { color: var(--danger, #dc2626); border-color: #fca5a5; background: var(--danger-soft, #fef2f2); }
+
+.layout-toolbar::after {
+  content: 'Ctrl+1/2/3/4 \00b7 Ctrl+\\ to collapse';
+  font-size: 10px;
+  color: var(--faint, #9a9eb0);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .layout-toolbar::after { display: none; }
+}
+
+/* ══════════════════════════════════
+   PANEL HEADER
+══════════════════════════════════ */
+.control-panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--border, #e4e6ef);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--faint, #9a9eb0);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.control-panel-header .panel-mode-label { display: flex; align-items: center; gap: 6px; }
+.control-panel-header .panel-collapse-x {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer;
+  color: var(--faint, #9a9eb0); border-radius: 5px; font-size: 13px; transition: all 0.13s;
+}
+.control-panel-header .panel-collapse-x:hover { background: var(--danger-soft, #fef2f2); color: var(--danger, #dc2626); }
+
+/* ══════════════════════════════════
+   SECTION CARDS (inside panel)
+══════════════════════════════════ */
+.control-panel .section-card {
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  border-top: none;
+  border-bottom: 1px solid var(--border, #e4e6ef);
+  margin-bottom: 0;
+  padding: 16px;
+}
+.control-panel .section-card:last-child { border-bottom: none; }
+.control-panel .section-card:first-child { border-top: none; }
+
+/* ══════════════════════════════════
+   Plotly manages the inner graph-div's size itself (layout.width/height,
+   set from Fig Width/Height incl. Journal Presets) — intentionally no
+   width override here.
+══════════════════════════════════ */
+
+/* ══════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+══════════════════════════════════ */
+@media (max-width: 900px) {
+  .workspace.layout-left,
+  .workspace.layout-right {
+    flex-direction: column !important;
+  }
+  .workspace.layout-left .control-panel,
+  .workspace.layout-right .control-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: 300px;
+    max-height: 300px;
+  }
+  .resizer-vertical { display: none; }
+  .layout-toolbar::after { display: none; }
+}
+
+/* ══════════════════════════════════
+   DRAG CURSOR OVERRIDE
+══════════════════════════════════ */
+body.resizing-h { cursor: ew-resize !important; user-select: none !important; }
+body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
+
+/* ══════════════════════════════════
+   PINNED ACTION BAR (structural — must win the cascade)
+══════════════════════════════════ */
+.control-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  max-height: 100% !important;
+  align-self: flex-start !important;
+  overflow: hidden !important;
+}
+
+/* Top/Bottom dock modes want the panel to fill their fixed strip height
+   exactly (set elsewhere), not shrink-to-content like Left/Right does. */
+.workspace.layout-top    .control-panel,
+.workspace.layout-bottom .control-panel {
+  height: 320px !important;
+  align-self: stretch !important;
+}
+
+.control-panel-inner {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+}
+
+.panel-actions {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 50 !important;
+  background: var(--surface, #fff) !important;
+  border-bottom: 1px solid var(--border, #e4e6ef) !important;
+  box-shadow: 0 2px 8px rgba(20,22,31,.06) !important;
+  flex: 0 0 auto !important;
+}
+
+.control-panel-header {
+  order: -1 !important;
+  z-index: 51 !important;
+}
+
+.layout-toolbar .btn-sm {
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid var(--border, #e4e6ef);
+}
+
+/* ══════════════════════════════════
+   QUICK-NAV PILLS (jump between numbered groups)
+══════════════════════════════════ */
+.quick-nav {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border, #e4e6ef);
+  background: var(--surface-2, #f3f4f9);
+}
+.quick-nav-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border, #e4e6ef);
+  background: var(--surface, #fff);
+  color: var(--muted, #6b7080);
+  cursor: pointer;
+  transition: all .13s;
+  white-space: nowrap;
+}
+.quick-nav-pill:hover,
+.quick-nav-pill.active {
+  border-color: var(--accent-soft-border, #c8cdfa);
+  color: var(--accent, #4338ca);
+  background: var(--accent-soft, #eef0fe);
+}

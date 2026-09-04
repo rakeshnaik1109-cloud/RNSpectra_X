@@ -1,0 +1,1 @@
+console.log("RNSpectraX v3.0  initialized");

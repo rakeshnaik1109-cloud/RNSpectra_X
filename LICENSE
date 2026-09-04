@@ -1,0 +1,32 @@
+RNSpectraX™ — Proprietary Software Licence
+Copyright © 2026 Rakesh Naik and Sachin Kumar Srivastava.
+All rights reserved.
+
+RNSpectraX™ and its source code are the proprietary work of the copyright
+holders, developed at the Centre for Photonics and Quantum Communication
+Technology and the Department of Physics, IIT Roorkee.
+
+PERMITTED WITHOUT REQUEST
+  · Viewing this source code.
+  · Running the application locally for personal, academic or evaluation use.
+  · Citing the software in academic work, using the citation in CITATION.cff.
+
+REQUIRES WRITTEN CONSENT OF THE COPYRIGHT HOLDERS
+  · Copying, redistributing or publishing this software or any derivative of it.
+  · Modifying it for distribution.
+  · Any commercial use, including use inside a commercial product or service.
+  · Removing or altering these notices.
+
+THIRD-PARTY COMPONENTS
+  Plotly.js (MIT), jsPDF (MIT) and MathJax (Apache-2.0) are loaded from public
+  CDNs and remain under their own licences.
+
+NO WARRANTY
+  This software is provided "as is", without warranty of any kind, express or
+  implied, including but not limited to the warranties of merchantability,
+  fitness for a particular purpose and non-infringement. In no event shall the
+  authors be liable for any claim, damages or other liability arising from the
+  use of this software. Scientific results obtained with it remain the
+  responsibility of the user.
+
+Enquiries: Rakesh Naik, IIT Roorkee.
