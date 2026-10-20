@@ -42,7 +42,7 @@
     if (window.Plotly) {
       ['plot-wrapper', 'xy-plot-wrapper'].forEach(function (id) {
         var el = document.getElementById(id);
-        if (el && el.data) { try { Plotly.Plots.resize(el); } catch (e) {} }
+        if (el && el.data && el.offsetParent !== null) { try { Promise.resolve(Plotly.Plots.resize(el)).catch(() => {}); } catch (e) {} }
       });
     }
   };

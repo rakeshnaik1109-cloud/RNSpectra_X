@@ -129,16 +129,27 @@ function clearAllXYFiles() {
   if (emptyState) emptyState.style.display = "flex";
 
   // 4. Hide the data tables and fit results
-  document.getElementById("xyPeakTableSection").style.display = "none";
   document.getElementById("xyComparisonSection").style.display = "none";
   document.getElementById("fitResultBox").innerHTML = "";
 
   // 5. Reset plot tracking variables
   lastXYSeries = [];
-  lastXYPeaks = [];
   lastFitResults = [];
 }
-function parseCSVVals(str) { return (str || "").split(/[\s,;]+/).map(Number).filter(v => !isNaN(v)); }
+// Blank tokens (e.g. a trailing comma or space) are dropped before conversion;
+// Number("") is 0, which would otherwise append a spurious zero.
+function parseCSVVals(str) { return (str || "").split(/[\s,;]+/).filter(t => t !== "").map(Number).filter(v => Number.isFinite(v)); }
+
+// Pair X/Y (and optional error) lists from the paste boxes. Mismatched
+// lengths are truncated to the shortest list instead of silently mis-pairing.
+function pairXYLists(x, y, ey, ex, name) {
+  const n = Math.min(x.length, y.length);
+  if (x.length !== y.length) rxNotify(`"${name}": ${x.length} X values but ${y.length} Y values — using the first ${n} pairs.`);
+  const trimErr = e => (e && e.length) ? (e.length >= n ? e.slice(0, n) : (rxNotify(`"${name}": error list shorter than the data — error bars ignored.`), null)) : null;
+  return { x: x.slice(0, n), y: y.slice(0, n), ey: trimErr(ey), ex: trimErr(ex) };
+}
+
+function rxNotify(msg) { if (window.rxToast) window.rxToast(msg); else console.warn(msg); }
 
 
 
@@ -154,12 +165,13 @@ function gatherXYDatasets() {
   const y1 = parseCSVVals(document.getElementById("xyYvals").value);
   const ey1 = parseCSVVals(document.getElementById("xyYerr").value);
   const ex1 = parseCSVVals(document.getElementById("xyXerr").value);
-  if (x1.length && y1.length) list.push({ x: x1, y: y1, ey: ey1.length ? ey1 : null, ex: ex1.length ? ex1 : null, name: document.getElementById("xyName1").value, color: document.getElementById("xyColor1").value });
+  if (x1.length && y1.length) list.push(Object.assign(pairXYLists(x1, y1, ey1, ex1, document.getElementById("xyName1").value), { name: document.getElementById("xyName1").value, color: document.getElementById("xyColor1").value }));
   for (let i = 1; i <= extraDatasetCount; i++) {
     if (document.getElementById("xyXvals" + i)) {
       const ey = parseCSVVals(document.getElementById("xyYerr" + i)?.value);
       const ex = parseCSVVals(document.getElementById("xyXerr" + i)?.value);
-      list.push({ x: parseCSVVals(document.getElementById("xyXvals" + i).value), y: parseCSVVals(document.getElementById("xyYvals" + i).value), ey: ey.length ? ey : null, ex: ex.length ? ex : null, name: document.getElementById("xyName" + i).value, color: document.getElementById("xyColor" + i).value });
+      const nm = document.getElementById("xyName" + i).value;
+      list.push(Object.assign(pairXYLists(parseCSVVals(document.getElementById("xyXvals" + i).value), parseCSVVals(document.getElementById("xyYvals" + i).value), ey, ex, nm), { name: nm, color: document.getElementById("xyColor" + i).value }));
     }
   }
   return list;

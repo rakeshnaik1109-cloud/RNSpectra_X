@@ -90,8 +90,6 @@ function downloadComparisonReport(format, mode) {
 
 
 
-function downloadXYPeaksTxt() { syncXyTableToMemory(); let txt = `Peak List\n`; lastXYPeaks.forEach((r, i) => { txt += `${i + 1}\t${r.x.toFixed(2)}\t${r.y.toFixed(4)}\t${r.note}\n`; }); downloadBlob(txt, "Peaks.txt", "text/plain"); }
-function downloadXYPeaksPdf() { syncXyTableToMemory(); const { jsPDF } = window.jspdf; const doc = new jsPDF(); let y = 30; lastXYPeaks.forEach((r, i) => { doc.text(`${i + 1}. X: ${r.x.toFixed(2)} | Y: ${r.y.toFixed(4)} | Note: ${r.note}`, 14, y); y += 8; }); doc.save("Peaks.pdf"); }
 function downloadXYPlot() {
   const dpi = parseInt(document.getElementById("xyExportDPI")?.value) || 300;
   exportWrapperAsImage("xy-plot-wrapper", "Plot", document.getElementById("xyDownloadFormat").value,
@@ -115,23 +113,30 @@ function downloadXYData() {
 
 
 function downloadFitParams() {
-  if (!lastFitResults.length) { alert("Run a fit first (choose a Fit Model and press Plot)."); return; }
+  const fits = lastFitResults.filter(f => !f.failed);
+  if (!fits.length) { alert("Run a fit first (choose a Fit Model and press Plot)."); return; }
   let txt = `RNSpectraX — Curve Fit Parameters\nGenerated: ${new Date().toLocaleString()}\n`;
+  txt += "Uncertainties are 1σ standard errors from the parameter covariance matrix.\n";
   txt += "=".repeat(60) + "\n\n";
-  lastFitResults.forEach(fit => {
-    txt += `Dataset: ${fit.datasetName}\nModel: ${fit.model}\nEquation: ${fit.eqText}\n`;
-    txt += `R^2: ${fit.r2.toFixed(8)}\nAdjusted R^2: ${fit.adjR2.toFixed(8)}\nResidual SS: ${fit.ssRes.toExponential(6)}\nn points: ${fit.n}\n`;
+  fits.forEach(fit => {
+    txt += `Dataset: ${fit.datasetName}\nModel: ${fit.label}\nEquation: ${fit.eqText}\n`;
+    txt += `R^2: ${fit.r2.toFixed(8)}\nAdjusted R^2: ${fit.adjR2.toFixed(8)}\nResidual SS: ${fit.ssRes.toExponential(6)}\n`;
+    if (fit.redChi2 !== null && fit.redChi2 !== undefined) txt += `Reduced chi^2: ${fit.redChi2.toExponential(6)}\n`;
+    txt += `n points: ${fit.n}   parameters: ${fit.k}${fit.weighted ? "   (weighted by 1/sigma^2)" : ""}${fit.converged ? "" : "   WARNING: not fully converged"}\n`;
     txt += `Parameters:\n`;
-    Object.entries(fit.coeffs).forEach(([k, v]) => { txt += `   ${k} = ${typeof v === 'number' ? v.toExponential(8) : v}\n`; });
+    fit.names.forEach((nm, j) => { txt += `   ${nm} = ${fit.values[j].toExponential(8)}  ±  ${Number.isFinite(fit.errors[j]) ? fit.errors[j].toExponential(4) : "n/a"}\n`; });
+    fit.derived.forEach(d => { txt += `   ${d.name} = ${d.value.toExponential(8)}  ±  ${Number.isFinite(d.se) ? d.se.toExponential(4) : "n/a"}\n`; });
     txt += "\n" + "-".repeat(60) + "\n\n";
   });
-  // also CSV
-  let csv = "dataset,model,parameter,value\n";
-  lastFitResults.forEach(fit => {
-    csv += `"${fit.datasetName}","${fit.model}","R2",${fit.r2}\n`;
-    csv += `"${fit.datasetName}","${fit.model}","adjR2",${fit.adjR2}\n`;
-    csv += `"${fit.datasetName}","${fit.model}","ssRes",${fit.ssRes}\n`;
-    Object.entries(fit.coeffs).forEach(([k, v]) => { csv += `"${fit.datasetName}","${fit.model}","${k}",${v}\n`; });
+  const q = s => `"${String(s).replace(/"/g, '""')}"`;
+  let csv = "dataset,model,parameter,value,std_error\n";
+  fits.forEach(fit => {
+    const row = (k, v, e) => { csv += `${q(fit.datasetName)},${q(fit.label)},${q(k)},${v},${Number.isFinite(e) ? e : ""}\n`; };
+    fit.names.forEach((nm, j) => row(nm, fit.values[j], fit.errors[j]));
+    fit.derived.forEach(d => row(d.name, d.value, d.se));
+    row("R2", fit.r2); row("adjR2", fit.adjR2); row("ssRes", fit.ssRes);
+    if (fit.redChi2 !== null && fit.redChi2 !== undefined) row("reduced_chi2", fit.redChi2);
+    row("n", fit.n);
   });
   downloadBlob(txt, "RNSpectraX_FitParameters.txt", "text/plain");
   setTimeout(() => downloadBlob(csv, "RNSpectraX_FitParameters.csv", "text/csv"), 150);

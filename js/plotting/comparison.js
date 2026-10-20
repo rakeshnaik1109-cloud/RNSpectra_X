@@ -2,7 +2,7 @@
    COMPREHENSIVE PEAK SEPARATION ENGINE (COMMON VS DISTINCT)
 ═══════════════════════════════════════════════════════════ */
 function runComprehensiveComparisonEngine(mode) {
-  analyzedCommonPeaks = []; analyzedDistinctPeaks = [];
+  analyzedCommonPeaks = []; analyzedDistinctPeaks = []; analyzedComparisonMode = mode;
   let peakCollections = []; let totalTraces = 0;
 
   if (mode === 'ocean') {
@@ -23,7 +23,7 @@ function runComprehensiveComparisonEngine(mode) {
     totalTraces = datasets.length;
     if (totalTraces < 2) { alert("Please load at least 2 data channels to enable comparative operations."); return; }
     datasets.forEach(ds => {
-      let yy = applySmoothing([...ds.y], document.getElementById("xySmoothType").value, parseInt(document.getElementById("xySmP1").value) || 5, 2, 2);
+      let yy = applySmoothing([...ds.y], document.getElementById("xySmoothType").value, parseInt(document.getElementById("xySmP1").value) || 5, parseInt(document.getElementById("xySmP2").value) || 2, 2);
       yy = normalizeData(yy, document.getElementById("xyNorm").value);
       runPeakDetectionAlgorithm(ds.x, yy).forEach(i => { peakCollections.push({ x: ds.x[i], y: yy[i], traceLabel: ds.name }); });
     });
@@ -72,10 +72,12 @@ function renderComparisonTableUI(mode) {
   let targetData = (activeComparisonSubTab === 'common') ? analyzedCommonPeaks : analyzedDistinctPeaks;
   
   // Clean, lab-standard terminology
+  const posHead = mode === 'ocean' ? 'Target Peak (cm⁻¹)' : 'Maximum at X';
+  const yHead = mode === 'ocean' ? 'Intensity' : 'Y';
   if (activeComparisonSubTab === 'common') {
-      headerRow.innerHTML = `<th>Target Peak (cm⁻¹)</th><th>Avg Intensity</th><th>Detection Status</th>`;
+      headerRow.innerHTML = `<th>${posHead}</th><th>Avg ${yHead}</th><th>Detection Status</th>`;
   } else {
-      headerRow.innerHTML = `<th>Target Peak (cm⁻¹)</th><th>Local Intensity</th><th>Found In (Files)</th>`;
+      headerRow.innerHTML = `<th>${posHead}</th><th>Local ${yHead}</th><th>Found In (Files)</th>`;
   }
 
   // Clean empty state
@@ -95,5 +97,5 @@ function renderComparisonTableUI(mode) {
     </tr>`;
   });
   
-  if (mode === 'ocean') replotWithModifiedPeaks(); else replotWithModifiedXyPeaks();
+  if (mode === 'ocean') replotWithModifiedPeaks(); else triggerInteractiveReplotStyleOnly('xy');
 }

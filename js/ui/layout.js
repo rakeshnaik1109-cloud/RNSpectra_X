@@ -173,7 +173,8 @@ function _getPlotPanel() { return _getWorkspace().querySelector('.plot-panel'); 
 
 function _save() { try { localStorage.setItem(LAYOUT_KEY, _layout); localStorage.setItem(PANEL_SIZE_KEY, _panelSize); localStorage.setItem(COLLAPSED_KEY, _collapsed); } catch(e) {} }
 function _resetLayout() { _layout = DEFAULTS.layout; _panelSize = DEFAULTS.panelSize; _collapsed = DEFAULTS.collapsed; _save(); _apply(); _updateToolbar(); _updateCollapseBtn(); }
-function _triggerPlotlyResize() { ['plot-wrapper', 'xy-plot-wrapper'].forEach(id => { const el = document.getElementById(id); if(el && window.Plotly) Plotly.Plots.resize(el); }); }
+// Only plotted, visible charts can be resized; Plotly rejects hidden or empty divs.
+function _triggerPlotlyResize() { ['plot-wrapper', 'xy-plot-wrapper'].forEach(id => { const el = document.getElementById(id); if (el && window.Plotly && el.data && el.offsetParent !== null) Promise.resolve(Plotly.Plots.resize(el)).catch(() => {}); }); }
 
 function _bindKeyboard() {
   document.addEventListener('keydown', e => {

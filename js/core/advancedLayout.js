@@ -341,11 +341,51 @@ function computeAxisExtras(prefix, axis /* 'x' | 'y' */) {
   };
 }
 
-function getManualYRange(prefix) {
-  const minV = $val(fid(prefix, 'Ymin'), "");
-  const maxV = $val(fid(prefix, 'Ymax'), "");
-  if (minV !== "" && maxV !== "") return [parseFloat(minV), parseFloat(maxV)];
-  return undefined;
+// Data extent of the plotted traces along one axis ('x' or 'y'), including
+// error bars, ignoring helper traces (guides, markers, legend stubs, insets).
+function dataExtent(traces, axis) {
+  let lo = Infinity, hi = -Infinity;
+  (traces || []).forEach(t => {
+    if (!t || t.isGuide || t.isPeakMarker || t.isCommonLegend || t.isInsetClone || !Array.isArray(t[axis])) return;
+    const err = t['error_' + axis] && t['error_' + axis].visible !== false ? t['error_' + axis].array : null;
+    t[axis].forEach((v, i) => {
+      if (v === null || !Number.isFinite(+v)) return;
+      const e = err && Number.isFinite(+err[i]) ? Math.abs(+err[i]) : 0;
+      if (+v - e < lo) lo = +v - e;
+      if (+v + e > hi) hi = +v + e;
+    });
+    if (axis === 'y' && t.fill === 'tozeroy') { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+    if (axis === 'y' && t.type === 'bar') { lo = Math.min(lo, 0); hi = Math.max(hi, 0); }
+  });
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) return null;
+  const pad = (hi - lo) * 0.05 || Math.abs(hi) * 0.05 || 1;
+  return [lo - pad, hi + pad];
+}
+
+// Resolve a [min, max] pair from two input fields. Both blank -> undefined
+// (Plotly autoscale). One blank -> that side follows the data extent.
+function resolveManualRange(minId, maxId, traces, axis) {
+  const minS = $val(minId, ""), maxS = $val(maxId, "");
+  const minV = minS === "" ? NaN : parseFloat(minS);
+  const maxV = maxS === "" ? NaN : parseFloat(maxS);
+  if (!Number.isFinite(minV) && !Number.isFinite(maxV)) return undefined;
+  let lo = minV, hi = maxV;
+  if (!Number.isFinite(lo) || !Number.isFinite(hi)) {
+    const ext = dataExtent(traces, axis);
+    if (!ext) return undefined;
+    if (!Number.isFinite(lo)) lo = Math.min(ext[0], hi);
+    if (!Number.isFinite(hi)) hi = Math.max(ext[1], lo);
+  }
+  if (lo === hi) return undefined;
+  return lo < hi ? [lo, hi] : [hi, lo];
+}
+
+function getManualYRange(prefix, traces) {
+  return resolveManualRange(fid(prefix, 'Ymin'), fid(prefix, 'Ymax'), traces, 'y');
+}
+
+function getManualXRange(traces) {
+  return resolveManualRange('xyXmin', 'xyXmax', traces, 'x');
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -449,7 +489,7 @@ function buildScaleBarShapesAndAnnotations(prefix, cleanTraces) {
   // prefer the user's manual Y min/max (that's what will actually render),
   // otherwise fall back to the extent of the plotted data (close to what
   // Plotly's autorange will pick).
-  const manualRange = getManualYRange(prefix);
+  const manualRange = getManualYRange(prefix, cleanTraces);
   let yMin, yMax;
   if (manualRange) {
     [yMin, yMax] = manualRange;

@@ -139,8 +139,9 @@ function syncOceanTableToMemory() {
 function deleteOceanPeakRow(idx) { lastPeaksData.splice(idx, 1); buildOceanPeakTableHTML(); replotWithModifiedPeaks(); }
 function addCustomOceanPeakRow() { syncOceanTableToMemory(); const match = lookUpDefaultBiomolecularAssignment(parseFloat(document.getElementById("xmin").value)); lastPeaksData.push({ x: parseFloat(document.getElementById("xmin").value), y: 0.5, mode: match.mode, assign: match.assign }); buildOceanPeakTableHTML(); replotWithModifiedPeaks(); }
 function replotWithModifiedPeaks() {
-  syncOceanTableToMemory(); const font = document.getElementById("boldStyle").checked ? "Arial Black, Arial" : "Georgia, serif";
-  const wrapper = document.getElementById("plot-wrapper"); const currentTraces = wrapper.data ? wrapper.data.filter(t => t.name !== undefined) : [];
+  syncOceanTableToMemory(); const font = resolveFont("", "boldTick");
+  const wrapper = document.getElementById("plot-wrapper"); if (!wrapper.data) return;
+  const currentTraces = wrapper.data.filter(t => t.name !== undefined);
   renderCanvasTracesAndLayout(currentTraces, lastPeaksData, font, wrapper, 'ocean');
 }
 
@@ -150,36 +151,4 @@ function togglePeakSectionVisibility() {
   document.getElementById("peakTableSection").style.display = (check && lastPeaksData.length) ? "block" : "none";
 }
 
-
-
-function buildXyPeakTableHTML() {
-  const tbody = document.getElementById("xyPeakTableBody"); tbody.innerHTML = "";
-  lastXYPeaks.sort((a, b) => a.x - b.x).forEach((pk, i) => {
-    tbody.innerHTML += `
-      <tr id="xy-pk-row-${i}">
-        <td>${i + 1}</td>
-        <td><input type="number" step="0.1" id="xy-pk-x-${i}" value="${pk.x.toFixed(2)}" onchange="syncXyTableToMemory()"></td>
-        <td><input type="number" step="0.001" id="xy-pk-y-${i}" value="${pk.y.toFixed(4)}" onchange="syncXyTableToMemory()"></td>
-        <td><input type="text" id="xy-pk-note-${i}" value="${pk.note || ''}" onchange="syncXyTableToMemory()"></td>
-        <td><button class="btn-danger-action" onclick="deleteXyPeakRow(${i})">✕ Delete</button></td>
-      </tr>`;
-  });
-  document.getElementById("xyPeakTableSection").style.display = "block";
-}
-
-function syncXyTableToMemory() {
-  const matrix = []; lastXYPeaks.forEach((_, i) => { if (document.getElementById(`xy-pk-row-${i}`)) matrix.push({ x: parseFloat(document.getElementById(`xy-pk-x-${i}`).value) || 0, y: parseFloat(document.getElementById(`xy-pk-y-${i}`).value) || 0, note: document.getElementById(`xy-pk-note-${i}`).value }); }); lastXYPeaks = matrix;
-}
-
-
-
-function deleteXyPeakRow(idx) { lastXYPeaks.splice(idx, 1); buildXyPeakTableHTML(); replotWithModifiedXyPeaks(); }
-function addCustomXyPeakRow() { syncXyTableToMemory(); lastXYPeaks.push({ x: 0, y: 0.5, note: "Manual alignment entry" }); buildXyPeakTableHTML(); replotWithModifiedXyPeaks(); }
-function replotWithModifiedXyPeaks() { syncXyTableToMemory(); const w = document.getElementById("xy-plot-wrapper"); if (!w.data) return; renderCanvasTracesAndLayout(w.data.filter(t => t.name !== undefined), lastXYPeaks, document.getElementById("xyBold").checked ? "Arial Black, Arial" : "Georgia, serif", w, 'xy'); }
-
-
-function toggleXyPeakSectionVisibility() {
-  const check = document.getElementById("xyShowPeaks").checked;
-  document.getElementById("xyPeakTableSection").style.display = (check && lastXYPeaks.length) ? "block" : "none";
-}
 

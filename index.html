@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>RNSpectraX — Raman &amp; Spectral Plotter and Analytics Suite</title>
-<meta name="description" content="RNSpectraX is a browser-based Raman, SERS and XY analysis suite: cosmic-ray despiking, baseline correction, smoothing, group averaging with SD/SEM bands, peak assignment and curve fitting. Your data never leaves your machine."/>
+<meta name="description" content="RNSpectraX is a browser-based Raman and SERS analysis suite with a general scientific XY plotter: cosmic-ray despiking, baseline correction, smoothing, group averaging with SD/SEM bands, peak assignment, error bars and weighted curve fitting with parameter uncertainties. Your data never leaves your machine."/>
 <meta name="author" content="Rakesh Naik and Sachin Kumar Srivastava"/>
 <meta name="theme-color" content="#16101f"/>
 <link rel="canonical" href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/"/>
@@ -723,13 +723,18 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <option value="general">General XY</option>
                 <option value="ftir">FTIR Spectrum</option>
                 <option value="uv">UV-Vis Spectrum</option>
+                <option value="fluorescence">Fluorescence / PL</option>
                 <option value="xrd">XRD Pattern</option>
-                <option value="fluorescence">Fluorescence</option>
+                <option value="xps">XPS Spectrum</option>
+                <option value="iv">Current–Voltage (I–V)</option>
+                <option value="time">Time Series / Kinetics</option>
+                <option value="thermal">Thermal Analysis (TGA)</option>
+                <option value="calibration">Calibration Curve</option>
                 <option value="custom">Custom</option>
               </select>
             </div>
             <div class="info-box" style="margin-top:10px">
-              X Y pairs — optional 3rd col = Y error, 4th = X error. Fitter reports R², all coefficients.
+              X Y pairs — optional 3rd column = Y error, 4th = X error. Choosing a data type only pre-fills the axis labels; any numeric X–Y data can be plotted and fitted.
             </div>
 
             <div class="xy-tabs" style="margin-top:12px;">
@@ -827,7 +832,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             </div>
             <div class="collapsible-body" style="max-height:500px">
               <div style="height:10px"></div>
-              <div class="info-box">Fits the first dataset (or all if "Fit all" is on). Reports R², adjusted R², all coefficients, residual sum of squares.</div>
+              <div class="info-box">Fits the first dataset (or all if "Fit all" is on) by least squares (Levenberg–Marquardt for non-linear models). Reports every parameter with its standard error, R², adjusted R², RSS and reduced χ². When a Y-error column is present the fit is weighted by 1/σ².</div>
               <div class="grid">
                 <div class="field"><label>Fit Model</label>
                   <select id="fitModel" onchange="updateFitParams()">
@@ -841,7 +846,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                     <option value="lorentzian">Lorentzian peak</option>
                   </select>
                 </div>
-                <div class="field" id="fitOrderWrap" style="display:none"><label>Poly Order</label><input type="number" id="fitOrder" value="2" min="2" max="6"/></div>
+                <div class="field" id="fitOrderWrap" style="display:none"><label>Poly Order</label><input type="number" id="fitOrder" value="2" min="2" max="10"/></div>
                 <div class="field" style="display:none;"><label>Fit Color</label><input type="color" id="fitColor" value="#dc2626"/></div>
               </div>
               <div class="toggles" style="margin-top:8px;">
@@ -861,15 +866,18 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               <div class="section-title" style="margin:0">Axes &amp; Labels</div>
               <span class="chevron">▼</span>
             </div>
-            <div class="collapsible-body" style="max-height:360px">
+            <div class="collapsible-body" style="max-height:460px">
               <div style="height:10px"></div>
               <div class="grid">
-                <div class="field" style="grid-column:span 2"><label>Title</label><input type="text" id="xyTitle" value="Spectrum" title="LaTeX: wrap the WHOLE title in one $...$ pair (mixing plain text and $...$ is not supported by Plotly for titles)."/></div>
-                <div class="field"><label>X Label</label><input type="text" id="xyXlabel" value="Wavenumber (cm⁻¹)" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for plain-text portions."/></div>
-                <div class="field"><label>Y Label</label><input type="text" id="xyYlabel" value="Intensity (a.u.)" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for plain-text portions."/></div>
-                <div class="field"><label>X Min</label><input type="number" id="xyXmin" placeholder="Auto"/></div>
-                <div class="field"><label>X Max</label><input type="number" id="xyXmax" placeholder="Auto"/></div>
+                <div class="field" style="grid-column:span 2"><label>Title</label><input type="text" id="xyTitle" value="XY Plot" title="LaTeX: wrap the WHOLE title in one $...$ pair (mixing plain text and $...$ is not supported by Plotly for titles)."/></div>
+                <div class="field"><label>X Label</label><input type="text" id="xyXlabel" value="X" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for plain-text portions."/></div>
+                <div class="field"><label>Y Label</label><input type="text" id="xyYlabel" value="Y" title="LaTeX: wrap the WHOLE label in one $...$ pair, using \text{...} for plain-text portions."/></div>
+                <div class="field"><label>X Min</label><input type="number" id="xyXmin" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>X Max</label><input type="number" id="xyXmax" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Y Min</label><input type="number" id="xyYmin" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field"><label>Y Max</label><input type="number" id="xyYmax" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
               </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Leave a limit blank to let it follow the data. Filling only one side keeps the other automatic.</div>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
@@ -1038,8 +1046,6 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
                 <div class="field"><label>Y Scale Divisor</label><input type="number" id="xyYDivisor" value="1" min="0.0001" step="any" onchange="if(document.getElementById('xy-plot-wrapper').data) plotXY();"/></div>
-                <div class="field"><label>Y Min</label><input type="number" id="xyYmin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
-                <div class="field"><label>Y Max</label><input type="number" id="xyYmax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
               </div>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-top:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xyXGrid" checked onchange="triggerInteractiveReplotStyleOnly('xy')">X Grid Lines</label>
@@ -1099,18 +1105,16 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
 
-            <!-- Peak Detection -->
-            <div class="collapsible-header open" onclick="toggleSection(this)">
-              <div class="section-title" style="margin:0">Peak Detection</div>
+            <!-- Cross-file comparison -->
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">Cross-File Comparison</div>
               <span class="chevron">▼</span>
             </div>
-            <div class="collapsible-body" style="max-height:180px">
+            <div class="collapsible-body" style="max-height:0px">
               <div style="height:10px"></div>
-              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-bottom:12px;">
-                <label class="toggle-item"><input type="checkbox" id="xyShowPeaks" checked onchange="toggleXyPeakSectionVisibility()">Detect Peaks</label>
-              </div>
+              <div class="info-box">Used by 🔍 Compare in the Upload File tab: maxima whose X positions agree within this window (in X-axis units) are treated as the same feature.</div>
               <div class="grid">
-                <div class="field"><label>Peak Match Window</label><input type="number" id="xyTolerance" value="5" min="1"/></div>
+                <div class="field"><label>Match Window (X units)</label><input type="number" id="xyTolerance" value="5" min="0" step="any"/></div>
               </div>
             </div>
           </div>
@@ -1153,29 +1157,10 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
         <div class="plot-empty-state" id="xyEmptyState">
           <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="4" y="44" width="56" height="2" rx="1" fill="#64748b"/><circle cx="14" cy="36" r="3.5" fill="#2563eb"/><circle cx="26" cy="22" r="3.5" fill="#16a34a"/><circle cx="40" cy="30" r="3.5" fill="#dc2626"/><circle cx="52" cy="16" r="3.5" fill="#7c3aed"/><path d="M14 36 L52 16" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3"/></svg>
           <h3>Enter or upload XY data to begin</h3>
-          <p>Paste X/Y values, upload a CSV, or enter column-format data.<br>Supports optional Y-error and X-error columns for error bars.</p>
+          <p>Paste X/Y values, upload CSV/TXT files, or enter column-format data from any instrument or simulation.<br>Optional Y-error and X-error columns are drawn as error bars and used to weight the fit.</p>
         </div>
 
         <div id="xy-plot-wrapper" style="display:none;background:white;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);"></div>
-
-        <div class="peak-table-wrap" id="xyPeakTableSection" style="display:none">
-          <div class="collapsible-header open" onclick="toggleSection(this)">
-            <h3 style="margin:0">📊 Individual Peak Coordinates</h3>
-            <span class="chevron">▼</span>
-          </div>
-          <div class="collapsible-body" style="max-height:800px; overflow-y:auto; margin-top:12px;">
-            <table class="peak-table" id="xyPeakTable">
-              <thead><tr><th>#</th><th>Peak X</th><th>Intensity Y</th><th>Notes</th><th>Actions</th></tr></thead>
-              <tbody id="xyPeakTableBody"></tbody>
-            </table>
-            <div class="peak-dl-group">
-              <button class="btn btn-outline btn-sm" onclick="addCustomXyPeakRow()">+ Custom Peak</button>
-              <button class="btn btn-primary btn-sm" onclick="replotWithModifiedXyPeaks()">🔄 Update Markers</button>
-              <button class="btn btn-outline btn-sm" onclick="downloadXYPeaksTxt()" style="margin-left:auto;">↓ .txt</button>
-              <button class="btn btn-outline btn-sm" onclick="downloadXYPeaksPdf()">↓ PDF</button>
-            </div>
-          </div>
-        </div>
 
         <div class="peak-table-wrap" id="xyComparisonSection" style="display:none;border-color:var(--accent-soft-border);background:var(--accent-soft);">
           <div class="collapsible-header open" onclick="toggleSection(this)" style="color:var(--accent); margin-bottom: 12px;">
@@ -1201,7 +1186,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
         </div>
 
       </div></div></div><footer class="app-footer">
-    <strong>RNSpectraX™ v3.1</strong> — Rakesh Naik &amp; Sachin Kumar Srivastava,
+    <strong>RNSpectraX™ v3.2</strong> — Rakesh Naik &amp; Sachin Kumar Srivastava,
     Centre for Photonics and Quantum Communication Technology, IIT Roorkee.<br/>
     Every calculation runs in this browser tab; no spectrum is uploaded anywhere.
     <!--· <a data-home-link href="https://rakeshnaik1109-cloud.github.io/RakeshNaik/">Rakesh Naik — homepage</a>-->

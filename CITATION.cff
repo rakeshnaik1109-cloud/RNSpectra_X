@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "RNSpectraX: a client-side suite for Raman and SERS spectral processing and comparative analysis"
+title: "RNSpectraX: a client-side suite for Raman and SERS spectral processing, scientific XY plotting and curve fitting"
 message: "If you use RNSpectraX in your research, please cite it as below."
 type: software
 authors:
@@ -9,8 +9,8 @@ authors:
   - family-names: Srivastava
     given-names: Sachin Kumar
     affiliation: "Department of Physics and Centre for Photonics and Quantum Communication Technology, IIT Roorkee"
-version: "3.1"
-date-released: "2026-07-30"
+version: "3.2"
+date-released: "2026-10-20"
 license-other: "Proprietary — see LICENSE"
 keywords:
   - Raman spectroscopy
@@ -18,4 +18,6 @@ keywords:
   - spectral analysis
   - baseline correction
   - peak fitting
+  - curve fitting
+  - scientific plotting
   - photonics

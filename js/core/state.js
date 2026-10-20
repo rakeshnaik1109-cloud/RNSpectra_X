@@ -5,7 +5,6 @@ let currentMode = 'ocean';
 let extraDatasetCount = 0;
 
 let lastPeaksData = [];
-let lastXYPeaks = [];
 
 let xyGlobalIdx = 0;
 let xyFileNames = {};
@@ -15,6 +14,7 @@ let oceanFileNames = {};
 
 let analyzedCommonPeaks = [];
 let analyzedDistinctPeaks = [];
+let analyzedComparisonMode = null; // 'ocean' | 'xy' — which plot the comparison bands belong to
 
 let activeComparisonSubTab = 'common';
 

@@ -164,32 +164,77 @@ control".
 
 ## 8. Curve fitting
 
-Linear-in-parameters models (linear, polynomial) are solved directly by least
-squares. Exponential, power and logarithmic models are linearised by the
-appropriate transform, fitted, and back-transformed — note that this weights the
-residuals in the transformed space.
-
-Peak models are fitted iteratively:
+All models minimise the (optionally weighted) sum of squared residuals
 
 $$
-\text{Gaussian:}\quad y = A \exp\!\left(-\frac{(x-x_0)^2}{2\sigma^2}\right)
+\chi^2 = \sum_{i=1}^{N} w_i \bigl( y_i - f(x_i;\,\boldsymbol\theta) \bigr)^2,
 \qquad
-\text{Lorentzian:}\quad y = \frac{A\,\gamma^2}{(x-x_0)^2 + \gamma^2}
+w_i = \begin{cases} 1/\sigma_i^2 & \text{if a Y-error column is supplied} \\ 1 & \text{otherwise.} \end{cases}
 $$
 
-Choose by physics, not by R². A Lorentzian is the natural lineshape for a
-homogeneously broadened vibrational transition (lifetime broadening); a Gaussian
-arises from inhomogeneous broadening across an ensemble of environments. Real
-SERS bands are often between the two, and a Lorentzian will usually fit the tails
-better while a Gaussian fits the core.
+| Model | Function | Solver |
+|---|---|---|
+| Linear | $y = a x + b$ | Exact weighted least squares |
+| Polynomial (order $p$) | $y = \sum_{k=0}^{p} a_k x^k$ | Exact weighted least squares |
+| Exponential | $y = A\,e^{b x} + c$ | Levenberg–Marquardt |
+| Power | $y = a\,x^{b}$ | Levenberg–Marquardt ($x > 0$) |
+| Logarithmic | $y = a \ln x + b$ | Exact weighted least squares ($x > 0$) |
+| Gaussian | $y = y_0 + A \exp\!\left(-\dfrac{(x-x_0)^2}{2\sigma^2}\right)$ | Levenberg–Marquardt |
+| Lorentzian | $y = y_0 + \dfrac{A\,\gamma^2}{(x-x_0)^2 + \gamma^2}$ | Levenberg–Marquardt |
 
-Reported quality metrics:
+**Linear-in-parameters models** are solved in one step. Before solving, $x$ is
+centred and scaled to $t = (x - \bar{x})/s$ so that high polynomial orders on
+large abscissae (e.g. wavenumbers near 2000) stay numerically well conditioned;
+the coefficients and their covariance are then transformed back to plain powers
+of $x$.
+
+**Non-linear models** are refined by Levenberg–Marquardt from a data-driven
+starting point: a log-linearisation for the exponential and power laws, and the
+height, position and half-width of the dominant feature for the peak models.
+Peaks may point up (emission, diffraction) or down (absorption dips). The
+exponential is tried with its asymptote both below and above the data, so decays,
+growths and charging curves ($y = c - A' e^{-x/\tau}$) are all handled, and the
+better of the two solutions is kept. Because the final fit is made on the
+original data rather than on a transformed copy, residuals are weighted
+correctly.
+
+Choose a peak model by physics, not by R². A Lorentzian is the natural lineshape
+for a homogeneously broadened transition (lifetime broadening); a Gaussian arises
+from inhomogeneous broadening across an ensemble of environments. Real bands are
+often between the two: a Lorentzian will usually fit the tails better while a
+Gaussian fits the core.
+
+### Uncertainties and quality metrics
+
+Parameter standard errors are the square roots of the diagonal of
+
+$$
+\mathbf{C} = \bigl(\mathbf{J}^{\mathsf T}\mathbf{W}\mathbf{J}\bigr)^{-1}\,\chi^2_\nu,
+\qquad
+\chi^2_\nu = \frac{\chi^2}{N - k},
+$$
+
+where $\mathbf{J}$ is the Jacobian of the model with respect to the $k$ parameters
+at the optimum. Scaling by $\chi^2_\nu$ means the errors reflect the observed
+scatter about the fit, which is the default convention of most analysis
+packages. Derived quantities are propagated through $\mathbf{C}$ (delta method):
+the time constant $\tau = 1/|b|$ for exponentials, and the FWHM
+($2\sqrt{2\ln 2}\,\sigma$ or $2\gamma$) and integrated area
+($\sqrt{2\pi}A\sigma$ or $\pi A\gamma$) for peaks.
 
 $$
 R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2},
 \qquad
+\bar{R}^2 = 1 - (1 - R^2)\,\frac{N - 1}{N - k},
+\qquad
 \mathrm{RSS} = \sum_i (y_i - \hat{y}_i)^2
 $$
+
+When the fit is weighted, the reduced $\chi^2_\nu$ is also reported: a value near
+1 means the model describes the data to within the stated errors; much larger
+than 1 means the model is missing something or the errors are underestimated;
+much smaller than 1 suggests the errors are overestimated. (It is hidden when Y
+is normalised, because the errors are then no longer in the units of Y.)
 
 $R^2$ rises whenever a parameter is added, so it cannot be used to choose between
 models of different complexity — inspect the residuals for structure instead. A
@@ -207,7 +252,7 @@ For reproducibility, a methods section should state:
 4. Normalisation basis.
 5. Number of replicates per group, and whether bands are SD or SEM.
 6. Peak detection prominence, and the tolerance used for assignment.
-7. Fit model, and the reported R² and RSS.
+7. Fit model, whether it was weighted, the parameters with their standard errors, and R² (or reduced χ²).
 
 ---
 

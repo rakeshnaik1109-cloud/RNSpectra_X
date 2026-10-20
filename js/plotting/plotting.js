@@ -307,8 +307,12 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   const guideLineOpacity = parseFloat(document.getElementById("guideLineOpacity").value);
   const guideLineDash = document.getElementById("guideLineDash").value;
 
+  // Peak markers, guides and labels belong to the Raman / spectral mode only;
+  // XY mode is a general-purpose plotter and never draws them.
+  const peaksOn = isOcean && document.getElementById("showPeaks").checked;
+
   // --- Peak Guides (Dropdown Lines) ---
-  if (showPeakGuides && document.getElementById(isOcean ? "showPeaks" : "xyShowPeaks").checked) {
+  if (showPeakGuides && peaksOn) {
     peakDataMatrix.forEach(pk => {
         cleanTraces.unshift({
             x: [pk.x, pk.x], y: [0, pk.y], mode: "lines",
@@ -320,7 +324,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   }
 
   // --- Red Peak Markers ---
-  if (document.getElementById(isOcean ? "showPeaks" : "xyShowPeaks").checked && peakDataMatrix.length > 0) {
+  if (peaksOn && peakDataMatrix.length > 0) {
     cleanTraces.push({
         x: peakDataMatrix.map(p => p.x), y: peakDataMatrix.map(p => p.y),
         mode: "markers", marker: { color: "#dc2626", size: 6, symbol: "circle" },
@@ -333,7 +337,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   const shapes = []; // Used for drawing full-height background lines
 
   // --- PROFESSIONAL COMMON PEAKS (Full-Height Bands) ---
-  if (analyzedCommonPeaks.length > 0) {
+  if (analyzedCommonPeaks.length > 0 && analyzedComparisonMode === mode) {
       
     analyzedCommonPeaks.forEach(pk => {
         // 1. Draw the dotted line behind the spectra
@@ -359,7 +363,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   }
 
   // --- Standard Peak Annotations ---
-  if (document.getElementById(isOcean ? "showPeaks" : "xyShowPeaks").checked) {
+  if (peaksOn) {
     peakDataMatrix.forEach(pk => {
         annotations.push({
             x: pk.x, y: pk.y, text: String(Math.round(pk.x)),
@@ -415,13 +419,20 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   if (layout.xaxis.standoff !== undefined) { layout.xaxis.title.standoff = layout.xaxis.standoff; delete layout.xaxis.standoff; }
   if (layout.yaxis.standoff !== undefined) { layout.yaxis.title.standoff = layout.yaxis.standoff; delete layout.yaxis.standoff; }
 
-  // Y-axis range: auto (default, blank fields) or manual, for both modes
-  const yRange = getManualYRange(prefix);
+  // Y-axis range: auto (default, blank fields) or manual, for both modes.
+  // A single filled limit keeps the other side at the data extent.
+  const yRange = getManualYRange(prefix, cleanTraces);
   if (yRange) layout.yaxis.range = yRange;
 
-  if (!isOcean && document.getElementById("xyXmin").value !== "" && document.getElementById("xyXmax").value !== "") layout.xaxis.range = [parseFloat(document.getElementById("xyXmin").value), parseFloat(document.getElementById("xyXmax").value)];
-  if (!isOcean && document.getElementById("xyInvertX").checked) layout.xaxis.autorange = 'reversed';
-  if (!isOcean && document.getElementById("xyBarMode").checked) layout.barmode = 'group';
+  if (!isOcean) {
+    const xRange = getManualXRange(cleanTraces);
+    const invert = document.getElementById("xyInvertX").checked;
+    // Plotly ignores "autorange: reversed" once a range is fixed, so a manual
+    // window is reversed by swapping its ends instead.
+    if (xRange) layout.xaxis.range = invert ? [xRange[1], xRange[0]] : xRange;
+    else if (invert) layout.xaxis.autorange = 'reversed';
+    if (document.getElementById("xyBarMode").checked) layout.barmode = 'group';
+  }
 
   // --- Inset (zoomed sub-region) ---
   const inset = buildInset(prefix, cleanTraces);
@@ -467,5 +478,5 @@ function triggerInteractiveReplotStyleOnly(mode) {
   const wrapper = document.getElementById(isOcean ? "plot-wrapper" : "xy-plot-wrapper");
   if (!wrapper.data) return;
   const traces = wrapper.data.filter(t => t.name !== undefined || t.mode === "markers+text" || t.symbol === "star");
-  renderCanvasTracesAndLayout(traces, isOcean ? lastPeaksData : lastXYPeaks, font, wrapper, mode);
+  renderCanvasTracesAndLayout(traces, isOcean ? lastPeaksData : [], font, wrapper, mode);
 }

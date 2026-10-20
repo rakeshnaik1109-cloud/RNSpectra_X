@@ -48,6 +48,8 @@ function setXYTab(tab) {
 function updateXYHints() {
   const hints = XY_HINTS[document.getElementById("xyDataType").value]; document.getElementById("xyTypeBadge").textContent = hints.badge;
   if (hints.xlabel) document.getElementById("xyXlabel").value = hints.xlabel;
+  if (hints.ylabel) document.getElementById("xyYlabel").value = hints.ylabel;
+  document.getElementById("xyInvertX").checked = !!hints.invertX;
 }
 function addXYDataset() {
   extraDatasetCount++; const idx = extraDatasetCount;

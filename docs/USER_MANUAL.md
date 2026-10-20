@@ -8,7 +8,7 @@
 ## 1. Introduction
 RNSpectraX™ is an advanced spectral analytics suite. The application interface is divided into two primary workspaces, accessible via the top navigation bar:
 1. **Raman / Spectral Text Data:** Tailored for complex spectrometer outputs, automated peak assignments, and group averaging.
-2. **Other Plots (XY + Fitting):** Tailored for general optical data, fluorescence, XRD, and mathematical curve fitting.
+2. **Other Plots (XY + Fitting):** A general scientific XY plotter with error bars and weighted curve fitting, for data from any field.
 
 The workspace utilizes a professional dock system. You can use the layout toolbar at the top of the interface (or keyboard shortcuts `Ctrl+1` through `Ctrl+4`) to snap the control panel to the left, right, top, or bottom of your screen. 
 
@@ -43,13 +43,44 @@ To compare aggregate data:
 
 ## 3. Operating in XY Mode
 
-### 3.1 Data Entry
-XY mode allows for manual data manipulation. You can upload standard CSVs, or use the **Data Entry** tabs to paste columns of data directly from your clipboard. Third and fourth columns are automatically parsed as Y-Error and X-Error respectively.
+XY mode is a general-purpose scientific plotter. It makes no assumption about
+what X and Y are: calibration curves, I–V characteristics, kinetics, absorbance,
+diffraction patterns, thermograms and simulation output are all handled the same
+way. Peak markers and band assignments belong to the Raman mode and are not drawn
+here.
 
-### 3.2 Curve Fitting & Regression
-1. Under the Curve Fitting section, select a mathematical model (e.g., *Gaussian peak*, *Lorentzian peak*, *Polynomial*).
-2. To fit a single trace, uncheck "Fit all datasets". To fit every trace on the canvas simultaneously, check "Fit all datasets" (the fitted lines will automatically inherit the color of their parent data).
-3. Click ▶ Plot. The calculated coefficients (R², residual sum of squares, amplitude, center) will appear in a scrollable log window.
+### 3.1 Data Entry
+* **CSV / Paste:** paste X values and Y values (comma, space or semicolon
+  separated), with optional Y-error and X-error lists. If X and Y have different
+  lengths, the first matching pairs are used and you are told.
+* **Columns:** paste rows of `X Y [Yerr] [Xerr]`.
+* **Upload File:** load one or more `.csv`, `.txt`, `.dat` or `.tsv` files. The
+  third and fourth columns are read as Y-error and X-error.
+
+**Data Type** only pre-fills the axis labels (and reverses X for FTIR and XPS,
+where that is the convention). It never changes how the data are processed.
+
+### 3.2 Axis limits
+In **Axes & Labels**, X Min / X Max are followed directly by Y Min / Y Max.
+Leave a field blank to let that side follow the data; fill only one side to pin
+just that limit. Limits update the plot as you type, and work together with
+**Invert X**.
+
+### 3.3 Curve Fitting & Regression
+1. Choose a model: linear, polynomial, exponential, power, logarithmic, Gaussian
+   or Lorentzian.
+2. Leave "Fit all datasets" off to fit only the first dataset, or turn it on to fit
+   every dataset (fit lines then take the colour of their data).
+3. Click ▶ Plot. Every parameter is reported with its 1σ standard error, along
+   with R², adjusted R² and the residual sum of squares. Exponential fits also
+   give the time constant τ; peak fits also give the FWHM and the area.
+4. If your data include Y-errors, the fit is weighted by 1/σ² and the reduced χ²
+   is reported.
+
+### 3.4 Cross-file comparison
+With two or more files loaded in the Upload File tab, **🔍 Compare** lists the
+maxima that occur in every file and those unique to some files. The match window
+(in X-axis units) is set under **Cross-File Comparison**.
 
 ---
 
@@ -59,7 +90,7 @@ RNSpectraX™ features sticky action buttons pinned to the bottom of the control
 * **▶ Plot:** Renders the canvas based on current parameters.
 * **↓ Image:** Downloads a high-resolution snapshot of the Plotly canvas in your chosen format (`.png`, `.jpg`, `.svg`).
 * **↓ CSV:** Downloads the *processed* array matrices (post-smoothing, post-baseline correction) for external use.
-* **↓ Fit (XY Mode):** Exports a detailed `.txt` and `.csv` report of all mathematical curve-fitting coefficients.
+* **↓ Fit (XY Mode):** Exports a `.txt` and a `.csv` report of every fitted parameter with its standard error and the goodness-of-fit statistics.
 * **↓ PDF (Peak Tables):** Each data table contains independent export buttons to generate cleanly formatted PDF matrices of your peak assignments and comparison data.
 
 ---
@@ -117,7 +148,9 @@ Press `?` for the full sheet. The essentials:
 | Peaks disappear after smoothing | The smoothing window is wider than your narrowest band; reduce it, or switch to Savitzky–Golay |
 | The corrected spectrum dips below zero | The baseline is over-fitted; lower the polynomial order or increase the rolling-ball radius |
 | Group averaging produces nothing | Group names must match exactly, including case and spacing |
-| Fitted curve ignores the peak | Peak models need a starting region that contains the peak; crop the range or pick the model that matches the physics |
+| Fitted curve ignores the peak | Peak models fit one dominant peak; for data with several peaks, fit the region around the one you want, or pick the model that matches the physics |
+| "This model could not be fitted" | Too few points for the model, or power/log models with no x > 0 |
+| Reduced χ² far from 1 | The model is missing something, or the Y-errors are mis-scaled |
 
 ---
 
