@@ -10,31 +10,8 @@ installing anything and without uploading a single data point.
 <sup>2</sup>Department of Physics, IIT Roorkee
 © 2026 Rakesh Naik and Sachin Kumar Srivastava. All rights reserved.
 
----
 
-## Run it
 
-No build step, no package manager, no server required.
-
-```bash
-git clone https://github.com/<your-username>/rnspectrax.git
-cd rnspectrax
-open index.html        # macOS  ·  Windows: start index.html  ·  Linux: xdg-open index.html
-```
-
-If your browser blocks local module loading, serve the folder instead:
-
-```bash
-python3 -m http.server 8000     # then visit http://localhost:8000
-```
-
-### Deploy on GitHub Pages
-
-1. Push this repository.
-2. **Settings → Pages → Source: Deploy from a branch → `main` / `(root)`.**
-3. The app is live at `https://<your-username>.github.io/rnspectrax/`.
-
----
 
 ## Where your data goes
 
@@ -140,13 +117,7 @@ MathJax for typeset notation.
 No framework, no bundler, no build step — the whole point is that a reviewer or
 collaborator can open one file and reproduce your figure.
 
----
 
-## Cite it
-
-> Naik, R. and Srivastava, S. K. (2026). *RNSpectraX: a client-side suite for
-> Raman and SERS spectral processing and comparative analysis* (Version 3.1)
-> [Computer software].
 
 A `CITATION.cff` file is included so GitHub renders a citation box automatically.
 
@@ -159,15 +130,4 @@ medium requires the written consent of the authors. See [`LICENSE`](LICENSE).
 
 ---
 
-## Single-file build
 
-`dist/rnspectrax-standalone.html` is the whole application inlined into one
-file — useful when you want to email the suite to a collaborator or hand a
-reviewer something that opens with a double-click. Only the Plotly, jsPDF and
-MathJax CDN scripts remain external.
-
-Rebuild it after any change to `css/` or `js/`:
-
-```bash
-python3 build-standalone.py
-```
