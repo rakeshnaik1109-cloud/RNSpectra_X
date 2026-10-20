@@ -803,11 +803,12 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   <div class="field"><label>Show spread as</label>
                     <select id="xyGroupStyle">
                       <option value="band" selected>Shaded band</option>
-                      <option value="bars">Error bars</option>
-                      <option value="both">Band + bars</option>
+                      <option value="bars">Mean points + error bars</option>
+                      <option value="both">Band + points + error bars</option>
                     </select>
                   </div>
                   <div class="field"><label>Band opacity</label><input type="range" id="xyGroupBandOpacity" value="0.22" min="0.05" max="0.8" step="0.01"/></div>
+                  <div class="field"><label>Error bars every N points</label><input type="number" id="xyErrEvery" min="1" step="1" placeholder="Auto (~40 bars)" title="Dense spectra: bars at every point merge into a smear. Blank = every point up to 60 points, otherwise about 40 evenly spaced bars. The mean curve itself keeps every point."/></div>
                 </div>
                 <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 6px;">Quick grouping (ticked columns, in order)</div>
                 <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">

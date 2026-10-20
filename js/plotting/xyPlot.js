@@ -71,6 +71,14 @@ function buildXYGroups(processed, errKind) {
   });
 }
 
+// Show an error bar every N points: the "Error bars every" field, or, when it
+// is blank, every point for up to 60 points and about 40 bars otherwise.
+function errorBarStride(n) {
+  const v = parseInt(document.getElementById("xyErrEvery")?.value);
+  if (v >= 1) return v;
+  return n <= 60 ? 1 : Math.ceil(n / 40);
+}
+
 function plotXY() {
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
@@ -127,13 +135,30 @@ function plotXY() {
     if (document.getElementById("xyFill").checked && !scatter && !barMode) tr.fill = "tozeroy";
     const groupBars = ds.isGroup && dsEy && (errStyle === 'bars' || errStyle === 'both');
     const groupBand = ds.isGroup && dsEy && (errStyle === 'band' || errStyle === 'both');
-    if ((showErr && dsEy && !ds.isGroup) || groupBars) tr.error_y = { type: "data", array: dsEy, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
+    const wantYBars = (showErr && dsEy && !ds.isGroup) || groupBars;
+    const wantXBars = showErr && dsEx;
     if (groupBand && !barMode) {
       const band = buildErrorBandTrace(xv, yv, dsEy, ds.color, bandOpacity, displayName);
       if (band) { band.legendgroup = 'dataset-' + di; traces.push(band); }
     }
-    if (showErr && dsEx) tr.error_x = { type: "data", array: dsEx, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
-    traces.push(tr);
+    // On dense data (a spectrum has thousands of points) bars at every point
+    // merge into a smear, so they are drawn on a separate trace of evenly
+    // spaced points (with the mean marked) while the curve keeps every point.
+    const every = errorBarStride(xv.length);
+    const errOn = { thickness: 1.5, width: 4, color: hexToRgba(ds.color, 0.9) };
+    if ((wantYBars || wantXBars) && (every > 1 || traceMode === 'lines') && !barMode) {
+      const idx = []; for (let i = Math.floor((xv.length % every) / 2); i < xv.length; i += every) idx.push(i);
+      const pts = { x: idx.map(i => xv[i]), y: idx.map(i => yv[i]), name: displayName + " (error bars)", mode: "markers",
+        marker: { color: ds.color, size: Math.max(5, markerSize - 1), symbol: symbolSel === "auto" ? SYMBOLS[di % SYMBOLS.length] : symbolSel },
+        showlegend: false, legendgroup: 'dataset-' + di, hovertemplate: "%{x}<br>%{y} ± %{error_y.array}<extra></extra>" };
+      if (wantYBars) pts.error_y = Object.assign({ type: "data", array: idx.map(i => dsEy[i]), visible: true }, errOn);
+      if (wantXBars) pts.error_x = Object.assign({ type: "data", array: idx.map(i => dsEx[i]), visible: true }, errOn);
+      traces.push(tr, pts);
+    } else {
+      if (wantYBars) tr.error_y = Object.assign({ type: "data", array: dsEy, visible: true }, errOn);
+      if (wantXBars) tr.error_x = Object.assign({ type: "data", array: dsEx, visible: true }, errOn);
+      traces.push(tr);
+    }
 
     lastXYSeries.push({ name: displayName + (ds.isGroup && dsEy ? (errKind === 'sem' ? ' [mean, SEM]' : ' [mean, SD]') : ''), x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
 

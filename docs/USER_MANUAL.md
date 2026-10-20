@@ -103,7 +103,13 @@ grouping** panel appears.
   * **Clear groups** empties them.
 * **Plot as → Group means ± spread** draws each group's mean, labelled with
   its replicate count (e.g. `PBS (n=3)`), with **± SD** or **± SEM** shown as a
-  shaded band, error bars, or both.
+  shaded band, as mean points with error bars, or both.
+* **Error bars every N points.** A spectrum has thousands of points, and bars
+  at every one merge into a smear. The mean curve keeps every point, while the
+  mean markers and their error bars are drawn at evenly spaced points. Leave
+  the field blank for automatic spacing (every point up to 60 points,
+  otherwise about 40 bars), or enter N for a bar every N points. Individual
+  datasets with an error column use the same spacing.
 
 Smoothing and normalisation are applied to every column before averaging. If
 the columns of a group do not share the same X values, they are interpolated
