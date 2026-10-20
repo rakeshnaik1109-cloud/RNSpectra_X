@@ -71,7 +71,7 @@
   }
 
   window.clearWorkspaceSession = function () {
-    try { localStorage.removeItem(KEY); } catch (e) {}
+    try { localStorage.removeItem(KEY); localStorage.removeItem('rnspx_mode'); localStorage.removeItem('rnspx_xytab'); } catch (e) {}
     if (window.rxToast) window.rxToast('Saved settings cleared — reload for defaults');
   };
 

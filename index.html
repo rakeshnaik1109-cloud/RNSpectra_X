@@ -1300,7 +1300,9 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  setMode('ocean');
+  setMode(initialMode());
+  const savedTab = recallUI(XYTAB_KEY);
+  if (savedTab === 'csv' || savedTab === 'cols' || savedTab === 'file') setXYTab(savedTab);
   Object.defineProperty(window, '_layout', { get: () => localStorage.getItem('rnspx_layout') || 'left' });
   populateJournalPresetSelect('journalPreset');
   populateJournalPresetSelect('xyJournalPreset');

@@ -181,7 +181,10 @@ them, so switch to XY mode first if you are loading XY data.
 
 ### Session memory
 Every processing and styling control is written to this browser's local storage
-and restored on your next visit, so an analysis recipe survives a reload. Your
+and restored on your next visit, so an analysis recipe survives a reload. The
+app also reopens in the workspace you were last using (Raman or XY), on the same
+XY input tab. A link ending in `#xy` (or `#raman`) always opens that workspace
+first. Your
 spectrum files are never stored — reload them each session. To start from
 defaults, press `?` and choose **Clear saved settings**.
 

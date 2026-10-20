@@ -7,12 +7,41 @@ function updateXYLegendSlidersText() {
   document.getElementById("xyLegendY_val").textContent = document.getElementById("xyLegendY").value;
 }
 
+// The active workspace and XY input tab are remembered on this device, so a
+// reload reopens where the user was (until they click the other one).
+const MODE_KEY = 'rnspx_mode', XYTAB_KEY = 'rnspx_xytab';
+function rememberUI(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+function recallUI(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
 function setMode(mode) {
+  if (mode !== 'ocean' && mode !== 'xy') mode = 'ocean';
   currentMode = mode;
   document.getElementById('oceanMode').classList.toggle('hidden', mode !== 'ocean');
   document.getElementById('xyMode').classList.toggle('hidden', mode !== 'xy');
   document.getElementById('modeOcean').classList.toggle('active', mode === 'ocean');
   document.getElementById('modeXY').classList.toggle('active', mode === 'xy');
+  document.getElementById('modeOcean').setAttribute('aria-selected', mode === 'ocean');
+  document.getElementById('modeXY').setAttribute('aria-selected', mode === 'xy');
+  rememberUI(MODE_KEY, mode);
+  // re-apply the dock layout to the workspace that just became visible
+  setTimeout(() => {
+    try {
+      if (typeof setWorkspaceLayout === 'function') {
+        let savedLayout = recallUI('rnspx_layout') || 'left';
+        if (savedLayout === 'undefined' || savedLayout === 'null') savedLayout = 'left';
+        setWorkspaceLayout(savedLayout);
+      }
+    } catch (layoutErr) { console.warn('Layout engine:', layoutErr); }
+  }, 50);
+}
+
+// Start-up workspace: a link ending in #xy or #raman wins; otherwise the
+// last one used; otherwise Raman.
+function initialMode() {
+  const h = (location.hash || '').toLowerCase();
+  if (h === '#xy') return 'xy';
+  if (h === '#raman' || h === '#ocean') return 'ocean';
+  return recallUI(MODE_KEY) || 'ocean';
 }
 
 
@@ -62,6 +91,7 @@ function setXYTab(tab) {
   document.getElementById('tabCSV').classList.toggle('active', tab === 'csv');
   document.getElementById('tabCols').classList.toggle('active', tab === 'cols');
   document.getElementById('tabFile').classList.toggle('active', tab === 'file');
+  rememberUI(XYTAB_KEY, tab);
 }
 function updateXYHints() {
   const hints = XY_HINTS[document.getElementById("xyDataType").value]; document.getElementById("xyTypeBadge").textContent = hints.badge;
@@ -86,38 +116,3 @@ function addXYDataset() {
       </div>
     </div>`);
 }
-
-
-window.setMode = function(mode) {
-  try {
-    const isOcean = (mode === 'ocean');
-    
-    // 1. Safely toggle the main workspace containers
-    const oceanSection = document.getElementById('oceanMode');
-    const xySection = document.getElementById('xyMode');
-    if (oceanSection) oceanSection.classList.toggle('hidden', !isOcean);
-    if (xySection) xySection.classList.toggle('hidden', isOcean);
-
-    // 2. Safely toggle the active styling on the tab buttons
-    const btnOcean = document.getElementById('modeOcean');
-    const btnXY = document.getElementById('modeXY');
-    if (btnOcean) btnOcean.classList.toggle('active', isOcean);
-    if (btnXY) btnXY.classList.toggle('active', !isOcean);
-
-    // 3. Safely re-trigger the layout engine
-    setTimeout(() => {
-      try {
-        if (typeof setWorkspaceLayout === 'function') {
-           let savedLayout = localStorage.getItem('rnspx_layout') || 'left';
-           if (savedLayout === 'undefined' || savedLayout === 'null') savedLayout = 'left'; 
-           setWorkspaceLayout(savedLayout);
-        }
-      } catch (layoutErr) {
-        console.warn("Layout engine minor error, but tabs still switched:", layoutErr);
-      }
-    }, 50);
-
-  } catch (err) {
-    console.error("Critical error during tab switch:", err);
-  }
-};
