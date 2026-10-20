@@ -1,4 +1,4 @@
-# RNSpectraX™ User Manual
+# RNSpectraX™ (Spectral Plotter and Analytics Suite) — User Manual
 
 **Author:** Rakesh Naik
 **Date:** June 2026
@@ -6,7 +6,7 @@
 ---
 
 ## 1. Introduction
-RNSpectraX™ is an advanced spectral analytics suite. The application interface is divided into two primary workspaces, accessible via the top navigation bar:
+RNSpectraX™ (Spectral Plotter and Analytics Suite) is a browser-based spectral analytics suite. The application interface is divided into two primary workspaces, accessible via the top navigation bar:
 1. **Raman / Spectral Text Data:** Tailored for complex spectrometer outputs, automated peak assignments, and group averaging.
 2. **Other Plots (XY + Fitting):** A general scientific XY plotter with error bars and weighted curve fitting, for data from any field.
 

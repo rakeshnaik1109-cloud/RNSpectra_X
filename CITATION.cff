@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "RNSpectraX: a client-side suite for Raman and SERS spectral processing, scientific XY plotting and curve fitting"
+title: "RNSpectraX (Spectral Plotter and Analytics Suite)"
 message: "If you use RNSpectraX in your research, please cite it as below."
 type: software
 authors:

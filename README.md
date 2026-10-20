@@ -1,4 +1,4 @@
-# RNSpectraX™ — Spectral Analysis & Scientific Plotting Suite
+# RNSpectraX™ (Spectral Plotter and Analytics Suite)
 
 RNSpectraX turns raw experimental data into analysed, publication-ready figures,
 entirely inside your web browser. There is nothing to install, no account to
