@@ -179,3 +179,88 @@ function parseXYFile(text) {
   }
   return { x, y, ey: hasEY ? ey : null, ex: hasEX ? ex : null };
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MULTI-COLUMN TABLES (XY mode): CSV / TXT / Excel
+   One X column followed by any number of Y columns, optionally
+   preceded by instrument header rows such as an Avantes export:
+
+     Filename-->      a.TRM8  b.TRM8 …
+     Int.time[ms]-->  500     500    …
+     Wavelength [nm]  a       b      …     ← names row
+     175.204          -172.4  0      …     ← data
+═══════════════════════════════════════════════════════════ */
+
+// Split delimited text into rows of cells, keeping empty cells so that
+// columns stay aligned (an empty "Mode/Unit-->" row must not shift columns).
+function textToRows(text) {
+  const lines = text.split(/\r\n|\r|\n/);
+  const sample = lines.slice(0, 50).join("\n");
+  // Tab first; then semicolon, which (unlike a comma) never appears inside a
+  // number, so "175,204;-172,47" is read as decimal-comma data; then comma;
+  // otherwise runs of spaces.
+  const delim = sample.includes("\t") ? "\t" : sample.includes(";") ? ";" : sample.includes(",") ? "," : null;
+  return lines.map(l => delim ? l.split(delim).map(c => c.trim()) : l.trim().split(/\s+/));
+}
+
+function cellNum(c) {
+  if (typeof c === "number") return Number.isFinite(c) ? c : NaN;
+  if (typeof c !== "string") return NaN;
+  let t = c.trim();
+  if (/^[+-]?\d+,\d+([eE][+-]?\d+)?$/.test(t)) t = t.replace(",", ".");   // decimal comma (European exports)
+  if (!t || !/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(t)) return NaN;
+  return Number(t);
+}
+function cellText(c) { return c === undefined || c === null ? "" : String(c).trim(); }
+
+// Returns { series: [{ name, x, y, ey, ex, info }], xLabel, layout }
+// layout: "wide" (one dataset per column) or "errors" (X Y [Yerr] [Xerr]).
+function parseXYTable(rows, sourceName) {
+  const out = { series: [], xLabel: "", layout: "wide" };
+  const isData = r => r && Number.isFinite(cellNum(r[0])) && r.filter(c => Number.isFinite(cellNum(c))).length >= 2;
+  const start = rows.findIndex(isData);
+  if (start < 0) return out;
+
+  // Names row: the nearest non-empty row above the data
+  let labels = [];
+  for (let k = start - 1; k >= 0; k--) {
+    const r = rows[k] || [];
+    if (r.some(c => cellText(c))) { if (!cellText(r[0]).endsWith("-->")) labels = r.map(cellText); break; }
+  }
+  // Instrument settings rows ("Int.time[ms]-->  500  500 …"), per column
+  const metaRows = rows.slice(0, start).filter(r => r && /-->\s*$/.test(cellText(r[0])));
+
+  const data = rows.slice(start).filter(isData);
+  let nCols = 0;
+  data.forEach(r => { for (let c = r.length - 1; c >= 0; c--) if (Number.isFinite(cellNum(r[c]))) { nCols = Math.max(nCols, c + 1); break; } });
+  out.xLabel = labels[0] && !Number.isFinite(cellNum(labels[0])) ? labels[0] : "";
+
+  const errLike = l => /(err|unc|σ|±|\bsd\b|\bsem\b|std|dev)/i.test(l || "");
+  const errorLayout = nCols >= 3 && nCols <= 4 && (labels.length ? errLike(labels[2]) : true);
+
+  const xs = data.map(r => cellNum(r[0]));
+  if (nCols === 2 || errorLayout) {
+    out.layout = errorLayout ? "errors" : "wide";
+    const s = { name: (labels[1] && !Number.isFinite(cellNum(labels[1]))) ? labels[1] : sourceName, x: [], y: [], ey: errorLayout ? [] : null, ex: errorLayout && nCols === 4 ? [] : null, info: "" };
+    data.forEach((r, i) => {
+      const y = cellNum(r[1]); if (!Number.isFinite(xs[i]) || !Number.isFinite(y)) return;
+      s.x.push(xs[i]); s.y.push(y);
+      if (s.ey) s.ey.push(Number.isFinite(cellNum(r[2])) ? cellNum(r[2]) : 0);
+      if (s.ex) s.ex.push(Number.isFinite(cellNum(r[3])) ? cellNum(r[3]) : 0);
+    });
+    if (s.x.length) out.series.push(s);
+    return out;
+  }
+
+  for (let c = 1; c < nCols; c++) {
+    const s = { name: labels[c] && !Number.isFinite(cellNum(labels[c])) ? labels[c] : `${sourceName} · column ${c + 1}`, x: [], y: [], ey: null, ex: null, info: "" };
+    data.forEach((r, i) => { const y = cellNum(r[c]); if (Number.isFinite(xs[i]) && Number.isFinite(y)) { s.x.push(xs[i]); s.y.push(y); } });
+    if (!s.x.length) continue;
+    s.info = metaRows.map(r => {
+      const v = cellText(r[c]); if (!v) return "";
+      return cellText(r[0]).replace(/-->\s*$/, "").trim() + ": " + v;
+    }).filter(Boolean).join(" · ");
+    out.series.push(s);
+  }
+  return out;
+}

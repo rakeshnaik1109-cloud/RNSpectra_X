@@ -67,7 +67,7 @@ reload; your files are not.
 
 | Capability | Detail |
 |---|---|
-| Data entry | Paste values, paste columns, or upload `.csv` / `.txt` / `.dat` / `.tsv` files, with optional Y-error and X-error columns |
+| Data entry | Paste values, paste columns, or upload `.csv` / `.txt` / `.dat` / `.tsv` or Excel (`.xlsx` / `.xls` / `.ods`) files, with optional Y-error and X-error columns. A multi-column table (one X column, many Y columns, e.g. an Avantes spectrometer export) becomes one dataset per column, all on one plot |
 | Axis presets | General, FTIR, UV-Vis, fluorescence/PL, XRD, XPS, I–V, time series/kinetics, thermal analysis and calibration curves. A preset only fills in axis labels; the data are never treated differently |
 | Axis limits | X Min / X Max with Y Min / Y Max directly below. Blank means automatic, and one side can be pinned on its own |
 | Plot styles | Lines, scatter, bar, fill-under, per-dataset X/Y offsets for stacked plots, inverted X axis |

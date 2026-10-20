@@ -27,7 +27,8 @@
   };
 
   /* ── Drag and drop ───────────────────────────────────── */
-  var SPECTRAL = /\.(txt|csv|dat|asc|spc|dpt|jdx|dx|tsv)$/i;
+  var SPECTRAL = /\.(txt|csv|dat|asc|spc|dpt|jdx|dx|tsv|xlsx|xlsm|xls|ods)$/i;
+  var SHEET = /\.(xlsx|xlsm|xls|ods)$/i;
   var veil = null, depth = 0;
 
   function getVeil() {
@@ -37,7 +38,7 @@
       veil.innerHTML =
         '<div class="drop-veil-card">' +
         '<strong>Drop to load spectra</strong>' +
-        '<span>.txt .csv .dat .asc .spc .dpt .jdx .tsv</span>' +
+        '<span>.txt .csv .dat .asc .spc .dpt .jdx .tsv · XY mode also .xlsx .xls .ods</span>' +
         '</div>';
       document.body.appendChild(veil);
     }
@@ -81,6 +82,10 @@
     var shim = { target: { files: files, value: '' } };
     var mode = (typeof currentMode !== 'undefined') ? currentMode : 'ocean';
 
+    if (mode !== 'xy' && files.some(function (f) { return SHEET.test(f.name); })) {
+      window.rxToast('Spreadsheets are read in XY mode — switch to Other Plots (XY + Fitting) and drop it again');
+      return;
+    }
     if (mode === 'xy' && typeof readXYFiles === 'function') {
       readXYFiles(shim);
     } else if (typeof addFiles === 'function') {

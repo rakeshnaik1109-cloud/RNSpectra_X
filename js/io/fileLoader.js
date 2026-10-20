@@ -88,18 +88,70 @@ function clearAllOceanFiles() {
 function refreshOceanStatus() { const n = Object.keys(oceanFileNames).length; setStatus(`${n} spectrum${n === 1 ? "" : "s"} loaded`, n > 0 ? "ok" : ""); }
 
 
-function readXYFiles(e) {
-  const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
-  let loaded = 0;
-  files.forEach(file => {
-    const myIdx = xyGlobalIdx++; const reader = new FileReader();
-    reader.onload = evt => {
-      const data = parseXYFile(evt.target.result);
-      xyFiles[myIdx] = { ...data, name: file.name.replace(/\.[^.]+$/, ""), color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
-      xyFileNames[myIdx] = file.name; loaded++; if (loaded === files.length) renderXYFileCards();
-    };
-    reader.readAsText(file);
+const SPREADSHEET_RE = /\.(xlsx|xlsm|xls|ods)$/i;
+
+// SheetJS is only needed for spreadsheets, so it is fetched on first use.
+let sheetJsPromise = null;
+function loadSheetJS() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (!sheetJsPromise) sheetJsPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error("Spreadsheet reader failed to load"));
+    sc.onerror = () => { sheetJsPromise = null; reject(new Error("Could not load the spreadsheet reader — check your internet connection, or save the sheet as CSV")); };
+    document.head.appendChild(sc);
   });
+  return sheetJsPromise;
+}
+
+function readFileAs(file, kind) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result); r.onerror = () => reject(r.error);
+    kind === "buffer" ? r.readAsArrayBuffer(file) : r.readAsText(file);
+  });
+}
+
+// Every file becomes one or more datasets: a two-column or X/Y/error file
+// gives one; a wide table (X then many Y columns, e.g. an Avantes export or
+// an Excel sheet) gives one per column, all plotted together.
+async function tablesFromFile(file) {
+  const base = file.name.replace(/\.[^.]+$/, "");
+  if (SPREADSHEET_RE.test(file.name)) {
+    const XLSX = await loadSheetJS();
+    const wb = XLSX.read(await readFileAs(file, "buffer"), { type: "array" });
+    const tables = wb.SheetNames.map(sn => ({ sheet: sn, t: parseXYTable(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: "" }), base) }))
+      .filter(o => o.t.series.length);
+    if (tables.length > 1) tables.forEach(o => o.t.series.forEach(s => { s.name = `${o.sheet} › ${s.name}`; }));
+    return tables.map(o => o.t);
+  }
+  return [parseXYTable(textToRows(await readFileAs(file, "text")), base)];
+}
+
+async function readXYFiles(e) {
+  const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
+  let added = 0, xLabel = "";
+  for (const file of files) {
+    try {
+      const tables = await tablesFromFile(file);
+      tables.forEach(t => {
+        if (t.xLabel && !xLabel) xLabel = t.xLabel;
+        t.series.forEach(sr => {
+          const myIdx = xyGlobalIdx++;
+          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
+          xyFileNames[myIdx] = file.name; added++;
+        });
+      });
+      if (!tables.some(t => t.series.length)) rxNotify(`"${file.name}": no numeric X/Y columns found.`);
+    } catch (err) {
+      rxNotify(`"${file.name}": ${err.message || err}`);
+    }
+  }
+  // Take the X-axis title from the table header while the label is still the default
+  const xl = document.getElementById("xyXlabel");
+  if (xLabel && xl && (xl.value.trim() === "" || xl.value.trim() === "X")) xl.value = xLabel;
+  if (added) rxNotify(`Loaded ${added} dataset${added === 1 ? "" : "s"}`);
+  renderXYFileCards();
 }
 
 
@@ -114,16 +166,18 @@ function renderXYFileCards() {
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
     const f = xyFiles[gIdx]; if (!f) return;
-    chipsEl.innerHTML += `<div class="file-chip"><span>${f.filename}</span><button class="chip-remove" onclick="removeXYFile(${gIdx})">×</button></div>`;
+    const esc = v => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    chipsEl.innerHTML += `<div class="file-chip"><span>${esc(f.name)}</span><button class="chip-remove" onclick="removeXYFile(${gIdx})">×</button></div>`;
     cardsEl.innerHTML += `
       <div class="spec-card" id="xyFileCard${gIdx}">
-        <b>${f.filename}</b>
-        <div class="spec-meta">${f.x.length} pts${f.ey ? " · Y-error column ✓" : ""}${f.ex ? " · X-error column ✓" : ""}</div>
-        <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${f.name}"></div>
+        <b>${esc(f.filename)}</b>
+        <div class="spec-meta">${f.x.length} pts${f.ey ? " · Y-error column ✓" : ""}${f.ex ? " · X-error column ✓" : ""}${f.info ? " · " + esc(f.info) : ""}</div>
+        <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${esc(f.name)}"></div>
         <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
       </div>`;
   });
-  document.getElementById("xyFileStatus").textContent = `${Object.keys(xyFileNames).length} documents staged`;
+  const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
+  document.getElementById("xyFileStatus").textContent = nSets ? `${nSets} dataset${nSets === 1 ? "" : "s"} from ${nFiles} file${nFiles === 1 ? "" : "s"}` : "No files";
 }
 
 

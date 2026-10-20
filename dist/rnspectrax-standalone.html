@@ -1778,7 +1778,8 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
             </div>
 
             <div id="xyInputFile" class="hidden">
-              <input type="file" id="xyFileInput" multiple accept=".csv,.txt,.dat,.tsv" style="display:none">
+              <input type="file" id="xyFileInput" multiple accept=".csv,.txt,.dat,.tsv,.xlsx,.xlsm,.xls,.ods" style="display:none">
+              <div class="info-box" style="margin-bottom:8px">CSV, TXT or Excel. A table with one X column and several Y columns (e.g. a spectrometer export with a wavelength column and one column per spectrum) is split into one dataset per column and plotted together. Header rows such as <code>Int.time[ms]--&gt;</code> are read as file information.</div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
                 <button class="btn btn-primary btn-sm" onclick="document.getElementById('xyFileInput').click()">+ Add Files</button>
                 <button class="btn btn-outline btn-sm" onclick="clearAllXYFiles()">✕ Clear</button>
@@ -3089,6 +3090,92 @@ function parseXYFile(text) {
   }
   return { x, y, ey: hasEY ? ey : null, ex: hasEX ? ex : null };
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MULTI-COLUMN TABLES (XY mode): CSV / TXT / Excel
+   One X column followed by any number of Y columns, optionally
+   preceded by instrument header rows such as an Avantes export:
+
+     Filename-->      a.TRM8  b.TRM8 …
+     Int.time[ms]-->  500     500    …
+     Wavelength [nm]  a       b      …     ← names row
+     175.204          -172.4  0      …     ← data
+═══════════════════════════════════════════════════════════ */
+
+// Split delimited text into rows of cells, keeping empty cells so that
+// columns stay aligned (an empty "Mode/Unit-->" row must not shift columns).
+function textToRows(text) {
+  const lines = text.split(/\r\n|\r|\n/);
+  const sample = lines.slice(0, 50).join("\n");
+  // Tab first; then semicolon, which (unlike a comma) never appears inside a
+  // number, so "175,204;-172,47" is read as decimal-comma data; then comma;
+  // otherwise runs of spaces.
+  const delim = sample.includes("\t") ? "\t" : sample.includes(";") ? ";" : sample.includes(",") ? "," : null;
+  return lines.map(l => delim ? l.split(delim).map(c => c.trim()) : l.trim().split(/\s+/));
+}
+
+function cellNum(c) {
+  if (typeof c === "number") return Number.isFinite(c) ? c : NaN;
+  if (typeof c !== "string") return NaN;
+  let t = c.trim();
+  if (/^[+-]?\d+,\d+([eE][+-]?\d+)?$/.test(t)) t = t.replace(",", ".");   // decimal comma (European exports)
+  if (!t || !/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(t)) return NaN;
+  return Number(t);
+}
+function cellText(c) { return c === undefined || c === null ? "" : String(c).trim(); }
+
+// Returns { series: [{ name, x, y, ey, ex, info }], xLabel, layout }
+// layout: "wide" (one dataset per column) or "errors" (X Y [Yerr] [Xerr]).
+function parseXYTable(rows, sourceName) {
+  const out = { series: [], xLabel: "", layout: "wide" };
+  const isData = r => r && Number.isFinite(cellNum(r[0])) && r.filter(c => Number.isFinite(cellNum(c))).length >= 2;
+  const start = rows.findIndex(isData);
+  if (start < 0) return out;
+
+  // Names row: the nearest non-empty row above the data
+  let labels = [];
+  for (let k = start - 1; k >= 0; k--) {
+    const r = rows[k] || [];
+    if (r.some(c => cellText(c))) { if (!cellText(r[0]).endsWith("-->")) labels = r.map(cellText); break; }
+  }
+  // Instrument settings rows ("Int.time[ms]-->  500  500 …"), per column
+  const metaRows = rows.slice(0, start).filter(r => r && /-->\s*$/.test(cellText(r[0])));
+
+  const data = rows.slice(start).filter(isData);
+  let nCols = 0;
+  data.forEach(r => { for (let c = r.length - 1; c >= 0; c--) if (Number.isFinite(cellNum(r[c]))) { nCols = Math.max(nCols, c + 1); break; } });
+  out.xLabel = labels[0] && !Number.isFinite(cellNum(labels[0])) ? labels[0] : "";
+
+  const errLike = l => /(err|unc|σ|±|\bsd\b|\bsem\b|std|dev)/i.test(l || "");
+  const errorLayout = nCols >= 3 && nCols <= 4 && (labels.length ? errLike(labels[2]) : true);
+
+  const xs = data.map(r => cellNum(r[0]));
+  if (nCols === 2 || errorLayout) {
+    out.layout = errorLayout ? "errors" : "wide";
+    const s = { name: (labels[1] && !Number.isFinite(cellNum(labels[1]))) ? labels[1] : sourceName, x: [], y: [], ey: errorLayout ? [] : null, ex: errorLayout && nCols === 4 ? [] : null, info: "" };
+    data.forEach((r, i) => {
+      const y = cellNum(r[1]); if (!Number.isFinite(xs[i]) || !Number.isFinite(y)) return;
+      s.x.push(xs[i]); s.y.push(y);
+      if (s.ey) s.ey.push(Number.isFinite(cellNum(r[2])) ? cellNum(r[2]) : 0);
+      if (s.ex) s.ex.push(Number.isFinite(cellNum(r[3])) ? cellNum(r[3]) : 0);
+    });
+    if (s.x.length) out.series.push(s);
+    return out;
+  }
+
+  for (let c = 1; c < nCols; c++) {
+    const s = { name: labels[c] && !Number.isFinite(cellNum(labels[c])) ? labels[c] : `${sourceName} · column ${c + 1}`, x: [], y: [], ey: null, ex: null, info: "" };
+    data.forEach((r, i) => { const y = cellNum(r[c]); if (Number.isFinite(xs[i]) && Number.isFinite(y)) { s.x.push(xs[i]); s.y.push(y); } });
+    if (!s.x.length) continue;
+    s.info = metaRows.map(r => {
+      const v = cellText(r[c]); if (!v) return "";
+      return cellText(r[0]).replace(/-->\s*$/, "").trim() + ": " + v;
+    }).filter(Boolean).join(" · ");
+    out.series.push(s);
+  }
+  return out;
+}
+
 </script>
 <script>
 /* js/io/fileLoader.js */
@@ -3182,18 +3269,70 @@ function clearAllOceanFiles() {
 function refreshOceanStatus() { const n = Object.keys(oceanFileNames).length; setStatus(`${n} spectrum${n === 1 ? "" : "s"} loaded`, n > 0 ? "ok" : ""); }
 
 
-function readXYFiles(e) {
-  const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
-  let loaded = 0;
-  files.forEach(file => {
-    const myIdx = xyGlobalIdx++; const reader = new FileReader();
-    reader.onload = evt => {
-      const data = parseXYFile(evt.target.result);
-      xyFiles[myIdx] = { ...data, name: file.name.replace(/\.[^.]+$/, ""), color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
-      xyFileNames[myIdx] = file.name; loaded++; if (loaded === files.length) renderXYFileCards();
-    };
-    reader.readAsText(file);
+const SPREADSHEET_RE = /\.(xlsx|xlsm|xls|ods)$/i;
+
+// SheetJS is only needed for spreadsheets, so it is fetched on first use.
+let sheetJsPromise = null;
+function loadSheetJS() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (!sheetJsPromise) sheetJsPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement("script");
+    sc.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    sc.onload = () => window.XLSX ? resolve(window.XLSX) : reject(new Error("Spreadsheet reader failed to load"));
+    sc.onerror = () => { sheetJsPromise = null; reject(new Error("Could not load the spreadsheet reader — check your internet connection, or save the sheet as CSV")); };
+    document.head.appendChild(sc);
   });
+  return sheetJsPromise;
+}
+
+function readFileAs(file, kind) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result); r.onerror = () => reject(r.error);
+    kind === "buffer" ? r.readAsArrayBuffer(file) : r.readAsText(file);
+  });
+}
+
+// Every file becomes one or more datasets: a two-column or X/Y/error file
+// gives one; a wide table (X then many Y columns, e.g. an Avantes export or
+// an Excel sheet) gives one per column, all plotted together.
+async function tablesFromFile(file) {
+  const base = file.name.replace(/\.[^.]+$/, "");
+  if (SPREADSHEET_RE.test(file.name)) {
+    const XLSX = await loadSheetJS();
+    const wb = XLSX.read(await readFileAs(file, "buffer"), { type: "array" });
+    const tables = wb.SheetNames.map(sn => ({ sheet: sn, t: parseXYTable(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: "" }), base) }))
+      .filter(o => o.t.series.length);
+    if (tables.length > 1) tables.forEach(o => o.t.series.forEach(s => { s.name = `${o.sheet} › ${s.name}`; }));
+    return tables.map(o => o.t);
+  }
+  return [parseXYTable(textToRows(await readFileAs(file, "text")), base)];
+}
+
+async function readXYFiles(e) {
+  const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
+  let added = 0, xLabel = "";
+  for (const file of files) {
+    try {
+      const tables = await tablesFromFile(file);
+      tables.forEach(t => {
+        if (t.xLabel && !xLabel) xLabel = t.xLabel;
+        t.series.forEach(sr => {
+          const myIdx = xyGlobalIdx++;
+          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
+          xyFileNames[myIdx] = file.name; added++;
+        });
+      });
+      if (!tables.some(t => t.series.length)) rxNotify(`"${file.name}": no numeric X/Y columns found.`);
+    } catch (err) {
+      rxNotify(`"${file.name}": ${err.message || err}`);
+    }
+  }
+  // Take the X-axis title from the table header while the label is still the default
+  const xl = document.getElementById("xyXlabel");
+  if (xLabel && xl && (xl.value.trim() === "" || xl.value.trim() === "X")) xl.value = xLabel;
+  if (added) rxNotify(`Loaded ${added} dataset${added === 1 ? "" : "s"}`);
+  renderXYFileCards();
 }
 
 
@@ -3208,16 +3347,18 @@ function renderXYFileCards() {
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
     const f = xyFiles[gIdx]; if (!f) return;
-    chipsEl.innerHTML += `<div class="file-chip"><span>${f.filename}</span><button class="chip-remove" onclick="removeXYFile(${gIdx})">×</button></div>`;
+    const esc = v => String(v ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    chipsEl.innerHTML += `<div class="file-chip"><span>${esc(f.name)}</span><button class="chip-remove" onclick="removeXYFile(${gIdx})">×</button></div>`;
     cardsEl.innerHTML += `
       <div class="spec-card" id="xyFileCard${gIdx}">
-        <b>${f.filename}</b>
-        <div class="spec-meta">${f.x.length} pts${f.ey ? " · Y-error column ✓" : ""}${f.ex ? " · X-error column ✓" : ""}</div>
-        <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${f.name}"></div>
+        <b>${esc(f.filename)}</b>
+        <div class="spec-meta">${f.x.length} pts${f.ey ? " · Y-error column ✓" : ""}${f.ex ? " · X-error column ✓" : ""}${f.info ? " · " + esc(f.info) : ""}</div>
+        <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${esc(f.name)}"></div>
         <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
       </div>`;
   });
-  document.getElementById("xyFileStatus").textContent = `${Object.keys(xyFileNames).length} documents staged`;
+  const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
+  document.getElementById("xyFileStatus").textContent = nSets ? `${nSets} dataset${nSets === 1 ? "" : "s"} from ${nFiles} file${nFiles === 1 ? "" : "s"}` : "No files";
 }
 
 
@@ -5476,7 +5617,8 @@ document.addEventListener('DOMContentLoaded', initWorkspaceLayout);
   };
 
   /* ── Drag and drop ───────────────────────────────────── */
-  var SPECTRAL = /\.(txt|csv|dat|asc|spc|dpt|jdx|dx|tsv)$/i;
+  var SPECTRAL = /\.(txt|csv|dat|asc|spc|dpt|jdx|dx|tsv|xlsx|xlsm|xls|ods)$/i;
+  var SHEET = /\.(xlsx|xlsm|xls|ods)$/i;
   var veil = null, depth = 0;
 
   function getVeil() {
@@ -5486,7 +5628,7 @@ document.addEventListener('DOMContentLoaded', initWorkspaceLayout);
       veil.innerHTML =
         '<div class="drop-veil-card">' +
         '<strong>Drop to load spectra</strong>' +
-        '<span>.txt .csv .dat .asc .spc .dpt .jdx .tsv</span>' +
+        '<span>.txt .csv .dat .asc .spc .dpt .jdx .tsv · XY mode also .xlsx .xls .ods</span>' +
         '</div>';
       document.body.appendChild(veil);
     }
@@ -5530,6 +5672,10 @@ document.addEventListener('DOMContentLoaded', initWorkspaceLayout);
     var shim = { target: { files: files, value: '' } };
     var mode = (typeof currentMode !== 'undefined') ? currentMode : 'ocean';
 
+    if (mode !== 'xy' && files.some(function (f) { return SHEET.test(f.name); })) {
+      window.rxToast('Spreadsheets are read in XY mode — switch to Other Plots (XY + Fitting) and drop it again');
+      return;
+    }
     if (mode === 'xy' && typeof readXYFiles === 'function') {
       readXYFiles(shim);
     } else if (typeof addFiles === 'function') {

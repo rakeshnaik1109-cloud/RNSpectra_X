@@ -75,8 +75,19 @@ here.
   separated), with optional Y-error and X-error lists. If X and Y have different
   lengths, the first matching pairs are used and you are told.
 * **Columns:** paste rows of `X Y [Yerr] [Xerr]`.
-* **Upload File:** load one or more `.csv`, `.txt`, `.dat` or `.tsv` files. The
-  third and fourth columns are read as Y-error and X-error.
+* **Upload File:** load one or more `.csv`, `.txt`, `.dat`, `.tsv` or Excel
+  (`.xlsx`, `.xls`, `.ods`) files.
+  * A file with columns `X Y [Yerr] [Xerr]` gives one dataset with error bars.
+  * A **multi-column table** — one X column followed by several Y columns, such
+    as a spectrometer export with a wavelength column and one column per
+    spectrum — gives one dataset per column, all plotted together. Each dataset
+    is named from the header row just above the numbers, and the X-axis title
+    is taken from the first header cell (e.g. "Wavelength [nm]").
+  * Instrument header rows ending in `-->` (e.g. `Int.time[ms]-->`,
+    `NrOfAverages-->` in Avantes exports) are shown on each dataset's card.
+  * In an Excel workbook every sheet that contains data is read.
+  * Semicolon-separated files with decimal commas (`175,204;-172,47`) are read
+    correctly.
 
 **Data Type** only pre-fills the axis labels (and reverses X for FTIR and XPS,
 where that is the convention). It never changes how the data are processed.

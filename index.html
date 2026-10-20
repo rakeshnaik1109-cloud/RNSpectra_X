@@ -770,7 +770,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             </div>
 
             <div id="xyInputFile" class="hidden">
-              <input type="file" id="xyFileInput" multiple accept=".csv,.txt,.dat,.tsv" style="display:none">
+              <input type="file" id="xyFileInput" multiple accept=".csv,.txt,.dat,.tsv,.xlsx,.xlsm,.xls,.ods" style="display:none">
+              <div class="info-box" style="margin-bottom:8px">CSV, TXT or Excel. A table with one X column and several Y columns (e.g. a spectrometer export with a wavelength column and one column per spectrum) is split into one dataset per column and plotted together. Header rows such as <code>Int.time[ms]--&gt;</code> are read as file information.</div>
               <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
                 <button class="btn btn-primary btn-sm" onclick="document.getElementById('xyFileInput').click()">+ Add Files</button>
                 <button class="btn btn-outline btn-sm" onclick="clearAllXYFiles()">✕ Clear</button>
