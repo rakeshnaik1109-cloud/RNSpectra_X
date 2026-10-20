@@ -22,6 +22,14 @@ let XY_HINTS = {
 /* ═══════════════════════════════════════════════════════════
    XY PLOT (scatter, lines, error bars, offsets, fitting overlay)
 ═══════════════════════════════════════════════════════════ */
+// XY smoothing with the panel's settings. For Gaussian smoothing the first
+// field is σ (in points); for the other filters it is the window length.
+function xySmooth(y) {
+  const type = document.getElementById("xySmoothType").value;
+  const p1 = parseFloat(document.getElementById("xySmP1").value) || 5;
+  return applySmoothing([...y], type, p1, parseInt(document.getElementById("xySmP2").value) || 2, type === 'gaussian' ? p1 : 2);
+}
+
 function plotXY() {
   const datasets = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!datasets.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first."); return; }
@@ -41,8 +49,8 @@ function plotXY() {
   const yDiv = getYDivisor("xy");
 
   datasets.forEach((ds, di) => {
-    let yy = applySmoothing([...ds.y], document.getElementById("xySmoothType").value, parseInt(document.getElementById("xySmP1").value) || 5, parseInt(document.getElementById("xySmP2").value) || 2, 2);
-    yy = normalizeData(yy, normSel);
+    let yy = xySmooth(ds.y);
+    yy = normalizeData(yy, normSel, ds.x);
     const shiftY = di * yOff, shiftX = di * xOff;
     const xv = ds.x.map(v => v + shiftX);
     let yv = yy.map(v => v + shiftY);

@@ -18,14 +18,26 @@ The workspace utilizes a professional dock system. You can use the layout toolba
 
 ### 2.1 Data Ingestion
 Click **+ Add Files** to upload your raw spectrometer data. RNSpectraX™ will automatically fingerprint the file type. 
-* Supported formats: `.txt`, `.csv`, `.dat`, `.asc`, `.spc`, `.jdx`, `.tsv`.
+* Supported formats: plain-text exports (`.txt`, `.csv`, `.dat`, `.asc`, `.dpt`, `.tsv`) from Ocean Optics, Horiba, Renishaw, Bruker and WITec software, JCAMP-DX (`.jdx`, `.dx`, uncompressed), and binary Thermo/Galactic SPC (`.spc`, new format; the first sub-spectrum of multi-spectrum files). Files whose X axis runs high-to-low are reordered automatically.
 * Once loaded, each file generates a "Spectrum Card" in the control panel where you can assign custom labels, trace colors, and grouping tags (e.g., "Control", "Sample A").
 
 ### 2.2 Signal Processing
-Before plotting, you may apply mathematical corrections to your raw data:
-* **Despiking (Cosmic Ray):** Select *Modified Z-Score* or *Whitaker-Hayes*. Adjust the Z-Threshold to aggressively target anomalous spikes without distorting genuine Raman bands.
-* **Baseline Correction:** Select from *Linear*, *Polynomial Fit*, *Rubber Band*, or *Rolling Ball*. Toggle "Show Baseline Overlay" to visualize the calculated baseline beneath your spectra.
-* **Smoothing:** Apply *Moving Average*, *Savitzky-Golay*, *Gaussian*, or *Median* filters to reduce high-frequency noise.
+Before plotting, you may apply corrections to your raw data. They run in this
+order: despiking → baseline → smoothing → normalisation.
+* **Despiking (cosmic rays):** *Modified Z-Score* (spike replaced by interpolation)
+  or *Whitaker–Hayes* (spike replaced by the mean of its clean neighbours within
+  the Repair Window). Only narrow, isolated jumps are treated as spikes, so strong
+  sharp bands are left alone. Start with a threshold of 6.
+* **Baseline Correction:** *Linear* (two anchor points), *Polynomial*
+  (iterative ModPoly, which runs underneath the bands instead of through them),
+  *Rubber Band* (lower convex hull, no parameters), or *Rolling Ball*. Turn on
+  "Show Baseline Overlay" to check the estimated baseline against the raw data.
+* **Smoothing:** *Moving Average*, *Savitzky–Golay* (recommended: keeps band
+  positions and heights), *Gaussian* (set σ in points) or *Median*. Keep the
+  window well below the width of your narrowest band.
+* **Normalisation:** *Max*, *Min–Max*, *Area*, *Vector*, or *Reference band*,
+  which divides each spectrum by its intensity at a band you choose (e.g.
+  1003 cm⁻¹ phenylalanine, 1450 cm⁻¹ CH₂, or 520.7 cm⁻¹ silicon).
 
 ### 2.3 Averaging & Error Bands
 To compare aggregate data:
@@ -34,10 +46,19 @@ To compare aggregate data:
 3. Select your error metric (SD or SEM) and style (Capped Bars or Shaded Band). The engine will calculate and render the statistics dynamically.
 
 ### 2.4 Peak Detection & Comparison
-* **Detect Peaks:** Checking this box highlights local maxima on the plot. The Peak Table below the graph lists the coordinate, intensity, and estimated biomolecular assignment.
-* **Cross-File Analyzer:** Click the **🔍 Compare** button to run the clustering algorithm. This tool scans all loaded files and sorts peaks into two categories:
-  * *Common Peaks:* Universal vibrations found across all loaded files (visualized as subtle background guide lines).
-  * *Distinct/Unique:* Anomalous peaks found only in specific traces.
+* **Detect Peaks:** marks every band whose prominence (height above the
+  surrounding signal) is at least **Min Prominence** % of the spectrum's
+  intensity range. Raise it to ignore noise; lower it to catch weak bands.
+* **Peak table:** lists every detected band with its position, intensity and a
+  suggested assignment from the built-in Raman band library. Edit any cell,
+  delete rows or add your own, then click **Update Markers**.
+* **Label Spacing / Max Labels:** only thin out the text labels on the plot so
+  they do not overlap. Every peak stays in the table.
+* **Cross-File Analyzer:** click **🔍 Compare** to sort bands across all loaded
+  files into:
+  * *Common Peaks:* found in every file (drawn as faint guide lines).
+  * *Distinct/Unique:* found only in some files. Bands closer than **Compare
+    Match ±cm⁻¹** are treated as the same band.
 
 ---
 
@@ -147,6 +168,8 @@ Press `?` for the full sheet. The essentials:
 | The file loads but the plot is empty | The parser found no numeric pairs — open the file and check for a header block the format detector did not recognise |
 | Peaks disappear after smoothing | The smoothing window is wider than your narrowest band; reduce it, or switch to Savitzky–Golay |
 | The corrected spectrum dips below zero | The baseline is over-fitted; lower the polynomial order or increase the rolling-ball radius |
+| Too many or too few peaks marked | Adjust **Min Prominence**; smoothing first also suppresses noise peaks |
+| A sharp genuine band is flattened by despiking | Raise the despike threshold; bands only 1–2 pixels wide cannot be told apart from spikes, so leave despiking off for such data |
 | Group averaging produces nothing | Group names must match exactly, including case and spacing |
 | Fitted curve ignores the peak | Peak models fit one dominant peak; for data with several peaks, fit the region around the one you want, or pick the model that matches the physics |
 | "This model could not be fitted" | Too few points for the model, or power/log models with no x > 0 |

@@ -33,7 +33,7 @@ function plotSpectrum() {
 
   const traces = []; let detectedPeaks = []; lastPlottedSeries = [];
 
- const pushSeries = (name, x, y, color, eY, eX, baseline = null, raw = null, shift = 0, kind = "file", idx = 0) => {
+ const pushSeries = (name, x, y, color, eY, eX, baseline = null, raw = null, shift = 0, kind = "file", idx = 0, xshift = 0) => {
 
     // Manual Y-axis scale divisor (e.g. show 5000 as 5, with the axis label
     // annotated accordingly) — applied uniformly at the single funnel point.
@@ -185,7 +185,8 @@ if (
             detectedPeaks.push({
 
                 x: x[i],
-                y: y[i]
+                y: y[i],
+                xTrue: x[i] - xshift   // position before any display X offset
 
             })
 
@@ -198,7 +199,7 @@ if (
   if (avgMode === "grandavg") {
 
     const agg = averageSpecs(activeSpectra);
-    if (!agg) return;
+    if (!agg) { alert("The loaded spectra do not share a common X range inside X Min–X Max, so they cannot be averaged."); return; }
 
     const eY =
         yErrMode === "sd" ? agg.sd :
@@ -236,7 +237,7 @@ if (
       const xshift = cascade ? gi * xOff : xOff;
       const y = agg.mean.map(v => v + shift);
       const x = agg.x.map(v => v + xshift);
-      pushSeries(`${g} (n=${agg.n})`, x, y, color, eY, null, null, null, 0, "group", gi);
+      pushSeries(`${g} (n=${agg.n})`, x, y, color, eY, null, null, null, 0, "group", gi, xshift);
     });
 
   } else { // individual
@@ -246,32 +247,16 @@ if (
       const shift = cascade ? idx * yOff : yOff;
       const xshift = cascade ? idx * xOff : xOff;
       const y = yy.map(v => v + shift); const x = xx.map(v => v + xshift);
-      pushSeries(label, x, y, color, null, null, baseline, raw, shift, "file", gIdx);
+      pushSeries(label, x, y, color, null, null, baseline, raw, shift, "file", gIdx, xshift);
     });
   }
 
- lastPeaksData = filterPeakAnnotations(
-
-    detectedPeaks.map(pk => {
-
-        const match = lookUpDefaultBiomolecularAssignment(pk.x);
-
-        return {
-
-            x: pk.x,
-            y: pk.y,
-            mode: match.mode,
-            assign: match.assign
-
-        };
-
-    }),
-
-    parseFloat(document.getElementById("labelSpacing").value),
-
-    parseInt(document.getElementById("maxPeakLabels").value)
-
-);
+  // Every detected peak goes to the table and gets a marker; Label Spacing and
+  // Max Labels only thin out the text labels drawn on the plot.
+  lastPeaksData = mergeNearbyPeaks(detectedPeaks, 3).map(pk => {
+    const match = lookUpDefaultBiomolecularAssignment(pk.xTrue ?? pk.x);
+    return { x: pk.x, y: pk.y, mode: match.mode, assign: match.assign };
+  });
   renderCanvasTracesAndLayout(traces, lastPeaksData, font, wrapper, 'ocean');
   if (doPeaks && lastPeaksData.length) buildOceanPeakTableHTML(); else document.getElementById("peakTableSection").style.display = "none";
 }
@@ -362,9 +347,11 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
     });
   }
 
-  // --- Standard Peak Annotations ---
+  // --- Standard Peak Annotations (thinned by Label Spacing / Max Labels) ---
   if (peaksOn) {
-    peakDataMatrix.forEach(pk => {
+    const spacing = parseFloat(document.getElementById("labelSpacing").value);
+    const maxLabels = parseInt(document.getElementById("maxPeakLabels").value);
+    filterPeakAnnotations(peakDataMatrix, Number.isFinite(spacing) ? spacing : 25, maxLabels > 0 ? maxLabels : Infinity).forEach(pk => {
         annotations.push({
             x: pk.x, y: pk.y, text: String(Math.round(pk.x)),
             showarrow: true, arrowhead: 0, arrowsize: 1, arrowwidth: 1, arrowcolor: "#555",

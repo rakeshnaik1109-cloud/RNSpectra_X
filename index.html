@@ -203,7 +203,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   <select id="baselineType" onchange="updateBaselineParams()">
                     <option value="none">None</option>
                     <option value="linear">Linear (2-point)</option>
-                    <option value="poly">Polynomial Fit</option>
+                    <option value="poly">Polynomial (iterative ModPoly)</option>
                     <option value="rubberband">Rubber Band</option>
                     <option value="rolling_ball">Rolling Ball</option>
                   </select>
@@ -264,13 +264,18 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               <div style="height:10px"></div>
               <div class="field">
                 <label>Method</label>
-                <select id="normType">
+                <select id="normType" onchange="document.getElementById('normRefWrap').style.display = this.value === 'ref' ? 'grid' : 'none'">
                   <option value="none">None</option>
                   <option value="max">Max</option>
                   <option value="minmax">Min-Max</option>
                   <option value="area">Area</option>
                   <option value="vector">Vector</option>
+                  <option value="ref">Reference band</option>
                 </select>
+              </div>
+              <div class="grid" id="normRefWrap" style="display:none;margin-top:8px;">
+                <div class="field"><label>Reference band (cm⁻¹)</label><input type="number" id="normRefX" value="1003" step="any" title="e.g. 1003 (phenylalanine), 1450 (CH₂), 520.7 (silicon)"/></div>
+                <div class="field"><label>Search ± (cm⁻¹)</label><input type="number" id="normRefWin" value="10" min="0.5" step="any"/></div>
               </div>
             </div>
           </div>
@@ -584,8 +589,9 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <label class="toggle-item"><input type="checkbox" id="showPeakGuides" checked>Peak Guides</label>
               </div>
               <div class="grid">
-                <div class="field"><label>Peak Match ±cm⁻¹</label><input type="number" id="oceanTolerance" value="5" min="1"/></div>
-                <div class="field"><label>Label Spacing</label><input type="number" id="labelSpacing" value="70" min="1" step="1"/></div>
+                <div class="field"><label>Min Prominence (%)</label><input type="number" id="peakProminence" value="5" min="0" max="100" step="0.5" title="A peak must rise this % of the spectrum's intensity range above the surrounding signal. Raise it to ignore noise; lower it to catch weak bands."/></div>
+                <div class="field"><label>Compare Match ±cm⁻¹</label><input type="number" id="oceanTolerance" value="5" min="0.5" step="any" title="Used by Compare: peaks from different files within this distance are treated as the same band."/></div>
+                <div class="field"><label>Label Spacing (cm⁻¹)</label><input type="number" id="labelSpacing" value="25" min="0" step="1" title="Minimum distance between peak labels on the plot. Only affects labels; every detected peak stays in the table."/></div>
                 <div class="field"><label>Max Labels</label><input type="number" id="maxPeakLabels" value="30" min="1" step="1"/></div>
                 <div class="field"><label>Guide Color</label><input type="color" id="guideLineColor" value="#666666"/></div>
                 <div class="field"><label>Guide Width</label><input type="range" id="guideLineWidth" value="1.5" min="0.5" max="5" step="0.5"/></div>
@@ -1186,7 +1192,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
         </div>
 
       </div></div></div><footer class="app-footer">
-    <strong>RNSpectraX™ v3.2</strong> — Rakesh Naik &amp; Sachin Kumar Srivastava,
+    <strong>RNSpectraX™ v3.3</strong> — Rakesh Naik &amp; Sachin Kumar Srivastava,
     Centre for Photonics and Quantum Communication Technology, IIT Roorkee.<br/>
     Every calculation runs in this browser tab; no spectrum is uploaded anywhere.
     <!--· <a data-home-link href="https://rakeshnaik1109-cloud.github.io/RakeshNaik/">Rakesh Naik — homepage</a>-->

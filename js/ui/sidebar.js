@@ -53,7 +53,8 @@ function updateXYHints() {
 }
 function addXYDataset() {
   extraDatasetCount++; const idx = extraDatasetCount;
-  document.getElementById("extraXYDatasets").innerHTML += `
+  // insertAdjacentHTML keeps values already pasted into earlier datasets
+  document.getElementById("extraXYDatasets").insertAdjacentHTML("beforeend", `
     <div id="extraDS${idx}" style="border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:12px;">
       <div style="display:flex; justify-content:space-between; align-items:center;"><b>Dataset ${idx + 1}</b><button class="btn btn-outline btn-sm" onclick="document.getElementById('extraDS${idx}').remove()">✕ Remove</button></div>
       <div class="grid-3">
@@ -65,7 +66,7 @@ function addXYDataset() {
         <div class="field"><label>Y Error (optional)</label><textarea id="xyYerr${idx}"></textarea></div>
         <div class="field"><label>X Error (optional)</label><textarea id="xyXerr${idx}"></textarea></div>
       </div>
-    </div>`;
+    </div>`);
 }
 
 

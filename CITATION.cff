@@ -9,7 +9,7 @@ authors:
   - family-names: Srivastava
     given-names: Sachin Kumar
     affiliation: "Department of Physics and Centre for Photonics and Quantum Communication Technology, IIT Roorkee"
-version: "3.2"
+version: "3.3"
 date-released: "2026-10-20"
 license-other: "Proprietary — see LICENSE"
 keywords:

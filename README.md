@@ -16,7 +16,7 @@ It has two workspaces:
    a simulation output), you can plot them with error bars and fit them with
    proper least-squares regression and parameter uncertainties.
 
-**Version 3.2** · **Authors:** Rakesh Naik<sup>1</sup>, Sachin Kumar Srivastava<sup>1,2</sup>
+**Version 3.3** · **Authors:** Rakesh Naik<sup>1</sup>, Sachin Kumar Srivastava<sup>1,2</sup>
 <sup>1</sup>Centre for Photonics and Quantum Communication Technology, IIT Roorkee ·
 <sup>2</sup>Department of Physics, IIT Roorkee
 © 2026 Rakesh Naik and Sachin Kumar Srivastava. All rights reserved.
@@ -53,13 +53,13 @@ reload; your files are not.
 
 | Capability | Detail |
 |---|---|
-| Format fingerprinting | Ocean Optics, Horiba/LabSpec, Renishaw WiRE, Bruker, WITec, JCAMP-DX, generic 2-column |
-| Despiking | Modified Z-score and Whitaker–Hayes cosmic-ray removal with adjustable threshold and repair window |
-| Baseline correction | Linear (2-point), polynomial, rubber band, rolling ball, with an optional overlay of the fitted baseline |
+| File formats | Text exports from Ocean Optics, Horiba/LabSpec, Renishaw WiRE, Bruker and WITec; JCAMP-DX; binary Thermo/Galactic SPC; any 2-column text file |
+| Despiking | Cosmic-ray removal that only treats narrow, isolated jumps as spikes, so strong sharp bands are preserved; Modified Z-score (interpolation) or Whitaker–Hayes (neighbour mean) repair |
+| Baseline correction | Linear (2-point), iterative polynomial (ModPoly), rubber band (lower convex hull), rolling ball, with an optional overlay of the estimated baseline |
 | Smoothing | Moving average, Savitzky–Golay, Gaussian, median |
-| Normalisation | Per-spectrum scaling for cross-sample comparison |
-| Group statistics | Group averages and grand average with SD or SEM, drawn as capped bars or shaded bands |
-| Peak detection | Local maxima with prominence control, cross-referenced against a biomolecular assignment library (Amide I/II/III, phenylalanine, tyrosine, lipids and others) |
+| Normalisation | Max, min–max, area, vector, or a chosen reference band (e.g. 1003 cm⁻¹ phenylalanine, 520.7 cm⁻¹ silicon) |
+| Group statistics | Group averages and grand average with SD or SEM, drawn as capped bars or shaded bands, over the range shared by all spectra |
+| Peak detection | Topographic prominence with an adjustable threshold; every band listed in the peak table and matched against a ~35-band Raman reference library (proteins, nucleic acids, lipids, carotenoids, silicon) |
 | Cross-file analyser | Clusters peaks across all loaded spectra into common bands and sample-specific bands |
 | Editable peak table | Correct positions, retitle assignments, delete rows, and re-plot from the edited table |
 
@@ -92,6 +92,39 @@ a methods section. Step-by-step usage is in
 [`docs/USER_MANUAL.md`](docs/USER_MANUAL.md).
 
 ---
+
+## New in 3.3 — Raman mode corrections
+
+- **Savitzky–Golay smoothing no longer shifts peaks.** It was evaluating each
+  local fit at the edge of the window instead of its centre, moving every band
+  by about half a window (≈ 5–6 cm⁻¹ with typical settings).
+- **Rubber-band baseline fixed.** It was built from the upper instead of the
+  lower convex hull, which zeroed the whole spectrum.
+- **Polynomial baseline is now iterative (ModPoly)**, so it runs underneath the
+  bands instead of cutting through them, and is numerically stable at high
+  orders.
+- **Despiking keeps genuine bands.** Before, the steep flanks of strong sharp
+  bands on clean data were "repaired" away. The two despike methods are now
+  genuinely different, and the Repair Window is actually used.
+- **Prominence-based peak detection** with a Min Prominence control (previously
+  an undocumented fixed 15 %-of-maximum threshold). Label Spacing now only
+  thins the plot labels, so close bands such as 1003/1031 cm⁻¹ are no longer
+  dropped from the peak table.
+- **Expanded band library** with literature positions, nearest-match
+  assignment, and "Unassigned" when nothing matches (instead of a generic
+  label).
+- **Reference-band normalisation**, and area normalisation by a proper integral.
+- **Gaussian smoothing** now exposes σ, which was previously fixed at 2 points.
+- **Loading:** binary SPC files are now read correctly; JCAMP-DX `(X++(Y..Y))`
+  blocks are read in full instead of only the first value per line;
+  descending-X files are reordered so averaging works; typed labels and groups
+  are kept when more files are added.
+- **Other fixes:** clearing X Min or X Max no longer crashes processing;
+  averaging no longer extrapolates beyond the range shared by all spectra; the
+  peak table's delete and edit buttons stay aligned with the right peaks; peak
+  assignments ignore the display X offset; in XY mode, values pasted into extra
+  datasets and edited file labels are no longer reset when another one is
+  added.
 
 ## New in 3.2
 

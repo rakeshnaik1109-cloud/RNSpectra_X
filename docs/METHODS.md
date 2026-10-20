@@ -12,16 +12,9 @@ counts or arbitrary intensity units.
 ## 1. Despiking (cosmic-ray removal)
 
 A cosmic ray striking the CCD produces a narrow, high-amplitude spike that is
-uncorrelated with any vibrational mode. Both methods detect spikes on the
-**first difference** of the signal, where a genuine Raman band is smooth and a
-spike is not.
-
-Let $\nabla y_i = y_i - y_{i-1}$.
-
-### Modified Z-score
-
-Standard z-scores are themselves distorted by the outliers they are meant to
-find, so the median and the median absolute deviation are used instead:
+uncorrelated with any vibrational mode. Spikes are found on the **first
+difference** of the signal, $\nabla y_i = y_{i+1} - y_i$, with a robust
+(modified) Z-score:
 
 $$
 Z_i = \frac{0.6745\,\bigl(\nabla y_i - \tilde{\nabla y}\bigr)}{\mathrm{MAD}},
@@ -29,20 +22,39 @@ Z_i = \frac{0.6745\,\bigl(\nabla y_i - \tilde{\nabla y}\bigr)}{\mathrm{MAD}},
 \mathrm{MAD} = \operatorname{median}\bigl(\,\lvert \nabla y_i - \tilde{\nabla y}\rvert\,\bigr)
 $$
 
-The constant 0.6745 is the 0.75 quantile of the standard normal distribution,
-which makes the MAD a consistent estimator of $\sigma$ for normally distributed
-noise. A point is flagged when $\lvert Z_i \rvert$ exceeds the threshold.
+The median and MAD are used because ordinary means and standard deviations are
+themselves distorted by the outliers they are meant to find; the constant 0.6745
+makes the MAD a consistent estimator of $\sigma$ for normally distributed noise.
 
-### Whitaker–Hayes
+At high signal-to-noise ratio the flanks of a strong, sharp band also produce
+outlying differences, so an outlier alone is not taken as a spike. A run of
+points $a+1 \dots b$ is flagged only when
 
-The same detector, followed by the repair rule from Whitaker & Hayes (2018):
-each flagged point is replaced by the mean of the unflagged points inside a
-window of $\pm w$ samples. Points that are themselves flagged are excluded from
-that mean, so a cluster of spikes cannot repair itself.
+1. the jump into it is an outlier, $\lvert Z_a \rvert$ above the threshold;
+2. within at most three points the signal returns to about the level before the
+   jump, $\lvert y_{b+1} - y_a \rvert < \tfrac12 \lvert \nabla y_a \rvert$; and
+3. the steps just outside the run are small compared with that jump,
+   $\lvert \nabla y_{a-1} \rvert,\ \lvert \nabla y_{b+1} \rvert < \tfrac12 \lvert \nabla y_a \rvert$.
+
+A spike rises out of locally smooth signal in a single step and drops back just
+as abruptly; a genuine band rises over several comparable steps and stays up
+for a band-width. Downward spikes (dead pixels) are treated the same way. A
+band only one or two pixels wide cannot be distinguished from a spike in a
+single spectrum. If your instrument undersamples that severely, leave
+despiking off, or compare repeat acquisitions instead.
+
+**Repair.**
+
+- *Modified Z-score:* each flagged point is replaced by linear interpolation
+  between the nearest unflagged neighbours.
+- *Whitaker–Hayes:* each flagged point is replaced by the mean of the unflagged
+  points within $\pm w$ samples (the Repair Window), following Whitaker & Hayes
+  (2018). Flagged points are excluded, so a cluster of spikes cannot repair
+  itself.
 
 **Choosing a threshold.** Start at 6. Lower it if visible spikes survive; raise
-it if sharp genuine bands are being clipped. Compare a corrected spectrum to the
-raw trace before committing.
+it if anything else is being changed. Compare a corrected spectrum to the raw
+trace (Show Original) before committing.
 
 ---
 
@@ -57,17 +69,29 @@ $y_i - b(x_i)$.
 $b$ is the straight line through the signal at the two anchor wavenumbers you
 specify. Fast, transparent, and adequate over a narrow window.
 
-### Polynomial
+### Polynomial (iterative, ModPoly)
 
-A degree-$p$ polynomial is fitted by least squares:
+A single least-squares polynomial passes *through* the Raman bands, so the
+corrected spectrum dips below zero beside every band and band heights are
+underestimated. RNSpectraX instead uses the modified polynomial method of
+Lieber & Mahadevan-Jansen (2003):
 
 $$
-\min_{c_0 \dots c_p} \sum_{i=1}^{N} \Bigl( y_i - \sum_{k=0}^{p} c_k x_i^{\,k} \Bigr)^2
+b^{(0)} = \operatorname{fit}_p(y), \qquad
+y^{(k+1)}_i = \min\!\bigl(y^{(k)}_i,\ b^{(k)}(x_i)\bigr), \qquad
+b^{(k+1)} = \operatorname{fit}_p\bigl(y^{(k+1)}\bigr)
 $$
 
-Low orders (2–4) capture broad fluorescence. High orders start absorbing the
-bands you are trying to measure — if the corrected peak heights change sharply
-as you increase the order, the order is too high.
+where $\operatorname{fit}_p$ is a least-squares polynomial of degree $p$. At each
+iteration the signal is clipped to the current baseline wherever it rises above
+it, so the bands progressively stop pulling the fit upward. Iteration stops when
+the baseline changes by less than 0.1 % (relative RMS), or after 100 passes.
+Before fitting, $x$ is centred and scaled to $[-1, 1]$; raw wavenumbers raised to
+high powers would make the normal equations numerically singular.
+
+Low orders (2–4) capture broad fluorescence. High orders start following broad
+bands. If the corrected band heights change sharply as you increase the order,
+the order is too high.
 
 ### Rubber band
 
@@ -79,11 +103,11 @@ parameters, which makes it a good neutral default.
 
 ### Rolling ball
 
-A ball of radius $r$ (in sample points) is rolled along the underside of the
-spectrum; the baseline is the surface traced by its top. Equivalent to a
-grey-scale morphological opening — an erosion followed by a dilation with a
-ball-shaped structuring element. Set $r$ larger than the widest genuine band and
-smaller than the background curvature.
+A structuring element of half-width $r$ (in sample points) is rolled along the
+underside of the spectrum, implemented as a grey-scale morphological opening:
+a running minimum over $\pm r$ points (erosion) followed by a running maximum
+over $\pm r$ points (dilation), with a flat element. Set $r$ larger than the
+widest genuine band and smaller than the scale of the background curvature.
 
 ---
 
@@ -97,8 +121,8 @@ your narrowest band.**
 | Filter | Computation | Behaviour |
 |---|---|---|
 | Moving average | Mean of $m$ neighbours | Strongest noise reduction, worst peak distortion |
-| Savitzky–Golay | Local least-squares polynomial of order $p$ over $m$ points, evaluated at the centre | Preserves peak height, width and area far better; the standard choice for spectroscopy |
-| Gaussian | Convolution with $\exp(-x^2/2\sigma^2)$ | Smooth response, no ringing |
+| Savitzky–Golay | Local least-squares polynomial of order $p$ over $m$ points, evaluated at the centre point (the window is truncated, not shifted, at the ends) | Preserves peak position, height and width far better; the standard choice for spectroscopy |
+| Gaussian | Convolution with $\exp(-k^2/2\sigma^2)$, $\sigma$ in points, kernel truncated at $\pm 3\sigma$ | Smooth response, no ringing |
 | Median | Median of $m$ neighbours | Non-linear; removes residual impulses without blurring edges |
 
 Savitzky–Golay is a convolution with fixed coefficients, so it costs the same as
@@ -108,16 +132,28 @@ a moving average and is almost always the better choice.
 
 ## 4. Normalisation
 
-Applied after correction, so it acts on the signal rather than the background.
-Options rescale each spectrum by its maximum, its area, or a chosen reference
-band, which is what makes relative band ratios comparable across samples whose
-absolute intensities differ (laser power drift, focus, integration time).
+Applied after baseline correction and smoothing, so it acts on the signal rather
+than the background. It makes relative band intensities comparable across
+samples whose absolute intensities differ (laser power drift, focus, integration
+time).
+
+| Method | Each spectrum is divided by |
+|---|---|
+| Max | its largest value |
+| Min–Max | rescaled so its minimum is 0 and its maximum is 1 |
+| Area | $\int \lvert y \rvert\,dx$, by the trapezoidal rule over its own $x$ values |
+| Vector | its Euclidean norm $\sqrt{\sum y_i^2}$ |
+| Reference band | its maximum within $\pm\Delta$ of a chosen band position, e.g. 1003 cm⁻¹ (phenylalanine), 1450 cm⁻¹ (CH₂) or 520.7 cm⁻¹ (silicon). Spectra with no positive signal there are left unscaled |
 
 ---
 
 ## 5. Group statistics
 
-For a group of $n$ spectra sharing a common $x$ axis, at each point:
+Spectra are averaged on the $x$ grid of the first spectrum in the group, with
+every other spectrum linearly interpolated onto it. Only the range covered by
+**all** spectra in the group is used, since outside it interpolation would only
+repeat end values. Files whose $x$ axis is stored in descending order are put in
+ascending order on loading. At each point:
 
 $$
 \bar{y} = \frac{1}{n}\sum_{j=1}^{n} y_j,
@@ -136,18 +172,39 @@ State which one the shaded band represents in every figure caption.
 
 ## 6. Peak detection
 
-A point is a candidate peak when it exceeds both neighbours. Candidates are then
-filtered by prominence — the height of the peak above the highest saddle
-separating it from any taller peak — which is the property that distinguishes a
-real band from a ripple riding on a shoulder.
+Every local maximum (a flat top counts once, at its centre) is a candidate. Each
+candidate's **topographic prominence** is computed: from the peak, walk left and
+right until the signal rises above the peak or the spectrum ends; the prominence
+is the peak height minus the higher of the two minima found on those walks.
+A candidate is kept when its prominence is at least the **Min Prominence**
+setting, expressed as a percentage of the spectrum's intensity range
+(default 5 %).
 
-Detected positions are matched against a biomolecular assignment table (Amide I
-≈ 1650–1680, Amide III ≈ 1230–1300, phenylalanine ring breathing ≈ 1002,
-tyrosine doublet ≈ 830/850 cm⁻¹, and others) within a tolerance window.
+Prominence is what distinguishes a real band from noise or a ripple riding on a
+shoulder, and unlike an absolute height threshold it does not depend on the
+baseline level or on display offsets. Raise the setting to ignore noise; lower
+it to catch weak bands.
+
+Every detected peak is listed in the peak table and marked on the plot. **Label
+Spacing** and **Max Labels** only thin out the text labels so they do not
+overlap; they never remove peaks from the table.
+
+### Band assignments
+
+Each peak is matched against a reference library of about 35 Raman bands
+commonly reported for biological samples and SERS (e.g. phenylalanine
+1003 cm⁻¹, tyrosine Fermi doublet 830/853 cm⁻¹, Amide III 1230–1285 cm⁻¹,
+CH₂ deformation 1450 cm⁻¹, Amide I α-helix 1655 cm⁻¹ and β-sheet 1670 cm⁻¹,
+lipid C=O ester 1740 cm⁻¹, CH stretches 2850–2935 cm⁻¹, and the silicon
+phonon at 520.7 cm⁻¹, which often comes from the substrate or a calibration
+wafer). Each library entry has its own matching half-width; a peak takes the
+entry whose centre is nearest, provided it falls inside that half-width, and is
+otherwise reported as *Unassigned*. Positions follow Movasaghi *et al.* (2007)
+and Talari *et al.* (2015).
 
 **Assignments are suggestions, not identifications.** Band positions shift with
 environment, protonation state and substrate coupling. Confirm against reference
-spectra before reporting.
+spectra before reporting. Every assignment can be edited in the peak table.
 
 ---
 
@@ -246,12 +303,12 @@ good fit leaves residuals that look like noise; a poor one leaves a pattern.
 
 For reproducibility, a methods section should state:
 
-1. Despiking method and threshold.
-2. Baseline method, and its order or radius.
+1. Despiking method, threshold, and repair window.
+2. Baseline method, and its order (ModPoly) or radius.
 3. Smoothing filter, window length, and polynomial order.
-4. Normalisation basis.
+4. Normalisation basis (and the reference band, if used).
 5. Number of replicates per group, and whether bands are SD or SEM.
-6. Peak detection prominence, and the tolerance used for assignment.
+6. Peak detection minimum prominence, and the band library used for assignment.
 7. Fit model, whether it was weighted, the parameters with their standard errors, and R² (or reduced χ²).
 
 ---
@@ -262,3 +319,5 @@ For reproducibility, a methods section should state:
 - Savitzky, A. & Golay, M. J. E. (1964). Smoothing and differentiation of data by simplified least squares procedures. *Analytical Chemistry*, 36(8), 1627–1639.
 - Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. *Applied Spectroscopy*, 57(11), 1363–1367.
 - Movasaghi, Z., Rehman, S. & Rehman, I. U. (2007). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 42(5), 493–541.
+- Talari, A. C. S., Movasaghi, Z., Rehman, S. & Rehman, I. U. (2015). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 50(1), 46–111.
+- Marquardt, D. W. (1963). An algorithm for least-squares estimation of nonlinear parameters. *Journal of the Society for Industrial and Applied Mathematics*, 11(2), 431–441.

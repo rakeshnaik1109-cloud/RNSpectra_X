@@ -4,12 +4,13 @@
 
 function processSpec(spec) {
 
-  const xmin = parseFloat(document.getElementById("xmin").value);
-  const xmax = parseFloat(document.getElementById("xmax").value);
+  let xmin = parseFloat(document.getElementById("xmin").value);
+  let xmax = parseFloat(document.getElementById("xmax").value);
 
-  // Safegaurd: if input is cleared, default to limits so data isn't destroyed
+  // Safeguard: if a limit is cleared, keep the data on that side
   if (isNaN(xmin)) xmin = -Infinity;
   if (isNaN(xmax)) xmax = Infinity;
+  if (xmin > xmax) [xmin, xmax] = [xmax, xmin];
 
 
   const mask = spec.x
@@ -37,7 +38,9 @@ function processSpec(spec) {
 
   yy = normalizeData(
     smoothed,
-    document.getElementById("normType").value
+    document.getElementById("normType").value,
+    xx,
+    { refX: parseFloat(document.getElementById("normRefX")?.value) || 1003, window: parseFloat(document.getElementById("normRefWin")?.value) || 10 }
   );
 
   return {
@@ -59,9 +62,15 @@ function averageSpecs(specList) {
 
     if (!specList.length) return null;
 
-    const processed = specList.map(processSpec);
+    const processed = specList.map(processSpec).filter(p => p.xx.length);
+    if (!processed.length) return null;
 
-    const sharedX = processed[0].xx.slice();
+    // Average only where every spectrum has data: outside the common range
+    // the interpolation would just repeat each spectrum's end value.
+    const lo = Math.max(...processed.map(p => p.xx[0]));
+    const hi = Math.min(...processed.map(p => p.xx[p.xx.length - 1]));
+    const sharedX = processed[0].xx.filter(v => v >= lo && v <= hi);
+    if (!sharedX.length) return null;
 
     const n = processed.length;
 

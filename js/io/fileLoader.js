@@ -10,35 +10,45 @@ function addFiles(e) {
   let loaded = 0;
   newFiles.forEach(file => {
     const myIdx = oceanGlobalIdx++; const reader = new FileReader();
+    const binary = /\.spc$/i.test(file.name);
     reader.onload = evt => {
-      ingestSpectrum(evt.target.result, file.name, myIdx); loaded++;
+      if (binary) ingestParsedSpectrum(parseSpcBinary(evt.target.result, file.name), file.name, myIdx);
+      else ingestSpectrum(evt.target.result, file.name, myIdx);
+      loaded++;
       if (loaded === newFiles.length) {
         refreshOceanStatus();
         document.getElementById("spectraPanel").style.display = "block";
         document.getElementById("oceanFileList").style.display = "block";
       }
     };
-    reader.readAsText(file);
+    if (binary) reader.readAsArrayBuffer(file); else reader.readAsText(file);
   });
 }
 
 
 function ingestSpectrum(text, filename, index) {
-  const { x, y, meta } = parseSpectralData(text, filename);
+  ingestParsedSpectrum(parseSpectralData(text, filename), filename, index);
+}
+
+function ingestParsedSpectrum({ x, y, meta }, filename, index) {
   spectra[index] = { x, y, gIdx: index, meta };
   oceanFileNames[index] = filename;
 
-  document.getElementById("oceanFileChips").innerHTML +=
-    `<div class="file-chip" id="chip${index}"><span>${filename}</span><span class="fmt-tag">${meta.format}</span><button class="chip-remove" onclick="removeOceanFile(${index})">×</button></div>`;
+  // insertAdjacentHTML (not innerHTML +=) so labels/groups already typed on
+  // other cards are not reset when another file is added
+  document.getElementById("oceanFileChips").insertAdjacentHTML("beforeend",
+    `<div class="file-chip" id="chip${index}"><span>${filename}</span><span class="fmt-tag">${meta.format}</span><button class="chip-remove" onclick="removeOceanFile(${index})">×</button></div>`);
 
   let metaHtml = `<div class="spec-meta"><b>${meta.format}</b> · ${meta.points} pts`;
   if (meta.xrange) metaHtml += ` · X ${meta.xrange[0].toFixed(0)}–${meta.xrange[1].toFixed(0)}`;
+  if (!meta.points) metaHtml += ` · <span style="color:var(--danger,#dc2626)">no numeric X/Y data found</span>`;
+  if (meta.note) metaHtml += ` · <span style="color:var(--danger,#dc2626)">${meta.note}</span>`;
   if (meta.pairs && meta.pairs.length) {
     metaHtml += `<br>` + meta.pairs.slice(0, 4).map(p => `${p[0]}: ${p[1]}`).join(" · ");
   }
   metaHtml += `</div>`;
 
-  document.getElementById("spectrumControls").innerHTML += `
+  document.getElementById("spectrumControls").insertAdjacentHTML("beforeend", `
     <div class="spec-card" id="specCard${index}">
       <b>${filename}</b>
       ${metaHtml}
@@ -47,7 +57,7 @@ function ingestSpectrum(text, filename, index) {
         <div class="field"><label>Color</label><input type="color" id="color${index}" value="${GROUP_COLORS[index % GROUP_COLORS.length]}"></div>
       </div>
       <div class="field" style="margin-top:8px"><label>Group / Species</label><input id="group${index}" value="Group 1" placeholder="e.g. Species A"></div>
-    </div>`;
+    </div>`);
 }
 
 
@@ -66,6 +76,8 @@ function removeOceanFile(index) {
 
 function clearAllOceanFiles() {
   spectra = []; oceanFileNames = {}; oceanGlobalIdx = 0;
+  if (analyzedComparisonMode === 'ocean') { analyzedCommonPeaks = []; analyzedDistinctPeaks = []; analyzedComparisonMode = null; }
+  lastPeaksData = [];
   document.getElementById("spectrumControls").innerHTML = ""; document.getElementById("oceanFileChips").innerHTML = "";
   document.getElementById("spectraPanel").style.display = "none"; document.getElementById("oceanFileList").style.display = "none";
   document.getElementById("peakTableSection").style.display = "none"; document.getElementById("oceanComparisonSection").style.display = "none";
@@ -93,6 +105,12 @@ function readXYFiles(e) {
 
 function renderXYFileCards() {
   const chipsEl = document.getElementById("xyFileChips"); const cardsEl = document.getElementById("xyFileCards");
+  // keep any label/colour the user has already edited before rebuilding the cards
+  Object.keys(xyFileNames).forEach(gIdx => {
+    const f = xyFiles[gIdx]; if (!f) return;
+    const lab = document.getElementById("xyFileLabel" + gIdx), col = document.getElementById("xyFileColor" + gIdx);
+    if (lab) f.name = lab.value; if (col) f.color = col.value;
+  });
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
     const f = xyFiles[gIdx]; if (!f) return;

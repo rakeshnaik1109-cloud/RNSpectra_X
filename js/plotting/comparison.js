@@ -23,9 +23,9 @@ function runComprehensiveComparisonEngine(mode) {
     totalTraces = datasets.length;
     if (totalTraces < 2) { alert("Please load at least 2 data channels to enable comparative operations."); return; }
     datasets.forEach(ds => {
-      let yy = applySmoothing([...ds.y], document.getElementById("xySmoothType").value, parseInt(document.getElementById("xySmP1").value) || 5, parseInt(document.getElementById("xySmP2").value) || 2, 2);
-      yy = normalizeData(yy, document.getElementById("xyNorm").value);
-      runPeakDetectionAlgorithm(ds.x, yy).forEach(i => { peakCollections.push({ x: ds.x[i], y: yy[i], traceLabel: ds.name }); });
+      let yy = xySmooth(ds.y);
+      yy = normalizeData(yy, document.getElementById("xyNorm").value, ds.x);
+      runPeakDetectionAlgorithm(ds.x, yy, 5).forEach(i => { peakCollections.push({ x: ds.x[i], y: yy[i], traceLabel: ds.name }); });
     });
     const tolerance = parseFloat(document.getElementById("xyTolerance").value) || 5;
     sortPeaksClusteringData(peakCollections, tolerance, totalTraces);

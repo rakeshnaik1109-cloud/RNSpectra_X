@@ -49,8 +49,15 @@ function parseSpectralData(text, filename) {
     }
   }
 
+  // ---- JCAMP-DX tabular (X++(Y..Y)) block: one X then several Ys per line ----
+  if (meta.format === "JCAMP-DX" && /##XYDATA\s*=\s*\(X\+\+\(Y\.\.Y\)\)/i.test(text)) {
+    const jc = parseJcampXYData(rawLines);
+    if (jc) { x = jc.x; y = jc.y; if (jc.note) meta.note = jc.note; }
+  }
+
   // ---- Read numeric X/Y rows ----
-  for (let i = startIdx; i < rawLines.length; i++) {
+  const haveJcamp = x.length > 0;
+  for (let i = startIdx; i < rawLines.length && !haveJcamp; i++) {
     const t = rawLines[i].trim();
     if (!t || t.startsWith("#") || t.startsWith("//") || t.startsWith("##") || t.startsWith(";")) continue;
     const parts = t.split(/[\s,;\t]+/);
@@ -60,11 +67,95 @@ function parseSpectralData(text, filename) {
     }
   }
 
-  // ---- If X is descending (FTIR/Bruker common), keep as-is but note it ----
+  // ---- Return X ascending. Descending files (common for FTIR/Bruker) are
+  // reordered so interpolation and group averaging work on every file. ----
   if (x.length > 2 && x[0] > x[x.length - 1]) meta.descending = true;
+  if (x.length > 1) {
+    const order = x.map((_, i) => i).sort((a, b) => x[a] - x[b]);
+    if (order.some((v, i) => v !== i)) { x = order.map(i => x[i]); y = order.map(i => y[i]); }
+  }
 
   meta.points = x.length;
   if (x.length) { meta.xrange = [Math.min(...x), Math.max(...x)]; }
+  return { x, y, meta };
+}
+
+
+// JCAMP-DX "##XYDATA=(X++(Y..Y))" in plain (AFFN/PAC) form. Each line holds a
+// starting X followed by consecutive Y values; X advances by
+// (LASTX − FIRSTX)/(NPOINTS − 1). XFACTOR/YFACTOR are applied.
+// Compressed forms (SQZ/DIF/DUP) are not decoded.
+function parseJcampXYData(lines) {
+  const ldr = {};
+  let inData = false, x0s = [], rows = [];
+  for (const raw of lines) {
+    const t = raw.trim();
+    if (t.startsWith("##")) {
+      const m = t.match(/^##([^=]+)=\s*(.*)$/);
+      if (!m) continue;
+      const key = m[1].replace(/[\s\-_/]/g, "").toUpperCase();
+      if (key === "XYDATA") { inData = true; continue; }
+      if (inData) { inData = false; }
+      ldr[key] = m[2].trim();
+      continue;
+    }
+    if (!inData || !t || t.startsWith("$$")) continue;
+    if (/[@A-IJ-Ra-ij-rS-Zs%]/.test(t.replace(/[eE][+-]?\d/g, ""))) return { x: [], y: [], note: "Compressed JCAMP-DX (SQZ/DIF) is not supported — export as plain (AFFN) JCAMP or CSV." };
+    const nums = t.match(/[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/g);
+    if (!nums || nums.length < 2) continue;
+    x0s.push(parseFloat(nums[0])); rows.push(nums.slice(1).map(parseFloat));
+  }
+  if (!rows.length) return null;
+  const xf = parseFloat(ldr.XFACTOR) || 1, yf = parseFloat(ldr.YFACTOR) || 1;
+  const total = rows.reduce((a, r) => a + r.length, 0);
+  const first = parseFloat(ldr.FIRSTX), last = parseFloat(ldr.LASTX), npts = parseInt(ldr.NPOINTS);
+  const dx = (Number.isFinite(first) && Number.isFinite(last) && npts > 1) ? (last - first) / (npts - 1)
+           : (x0s.length > 1 ? (x0s[1] - x0s[0]) * xf / rows[0].length : 1);
+  const x = [], y = [];
+  rows.forEach((r, li) => r.forEach((v, k) => { x.push(x0s[li] * xf + k * dx); y.push(v * yf); }));
+  return { x, y, note: npts && npts !== total ? `NPOINTS says ${npts}, read ${total}` : "" };
+}
+
+
+// Thermo/Galactic SPC (binary, "new" LSB format, version byte 0x4B).
+// Reads the first sub-file: evenly spaced X from FFIRST..FLAST, or an explicit
+// X array when the TXVALS flag is set; Y as float32 (exponent −128) or as
+// scaled integers y = n·2^(exp−32) (or 2^(exp−16) for 16-bit data).
+function parseSpcBinary(buffer, filename) {
+  const meta = { format: "Galactic SPC", filename, pairs: [] };
+  const fail = note => { meta.note = note; meta.points = 0; return { x: [], y: [], meta }; };
+  if (!(buffer instanceof ArrayBuffer) || buffer.byteLength < 544) return fail("File too short to be SPC");
+  const dv = new DataView(buffer);
+  const flags = dv.getUint8(0), version = dv.getUint8(1);
+  if (version !== 0x4B) return fail(version === 0x4C ? "Big-endian SPC is not supported" : version === 0x4D ? "Old-format SPC is not supported — re-save as new-format SPC, JCAMP-DX or CSV" : "Not a recognised SPC file");
+  const TSPREC = 0x01, TMULTI = 0x04, TXYXYS = 0x40, TXVALS = 0x80;
+  if ((flags & TMULTI) && (flags & TXYXYS)) return fail("Multi-file SPC with separate X per sub-file is not supported");
+  const fexp = dv.getInt8(3), npts = dv.getUint32(4, true);
+  const first = dv.getFloat64(8, true), last = dv.getFloat64(16, true), nsub = dv.getUint32(24, true);
+  if (!npts) return fail("SPC header reports no points");
+  let off = 512, x = [];
+  if (flags & TXVALS) {
+    for (let i = 0; i < npts; i++) x.push(dv.getFloat32(off + 4 * i, true));
+    off += 4 * npts;
+  } else {
+    for (let i = 0; i < npts; i++) x.push(npts > 1 ? first + (last - first) * i / (npts - 1) : first);
+  }
+  // 32-byte sub-header; its own exponent overrides the global one in multi-files
+  const subexp = dv.getInt8(off + 1);
+  const exp = (flags & TMULTI) ? subexp : fexp;
+  off += 32;
+  const y = [];
+  const need = exp === -128 ? 4 * npts : (flags & TSPREC) ? 2 * npts : 4 * npts;
+  if (off + need > buffer.byteLength) return fail("SPC data block is truncated");
+  for (let i = 0; i < npts; i++) {
+    if (exp === -128) y.push(dv.getFloat32(off + 4 * i, true));
+    else if (flags & TSPREC) y.push(dv.getInt16(off + 2 * i, true) * Math.pow(2, exp - 16));
+    else y.push(dv.getInt32(off + 4 * i, true) * Math.pow(2, exp - 32));
+  }
+  if (nsub > 1) meta.note = `${nsub} sub-spectra in file; the first is loaded`;
+  if (x.length > 2 && x[0] > x[x.length - 1]) { meta.descending = true; x.reverse(); y.reverse(); }
+  meta.points = x.length;
+  meta.xrange = [x[0], x[x.length - 1]];
   return { x, y, meta };
 }
 
