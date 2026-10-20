@@ -1787,6 +1787,47 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
               </div>
               <span id="xyFileStatus" style="font-size:12px;color:var(--muted)">No files</span>
               <div id="xyFileChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;"></div>
+
+              <div id="xyGroupPanel" style="display:none;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin:8px 0;">
+                <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:8px;">Columns to plot &amp; grouping</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+                  <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(true)">☑ All</button>
+                  <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(false)">☐ None</button>
+                </div>
+                <div class="grid">
+                  <div class="field"><label>Plot as</label>
+                    <select id="xyGroupMode">
+                      <option value="individual" selected>Each column</option>
+                      <option value="groups">Group means ± spread</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Spread</label>
+                    <select id="xyGroupErr">
+                      <option value="sd" selected>± SD</option>
+                      <option value="sem">± SEM</option>
+                      <option value="none">None</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Show spread as</label>
+                    <select id="xyGroupStyle">
+                      <option value="band" selected>Shaded band</option>
+                      <option value="bars">Error bars</option>
+                      <option value="both">Band + bars</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Band opacity</label><input type="range" id="xyGroupBandOpacity" value="0.22" min="0.05" max="0.8" step="0.01"/></div>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 6px;">Quick grouping (ticked columns, in order)</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                  <span style="font-size:12px;">Every</span>
+                  <input type="number" id="xyGroupEveryN" value="3" min="1" step="1" style="width:56px;">
+                  <span style="font-size:12px;">columns</span>
+                  <button class="btn btn-outline btn-sm" onclick="autoGroupXY('every')">Apply</button>
+                  <button class="btn btn-outline btn-sm" onclick="autoGroupXY('name')" title="PBS, PBS_2, PBS_3 → group PBS (a trailing _number, -number or space-number is ignored)">By name</button>
+                  <button class="btn btn-outline btn-sm" onclick="autoGroupXY('clear')">Clear groups</button>
+                </div>
+                <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Columns with the same <b>Group</b> name are averaged point by point (after smoothing and normalisation). Columns left without a group are still plotted individually.</div>
+              </div>
               <div id="xyFileCards" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
             </div>
           </div>
@@ -3343,6 +3384,8 @@ function renderXYFileCards() {
     const f = xyFiles[gIdx]; if (!f) return;
     const lab = document.getElementById("xyFileLabel" + gIdx), col = document.getElementById("xyFileColor" + gIdx);
     if (lab) f.name = lab.value; if (col) f.color = col.value;
+    const use = document.getElementById("xyFileUse" + gIdx), grp = document.getElementById("xyFileGroup" + gIdx);
+    if (use) f.include = use.checked; if (grp) f.group = grp.value;
   });
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
@@ -3353,14 +3396,42 @@ function renderXYFileCards() {
       <div class="spec-card" id="xyFileCard${gIdx}">
         <b>${esc(f.filename)}</b>
         <div class="spec-meta">${f.x.length} pts${f.ey ? " · Y-error column ✓" : ""}${f.ex ? " · X-error column ✓" : ""}${f.info ? " · " + esc(f.info) : ""}</div>
+        <div class="grid" style="grid-template-columns:auto 1fr;gap:8px;align-items:end;">
+          <label class="toggle-item" style="margin-bottom:6px;"><input type="checkbox" id="xyFileUse${gIdx}" ${f.include === false ? "" : "checked"}>Plot</label>
+          <div class="field"><label>Group</label><input id="xyFileGroup${gIdx}" value="${esc(f.group || "")}" placeholder="none — plotted on its own"></div>
+        </div>
         <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${esc(f.name)}"></div>
         <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
       </div>`;
   });
   const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
+  document.getElementById("xyGroupPanel").style.display = nSets > 1 ? "block" : "none";
   document.getElementById("xyFileStatus").textContent = nSets ? `${nSets} dataset${nSets === 1 ? "" : "s"} from ${nFiles} file${nFiles === 1 ? "" : "s"}` : "No files";
 }
 
+
+// Tick or untick every uploaded dataset
+function setAllXYIncluded(on) {
+  Object.keys(xyFileNames).forEach(gIdx => { const el = document.getElementById("xyFileUse" + gIdx); if (el) el.checked = on; });
+}
+
+// Fill the Group boxes of the ticked datasets, in order:
+//   "every" — consecutive blocks of N columns → G1, G2, …
+//   "name"  — the label without a trailing _2 / -2 / " 2" (PBS, PBS_2 → PBS)
+//   "clear" — empty every Group box
+function autoGroupXY(how) {
+  const ids = Object.keys(xyFileNames).filter(g => document.getElementById("xyFileUse" + g)?.checked);
+  const n = Math.max(1, parseInt(document.getElementById("xyGroupEveryN").value) || 1);
+  ids.forEach((g, k) => {
+    const box = document.getElementById("xyFileGroup" + g); if (!box) return;
+    if (how === "clear") box.value = "";
+    else if (how === "every") box.value = "G" + (Math.floor(k / n) + 1);
+    else if (how === "name") box.value = (document.getElementById("xyFileLabel" + g).value || "").trim().replace(/[\s_\-]*\d+$/, "") || (document.getElementById("xyFileLabel" + g).value || "").trim();
+  });
+  if (how !== "clear") document.getElementById("xyGroupMode").value = "groups";
+  const groups = new Set(ids.map(g => document.getElementById("xyFileGroup" + g)?.value).filter(Boolean));
+  if (how !== "clear") rxNotify(`${groups.size} group${groups.size === 1 ? "" : "s"} set — press Plot`);
+}
 
 function removeXYFile(gIdx) { delete xyFiles[gIdx]; delete xyFileNames[gIdx]; renderXYFileCards(); }
 function clearAllXYFiles() { 
@@ -3408,7 +3479,9 @@ function rxNotify(msg) { if (window.rxToast) window.rxToast(msg); else console.w
 
 function gatherXYDatasets() {
   const tab = document.querySelector('.xy-tab.active').id;
-  if (tab === 'tabFile') return Object.keys(xyFileNames).map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value }));
+  if (tab === 'tabFile') return Object.keys(xyFileNames)
+    .filter(gi => document.getElementById("xyFileUse" + gi)?.checked !== false)
+    .map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value, group: (document.getElementById("xyFileGroup" + gi)?.value || "").trim() }));
   if (tab === 'tabCols') {
     const parsed = parseXYFile(document.getElementById("xyColText").value);
     return [{ x: parsed.x, y: parsed.y, ey: parsed.ey, ex: parsed.ex, name: document.getElementById("xyColName").value, color: "#2563eb" }];
@@ -4551,9 +4624,50 @@ function xySmooth(y) {
   return applySmoothing([...y], type, p1, parseInt(document.getElementById("xySmP2").value) || 2, type === 'gaussian' ? p1 : 2);
 }
 
+// Combine datasets that share a Group name into one mean curve with its SD and
+// SEM. Members are put on the X grid of the first member (linear interpolation)
+// over the X range they all cover; when they already share the same X values,
+// as columns of one spectrometer file do, no interpolation happens.
+// Datasets without a group pass through unchanged.
+function buildXYGroups(processed, errKind) {
+  const order = [], buckets = {};
+  processed.forEach(ds => {
+    if (!ds.group) { order.push({ single: ds }); return; }
+    if (!buckets[ds.group]) { buckets[ds.group] = []; order.push({ group: ds.group }); }
+    buckets[ds.group].push(ds);
+  });
+  return order.map(o => {
+    if (o.single) return o.single;
+    const members = buckets[o.group].map(ds => {
+      const idx = ds.x.map((_, i) => i).sort((a, b) => ds.x[a] - ds.x[b]);
+      return { x: idx.map(i => ds.x[i]), y: idx.map(i => ds.y[i]) };
+    });
+    const n = members.length;
+    const sameX = members.every(m => m.x.length === members[0].x.length && m.x.every((v, i) => v === members[0].x[i]));
+    let grid = members[0].x;
+    if (!sameX) {
+      const lo = Math.max(...members.map(m => m.x[0])), hi = Math.min(...members.map(m => m.x[m.x.length - 1]));
+      grid = grid.filter(v => v >= lo && v <= hi);
+    }
+    const mean = [], sd = [], sem = [];
+    grid.forEach((gx, i) => {
+      const vals = members.map(m => sameX ? m.y[i] : interpolate(m.x, m.y, gx));
+      const mu = vals.reduce((a, b) => a + b, 0) / n;
+      const s = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mu) ** 2, 0) / (n - 1)) : 0;
+      mean.push(mu); sd.push(s); sem.push(n > 1 ? s / Math.sqrt(n) : 0);
+    });
+    const first = buckets[o.group][0];
+    return {
+      // a one-member group has no spread to show
+      x: grid, y: mean, ey: n < 2 ? null : errKind === 'sem' ? sem : errKind === 'sd' ? sd : null, ex: null,
+      name: `${o.group} (n=${n})`, color: first.color, isGroup: true, n, members: buckets[o.group].map(d => d.name)
+    };
+  });
+}
+
 function plotXY() {
-  const datasets = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
-  if (!datasets.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first."); return; }
+  const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
+  if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
   const traces = []; lastXYSeries = []; lastFitResults = [];
   const scatter = document.getElementById("xyScatter").checked;
   const barMode = document.getElementById("xyBarMode").checked;
@@ -4569,9 +4683,19 @@ function plotXY() {
 
   const yDiv = getYDivisor("xy");
 
+  // Smoothing and normalisation act on every column first; groups are then
+  // averaged from the processed columns (the same order as Raman mode).
+  const processed = raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+  const tab = document.querySelector('.xy-tab.active')?.id;
+  const groupMode = tab === 'tabFile' && document.getElementById("xyGroupMode")?.value === 'groups';
+  const errKind = document.getElementById("xyGroupErr")?.value || 'sd';
+  const errStyle = document.getElementById("xyGroupStyle")?.value || 'band';
+  const bandOpacity = parseFloat(document.getElementById("xyGroupBandOpacity")?.value) || 0.22;
+  const datasets = groupMode ? buildXYGroups(processed, errKind) : processed;
+  if (groupMode && !datasets.some(d => d.isGroup)) rxNotify('No Group names set — plotting each column. Fill the Group boxes or use Quick grouping.');
+
   datasets.forEach((ds, di) => {
-    let yy = xySmooth(ds.y);
-    yy = normalizeData(yy, normSel, ds.x);
+    const yy = ds.y;
     const shiftY = di * yOff, shiftX = di * xOff;
     const xv = ds.x.map(v => v + shiftX);
     let yv = yy.map(v => v + shiftY);
@@ -4583,11 +4707,17 @@ function plotXY() {
       ? { type: "bar", x: xv, y: yv, name: displayName, marker: { color: ds.color, line: { width: 0 } }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } }
       : { x: xv, y: yv, name: displayName, mode: scatter ? "markers" : "lines", line: { width: lw, color: ds.color }, marker: { color: ds.color, size: scatter ? 7 : 4 }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } };
     if (document.getElementById("xyFill").checked && !scatter && !barMode) tr.fill = "tozeroy";
-    if (showErr && dsEy) tr.error_y = { type: "data", array: dsEy, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
+    const groupBars = ds.isGroup && dsEy && (errStyle === 'bars' || errStyle === 'both');
+    const groupBand = ds.isGroup && dsEy && (errStyle === 'band' || errStyle === 'both');
+    if ((showErr && dsEy && !ds.isGroup) || groupBars) tr.error_y = { type: "data", array: dsEy, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
+    if (groupBand && !barMode) {
+      const band = buildErrorBandTrace(xv, yv, dsEy, ds.color, bandOpacity, displayName);
+      if (band) { band.legendgroup = 'dataset-' + di; traces.push(band); }
+    }
     if (showErr && dsEx) tr.error_x = { type: "data", array: dsEx, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
     traces.push(tr);
 
-    lastXYSeries.push({ name: displayName, x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
+    lastXYSeries.push({ name: displayName + (ds.isGroup && dsEy ? (errKind === 'sem' ? ' [mean, SEM]' : ' [mean, SD]') : ''), x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
 
     // fitting — done on the processed data before any display offset/divisor,
     // so reported parameters are in the units of the data itself

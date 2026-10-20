@@ -89,6 +89,28 @@ here.
   * Semicolon-separated files with decimal commas (`175,204;-172,47`) are read
     correctly.
 
+### 3.1a Choosing columns and averaging replicates
+When more than one dataset is loaded from files, a **Columns to plot &
+grouping** panel appears.
+* **Plot** tick-box on each dataset card (or **All / None**) chooses which
+  columns are drawn.
+* **Group** box on each card: datasets with the same group name are averaged
+  point by point. Columns with no group are still plotted on their own.
+* **Quick grouping** fills the Group boxes of the ticked columns, in order:
+  * **Every N columns** — e.g. 15 columns with N = 3 → five groups G1 … G5.
+  * **By name** — the label without a trailing number, so `PBS`, `PBS_2`,
+    `PBS_3` become group `PBS`.
+  * **Clear groups** empties them.
+* **Plot as → Group means ± spread** draws each group's mean, labelled with
+  its replicate count (e.g. `PBS (n=3)`), with **± SD** or **± SEM** shown as a
+  shaded band, error bars, or both.
+
+Smoothing and normalisation are applied to every column before averaging. If
+the columns of a group do not share the same X values, they are interpolated
+onto the first column's X values over the range they all cover. The **CSV**
+export then contains each group's mean and its SD or SEM. With **Fit** on, a
+group mean is fitted weighted by its SD or SEM.
+
 **Data Type** only pre-fills the axis labels (and reverses X for FTIR and XPS,
 where that is the convention). It never changes how the data are processed.
 

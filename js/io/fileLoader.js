@@ -162,6 +162,8 @@ function renderXYFileCards() {
     const f = xyFiles[gIdx]; if (!f) return;
     const lab = document.getElementById("xyFileLabel" + gIdx), col = document.getElementById("xyFileColor" + gIdx);
     if (lab) f.name = lab.value; if (col) f.color = col.value;
+    const use = document.getElementById("xyFileUse" + gIdx), grp = document.getElementById("xyFileGroup" + gIdx);
+    if (use) f.include = use.checked; if (grp) f.group = grp.value;
   });
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
@@ -172,14 +174,42 @@ function renderXYFileCards() {
       <div class="spec-card" id="xyFileCard${gIdx}">
         <b>${esc(f.filename)}</b>
         <div class="spec-meta">${f.x.length} pts${f.ey ? " · Y-error column ✓" : ""}${f.ex ? " · X-error column ✓" : ""}${f.info ? " · " + esc(f.info) : ""}</div>
+        <div class="grid" style="grid-template-columns:auto 1fr;gap:8px;align-items:end;">
+          <label class="toggle-item" style="margin-bottom:6px;"><input type="checkbox" id="xyFileUse${gIdx}" ${f.include === false ? "" : "checked"}>Plot</label>
+          <div class="field"><label>Group</label><input id="xyFileGroup${gIdx}" value="${esc(f.group || "")}" placeholder="none — plotted on its own"></div>
+        </div>
         <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${esc(f.name)}"></div>
         <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
       </div>`;
   });
   const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
+  document.getElementById("xyGroupPanel").style.display = nSets > 1 ? "block" : "none";
   document.getElementById("xyFileStatus").textContent = nSets ? `${nSets} dataset${nSets === 1 ? "" : "s"} from ${nFiles} file${nFiles === 1 ? "" : "s"}` : "No files";
 }
 
+
+// Tick or untick every uploaded dataset
+function setAllXYIncluded(on) {
+  Object.keys(xyFileNames).forEach(gIdx => { const el = document.getElementById("xyFileUse" + gIdx); if (el) el.checked = on; });
+}
+
+// Fill the Group boxes of the ticked datasets, in order:
+//   "every" — consecutive blocks of N columns → G1, G2, …
+//   "name"  — the label without a trailing _2 / -2 / " 2" (PBS, PBS_2 → PBS)
+//   "clear" — empty every Group box
+function autoGroupXY(how) {
+  const ids = Object.keys(xyFileNames).filter(g => document.getElementById("xyFileUse" + g)?.checked);
+  const n = Math.max(1, parseInt(document.getElementById("xyGroupEveryN").value) || 1);
+  ids.forEach((g, k) => {
+    const box = document.getElementById("xyFileGroup" + g); if (!box) return;
+    if (how === "clear") box.value = "";
+    else if (how === "every") box.value = "G" + (Math.floor(k / n) + 1);
+    else if (how === "name") box.value = (document.getElementById("xyFileLabel" + g).value || "").trim().replace(/[\s_\-]*\d+$/, "") || (document.getElementById("xyFileLabel" + g).value || "").trim();
+  });
+  if (how !== "clear") document.getElementById("xyGroupMode").value = "groups";
+  const groups = new Set(ids.map(g => document.getElementById("xyFileGroup" + g)?.value).filter(Boolean));
+  if (how !== "clear") rxNotify(`${groups.size} group${groups.size === 1 ? "" : "s"} set — press Plot`);
+}
 
 function removeXYFile(gIdx) { delete xyFiles[gIdx]; delete xyFileNames[gIdx]; renderXYFileCards(); }
 function clearAllXYFiles() { 
@@ -227,7 +257,9 @@ function rxNotify(msg) { if (window.rxToast) window.rxToast(msg); else console.w
 
 function gatherXYDatasets() {
   const tab = document.querySelector('.xy-tab.active').id;
-  if (tab === 'tabFile') return Object.keys(xyFileNames).map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value }));
+  if (tab === 'tabFile') return Object.keys(xyFileNames)
+    .filter(gi => document.getElementById("xyFileUse" + gi)?.checked !== false)
+    .map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value, group: (document.getElementById("xyFileGroup" + gi)?.value || "").trim() }));
   if (tab === 'tabCols') {
     const parsed = parseXYFile(document.getElementById("xyColText").value);
     return [{ x: parsed.x, y: parsed.y, ey: parsed.ey, ex: parsed.ex, name: document.getElementById("xyColName").value, color: "#2563eb" }];

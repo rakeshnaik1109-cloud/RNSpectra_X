@@ -30,9 +30,50 @@ function xySmooth(y) {
   return applySmoothing([...y], type, p1, parseInt(document.getElementById("xySmP2").value) || 2, type === 'gaussian' ? p1 : 2);
 }
 
+// Combine datasets that share a Group name into one mean curve with its SD and
+// SEM. Members are put on the X grid of the first member (linear interpolation)
+// over the X range they all cover; when they already share the same X values,
+// as columns of one spectrometer file do, no interpolation happens.
+// Datasets without a group pass through unchanged.
+function buildXYGroups(processed, errKind) {
+  const order = [], buckets = {};
+  processed.forEach(ds => {
+    if (!ds.group) { order.push({ single: ds }); return; }
+    if (!buckets[ds.group]) { buckets[ds.group] = []; order.push({ group: ds.group }); }
+    buckets[ds.group].push(ds);
+  });
+  return order.map(o => {
+    if (o.single) return o.single;
+    const members = buckets[o.group].map(ds => {
+      const idx = ds.x.map((_, i) => i).sort((a, b) => ds.x[a] - ds.x[b]);
+      return { x: idx.map(i => ds.x[i]), y: idx.map(i => ds.y[i]) };
+    });
+    const n = members.length;
+    const sameX = members.every(m => m.x.length === members[0].x.length && m.x.every((v, i) => v === members[0].x[i]));
+    let grid = members[0].x;
+    if (!sameX) {
+      const lo = Math.max(...members.map(m => m.x[0])), hi = Math.min(...members.map(m => m.x[m.x.length - 1]));
+      grid = grid.filter(v => v >= lo && v <= hi);
+    }
+    const mean = [], sd = [], sem = [];
+    grid.forEach((gx, i) => {
+      const vals = members.map(m => sameX ? m.y[i] : interpolate(m.x, m.y, gx));
+      const mu = vals.reduce((a, b) => a + b, 0) / n;
+      const s = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mu) ** 2, 0) / (n - 1)) : 0;
+      mean.push(mu); sd.push(s); sem.push(n > 1 ? s / Math.sqrt(n) : 0);
+    });
+    const first = buckets[o.group][0];
+    return {
+      // a one-member group has no spread to show
+      x: grid, y: mean, ey: n < 2 ? null : errKind === 'sem' ? sem : errKind === 'sd' ? sd : null, ex: null,
+      name: `${o.group} (n=${n})`, color: first.color, isGroup: true, n, members: buckets[o.group].map(d => d.name)
+    };
+  });
+}
+
 function plotXY() {
-  const datasets = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
-  if (!datasets.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first."); return; }
+  const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
+  if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
   const traces = []; lastXYSeries = []; lastFitResults = [];
   const scatter = document.getElementById("xyScatter").checked;
   const barMode = document.getElementById("xyBarMode").checked;
@@ -48,9 +89,19 @@ function plotXY() {
 
   const yDiv = getYDivisor("xy");
 
+  // Smoothing and normalisation act on every column first; groups are then
+  // averaged from the processed columns (the same order as Raman mode).
+  const processed = raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+  const tab = document.querySelector('.xy-tab.active')?.id;
+  const groupMode = tab === 'tabFile' && document.getElementById("xyGroupMode")?.value === 'groups';
+  const errKind = document.getElementById("xyGroupErr")?.value || 'sd';
+  const errStyle = document.getElementById("xyGroupStyle")?.value || 'band';
+  const bandOpacity = parseFloat(document.getElementById("xyGroupBandOpacity")?.value) || 0.22;
+  const datasets = groupMode ? buildXYGroups(processed, errKind) : processed;
+  if (groupMode && !datasets.some(d => d.isGroup)) rxNotify('No Group names set — plotting each column. Fill the Group boxes or use Quick grouping.');
+
   datasets.forEach((ds, di) => {
-    let yy = xySmooth(ds.y);
-    yy = normalizeData(yy, normSel, ds.x);
+    const yy = ds.y;
     const shiftY = di * yOff, shiftX = di * xOff;
     const xv = ds.x.map(v => v + shiftX);
     let yv = yy.map(v => v + shiftY);
@@ -62,11 +113,17 @@ function plotXY() {
       ? { type: "bar", x: xv, y: yv, name: displayName, marker: { color: ds.color, line: { width: 0 } }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } }
       : { x: xv, y: yv, name: displayName, mode: scatter ? "markers" : "lines", line: { width: lw, color: ds.color }, marker: { color: ds.color, size: scatter ? 7 : 4 }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } };
     if (document.getElementById("xyFill").checked && !scatter && !barMode) tr.fill = "tozeroy";
-    if (showErr && dsEy) tr.error_y = { type: "data", array: dsEy, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
+    const groupBars = ds.isGroup && dsEy && (errStyle === 'bars' || errStyle === 'both');
+    const groupBand = ds.isGroup && dsEy && (errStyle === 'band' || errStyle === 'both');
+    if ((showErr && dsEy && !ds.isGroup) || groupBars) tr.error_y = { type: "data", array: dsEy, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
+    if (groupBand && !barMode) {
+      const band = buildErrorBandTrace(xv, yv, dsEy, ds.color, bandOpacity, displayName);
+      if (band) { band.legendgroup = 'dataset-' + di; traces.push(band); }
+    }
     if (showErr && dsEx) tr.error_x = { type: "data", array: dsEx, visible: true, thickness: 1.2, width: 3, color: hexToRgba(ds.color, 0.6) };
     traces.push(tr);
 
-    lastXYSeries.push({ name: displayName, x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
+    lastXYSeries.push({ name: displayName + (ds.isGroup && dsEy ? (errKind === 'sem' ? ' [mean, SEM]' : ' [mean, SD]') : ''), x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
 
     // fitting — done on the processed data before any display offset/divisor,
     // so reported parameters are in the units of the data itself

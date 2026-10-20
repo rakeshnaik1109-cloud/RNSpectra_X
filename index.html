@@ -779,6 +779,47 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               </div>
               <span id="xyFileStatus" style="font-size:12px;color:var(--muted)">No files</span>
               <div id="xyFileChips" style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;"></div>
+
+              <div id="xyGroupPanel" style="display:none;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin:8px 0;">
+                <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:8px;">Columns to plot &amp; grouping</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+                  <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(true)">☑ All</button>
+                  <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(false)">☐ None</button>
+                </div>
+                <div class="grid">
+                  <div class="field"><label>Plot as</label>
+                    <select id="xyGroupMode">
+                      <option value="individual" selected>Each column</option>
+                      <option value="groups">Group means ± spread</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Spread</label>
+                    <select id="xyGroupErr">
+                      <option value="sd" selected>± SD</option>
+                      <option value="sem">± SEM</option>
+                      <option value="none">None</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Show spread as</label>
+                    <select id="xyGroupStyle">
+                      <option value="band" selected>Shaded band</option>
+                      <option value="bars">Error bars</option>
+                      <option value="both">Band + bars</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Band opacity</label><input type="range" id="xyGroupBandOpacity" value="0.22" min="0.05" max="0.8" step="0.01"/></div>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 6px;">Quick grouping (ticked columns, in order)</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                  <span style="font-size:12px;">Every</span>
+                  <input type="number" id="xyGroupEveryN" value="3" min="1" step="1" style="width:56px;">
+                  <span style="font-size:12px;">columns</span>
+                  <button class="btn btn-outline btn-sm" onclick="autoGroupXY('every')">Apply</button>
+                  <button class="btn btn-outline btn-sm" onclick="autoGroupXY('name')" title="PBS, PBS_2, PBS_3 → group PBS (a trailing _number, -number or space-number is ignored)">By name</button>
+                  <button class="btn btn-outline btn-sm" onclick="autoGroupXY('clear')">Clear groups</button>
+                </div>
+                <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Columns with the same <b>Group</b> name are averaged point by point (after smoothing and normalisation). Columns left without a group are still plotted individually.</div>
+              </div>
               <div id="xyFileCards" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
             </div>
           </div>
