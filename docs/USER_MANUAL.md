@@ -114,6 +114,16 @@ group mean is fitted weighted by its SD or SEM.
 **Data Type** only pre-fills the axis labels (and reverses X for FTIR and XPS,
 where that is the convention). It never changes how the data are processed.
 
+### 3.1b Smoothing and trace style
+* **Smoothing** (② Preprocessing) is applied to every plotted dataset at once —
+  all pasted datasets and every column of an uploaded multi-column file. Tick
+  **Show original (unsmoothed) underneath** to draw the raw data faintly behind
+  each smoothed curve and judge how much the filter changed it.
+* **Trace Style** (④ Trace Appearance): *Lines*, *Markers* (scatter) or
+  *Lines + markers*, with adjustable **Marker Size** and **Marker Shape**.
+  *Vary per dataset* gives each dataset its own symbol, so curves stay
+  distinguishable in black-and-white print.
+
 ### 3.2 Axis limits
 In **Axes & Labels**, X Min / X Max are followed directly by Y Min / Y Max.
 Leave a field blank to let that side follow the data; fill only one side to pin

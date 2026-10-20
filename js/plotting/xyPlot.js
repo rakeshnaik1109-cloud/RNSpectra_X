@@ -75,7 +75,12 @@ function plotXY() {
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
   const traces = []; lastXYSeries = []; lastFitResults = [];
-  const scatter = document.getElementById("xyScatter").checked;
+  const traceMode = document.getElementById("xyTraceStyle")?.value || "lines";
+  const scatter = traceMode === "markers";
+  const markerSize = parseFloat(document.getElementById("xyMarkerSize")?.value) || 7;
+  const symbolSel = document.getElementById("xyMarkerSymbol")?.value || "auto";
+  const SYMBOLS = ["circle", "square", "diamond", "triangle-up", "cross", "x", "triangle-down", "star", "pentagon", "hexagon"];
+  const showOriginal = document.getElementById("xyShowOriginal")?.checked && document.getElementById("xySmoothType").value !== "none";
   const barMode = document.getElementById("xyBarMode").checked;
   const showErr = document.getElementById("xyShowErr").checked;
   const yOff = parseFloat(document.getElementById("xyYOffset").value) || 0;
@@ -92,12 +97,15 @@ function plotXY() {
   // Smoothing and normalisation act on every column first; groups are then
   // averaged from the processed columns (the same order as Raman mode).
   const processed = raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+  // the same pipeline without smoothing, for the optional "original" overlay
+  const unsmoothed = showOriginal ? raw.map(ds => ({ ...ds, y: normalizeData([...ds.y], normSel, ds.x) })) : null;
   const tab = document.querySelector('.xy-tab.active')?.id;
   const groupMode = tab === 'tabFile' && document.getElementById("xyGroupMode")?.value === 'groups';
   const errKind = document.getElementById("xyGroupErr")?.value || 'sd';
   const errStyle = document.getElementById("xyGroupStyle")?.value || 'band';
   const bandOpacity = parseFloat(document.getElementById("xyGroupBandOpacity")?.value) || 0.22;
   const datasets = groupMode ? buildXYGroups(processed, errKind) : processed;
+  const originals = unsmoothed ? (groupMode ? buildXYGroups(unsmoothed, errKind) : unsmoothed) : null;
   if (groupMode && !datasets.some(d => d.isGroup)) rxNotify('No Group names set — plotting each column. Fill the Group boxes or use Quick grouping.');
 
   datasets.forEach((ds, di) => {
@@ -111,7 +119,11 @@ function plotXY() {
     const displayName = getDisplayName('xy', 'dataset', di, ds.name);
     const tr = barMode
       ? { type: "bar", x: xv, y: yv, name: displayName, marker: { color: ds.color, line: { width: 0 } }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } }
-      : { x: xv, y: yv, name: displayName, mode: scatter ? "markers" : "lines", line: { width: lw, color: ds.color }, marker: { color: ds.color, size: scatter ? 7 : 4 }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } };
+      : { x: xv, y: yv, name: displayName, mode: traceMode, line: { width: lw, color: ds.color }, marker: { color: ds.color, size: markerSize, symbol: symbolSel === "auto" ? SYMBOLS[di % SYMBOLS.length] : symbolSel }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } };
+    if (originals && originals[di] && !barMode) {
+      let oy = originals[di].y.map(v => v + shiftY); if (yDiv !== 1) oy = oy.map(v => v / yDiv);
+      traces.push({ x: originals[di].x.map(v => v + shiftX), y: oy, name: displayName + " (original)", mode: "lines", line: { width: Math.max(0.8, lw * 0.6), color: ds.color }, opacity: 0.3, showlegend: false, legendgroup: 'dataset-' + di, hoverinfo: "skip" });
+    }
     if (document.getElementById("xyFill").checked && !scatter && !barMode) tr.fill = "tozeroy";
     const groupBars = ds.isGroup && dsEy && (errStyle === 'bars' || errStyle === 'both');
     const groupBand = ds.isGroup && dsEy && (errStyle === 'band' || errStyle === 'both');

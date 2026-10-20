@@ -848,6 +848,10 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field" id="xySmP1Wrap" style="display:none"><label id="xySmP1Label">Window (pts)</label><input type="number" id="xySmP1" value="5" min="3" step="2"/></div>
                 <div class="field" id="xySmP2Wrap" style="display:none"><label id="xySmP2Label">Poly Order</label><input type="number" id="xySmP2" value="2" min="1" max="5"/></div>
               </div>
+              <div class="toggles" style="margin-top:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyShowOriginal">Show original (unsmoothed) underneath</label>
+              </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Applied to every plotted dataset at once — all pasted datasets and every column of an uploaded multi-column file — before normalisation and group averaging.</div>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
@@ -935,17 +939,36 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               <div class="section-title" style="margin:0">Trace Appearance</div>
               <span class="chevron">▼</span>
             </div>
-            <div class="collapsible-body" style="max-height:300px">
+            <div class="collapsible-body" style="max-height:420px">
               <div style="height:10px"></div>
               <div class="grid">
                 <div class="field"><label>Line Width</label><input type="number" id="xyLinewidth" value="2" min="0.5" step="0.5"/></div>
                 <div class="field"><label>Y Offset / trace</label><input type="number" id="xyYOffset" value="0" step="0.1"/></div>
                 <div class="field"><label>X Offset / trace</label><input type="number" id="xyXOffset" value="0" step="1"/></div>
+                <div class="field"><label>Trace Style</label>
+                  <select id="xyTraceStyle">
+                    <option value="lines" selected>Lines</option>
+                    <option value="markers">Markers (scatter)</option>
+                    <option value="lines+markers">Lines + markers</option>
+                  </select>
+                </div>
+                <div class="field"><label>Marker Size</label><input type="number" id="xyMarkerSize" value="7" min="2" max="30" step="1"/></div>
+                <div class="field"><label>Marker Shape</label>
+                  <select id="xyMarkerSymbol">
+                    <option value="auto" selected>Vary per dataset</option>
+                    <option value="circle">● Circle</option>
+                    <option value="square">■ Square</option>
+                    <option value="diamond">◆ Diamond</option>
+                    <option value="triangle-up">▲ Triangle</option>
+                    <option value="cross">✚ Cross</option>
+                    <option value="x">✖ X</option>
+                    <option value="circle-open">○ Open circle</option>
+                  </select>
+                </div>
               </div>
               <div class="toggles" style="margin-top:10px;flex-wrap:wrap;gap:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xyInvertX">Invert X</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBarMode">Bar Plot</label>
-                <label class="toggle-item"><input type="checkbox" id="xyScatter">Scatter</label>
                 <label class="toggle-item"><input type="checkbox" id="xyShowErr" checked>Show Error</label>
                 <label class="toggle-item"><input type="checkbox" id="xyFill">Fill Under</label>
               </div>

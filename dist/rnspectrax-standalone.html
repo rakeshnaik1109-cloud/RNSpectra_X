@@ -1856,6 +1856,10 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field" id="xySmP1Wrap" style="display:none"><label id="xySmP1Label">Window (pts)</label><input type="number" id="xySmP1" value="5" min="3" step="2"/></div>
                 <div class="field" id="xySmP2Wrap" style="display:none"><label id="xySmP2Label">Poly Order</label><input type="number" id="xySmP2" value="2" min="1" max="5"/></div>
               </div>
+              <div class="toggles" style="margin-top:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyShowOriginal">Show original (unsmoothed) underneath</label>
+              </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Applied to every plotted dataset at once — all pasted datasets and every column of an uploaded multi-column file — before normalisation and group averaging.</div>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
@@ -1943,17 +1947,36 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
               <div class="section-title" style="margin:0">Trace Appearance</div>
               <span class="chevron">▼</span>
             </div>
-            <div class="collapsible-body" style="max-height:300px">
+            <div class="collapsible-body" style="max-height:420px">
               <div style="height:10px"></div>
               <div class="grid">
                 <div class="field"><label>Line Width</label><input type="number" id="xyLinewidth" value="2" min="0.5" step="0.5"/></div>
                 <div class="field"><label>Y Offset / trace</label><input type="number" id="xyYOffset" value="0" step="0.1"/></div>
                 <div class="field"><label>X Offset / trace</label><input type="number" id="xyXOffset" value="0" step="1"/></div>
+                <div class="field"><label>Trace Style</label>
+                  <select id="xyTraceStyle">
+                    <option value="lines" selected>Lines</option>
+                    <option value="markers">Markers (scatter)</option>
+                    <option value="lines+markers">Lines + markers</option>
+                  </select>
+                </div>
+                <div class="field"><label>Marker Size</label><input type="number" id="xyMarkerSize" value="7" min="2" max="30" step="1"/></div>
+                <div class="field"><label>Marker Shape</label>
+                  <select id="xyMarkerSymbol">
+                    <option value="auto" selected>Vary per dataset</option>
+                    <option value="circle">● Circle</option>
+                    <option value="square">■ Square</option>
+                    <option value="diamond">◆ Diamond</option>
+                    <option value="triangle-up">▲ Triangle</option>
+                    <option value="cross">✚ Cross</option>
+                    <option value="x">✖ X</option>
+                    <option value="circle-open">○ Open circle</option>
+                  </select>
+                </div>
               </div>
               <div class="toggles" style="margin-top:10px;flex-wrap:wrap;gap:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xyInvertX">Invert X</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBarMode">Bar Plot</label>
-                <label class="toggle-item"><input type="checkbox" id="xyScatter">Scatter</label>
                 <label class="toggle-item"><input type="checkbox" id="xyShowErr" checked>Show Error</label>
                 <label class="toggle-item"><input type="checkbox" id="xyFill">Fill Under</label>
               </div>
@@ -4669,7 +4692,12 @@ function plotXY() {
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
   const traces = []; lastXYSeries = []; lastFitResults = [];
-  const scatter = document.getElementById("xyScatter").checked;
+  const traceMode = document.getElementById("xyTraceStyle")?.value || "lines";
+  const scatter = traceMode === "markers";
+  const markerSize = parseFloat(document.getElementById("xyMarkerSize")?.value) || 7;
+  const symbolSel = document.getElementById("xyMarkerSymbol")?.value || "auto";
+  const SYMBOLS = ["circle", "square", "diamond", "triangle-up", "cross", "x", "triangle-down", "star", "pentagon", "hexagon"];
+  const showOriginal = document.getElementById("xyShowOriginal")?.checked && document.getElementById("xySmoothType").value !== "none";
   const barMode = document.getElementById("xyBarMode").checked;
   const showErr = document.getElementById("xyShowErr").checked;
   const yOff = parseFloat(document.getElementById("xyYOffset").value) || 0;
@@ -4686,12 +4714,15 @@ function plotXY() {
   // Smoothing and normalisation act on every column first; groups are then
   // averaged from the processed columns (the same order as Raman mode).
   const processed = raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+  // the same pipeline without smoothing, for the optional "original" overlay
+  const unsmoothed = showOriginal ? raw.map(ds => ({ ...ds, y: normalizeData([...ds.y], normSel, ds.x) })) : null;
   const tab = document.querySelector('.xy-tab.active')?.id;
   const groupMode = tab === 'tabFile' && document.getElementById("xyGroupMode")?.value === 'groups';
   const errKind = document.getElementById("xyGroupErr")?.value || 'sd';
   const errStyle = document.getElementById("xyGroupStyle")?.value || 'band';
   const bandOpacity = parseFloat(document.getElementById("xyGroupBandOpacity")?.value) || 0.22;
   const datasets = groupMode ? buildXYGroups(processed, errKind) : processed;
+  const originals = unsmoothed ? (groupMode ? buildXYGroups(unsmoothed, errKind) : unsmoothed) : null;
   if (groupMode && !datasets.some(d => d.isGroup)) rxNotify('No Group names set — plotting each column. Fill the Group boxes or use Quick grouping.');
 
   datasets.forEach((ds, di) => {
@@ -4705,7 +4736,11 @@ function plotXY() {
     const displayName = getDisplayName('xy', 'dataset', di, ds.name);
     const tr = barMode
       ? { type: "bar", x: xv, y: yv, name: displayName, marker: { color: ds.color, line: { width: 0 } }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } }
-      : { x: xv, y: yv, name: displayName, mode: scatter ? "markers" : "lines", line: { width: lw, color: ds.color }, marker: { color: ds.color, size: scatter ? 7 : 4 }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } };
+      : { x: xv, y: yv, name: displayName, mode: traceMode, line: { width: lw, color: ds.color }, marker: { color: ds.color, size: markerSize, symbol: symbolSel === "auto" ? SYMBOLS[di % SYMBOLS.length] : symbolSel }, legendgroup: 'dataset-' + di, meta: { editable: true, kind: 'dataset', idx: di } };
+    if (originals && originals[di] && !barMode) {
+      let oy = originals[di].y.map(v => v + shiftY); if (yDiv !== 1) oy = oy.map(v => v / yDiv);
+      traces.push({ x: originals[di].x.map(v => v + shiftX), y: oy, name: displayName + " (original)", mode: "lines", line: { width: Math.max(0.8, lw * 0.6), color: ds.color }, opacity: 0.3, showlegend: false, legendgroup: 'dataset-' + di, hoverinfo: "skip" });
+    }
     if (document.getElementById("xyFill").checked && !scatter && !barMode) tr.fill = "tozeroy";
     const groupBars = ds.isGroup && dsEy && (errStyle === 'bars' || errStyle === 'both');
     const groupBand = ds.isGroup && dsEy && (errStyle === 'band' || errStyle === 'both');
@@ -5378,11 +5413,29 @@ function setMode(mode) {
 
 
 
+// Collapsible sections animate open to their real content height and are then
+// left unconstrained ("none"), so content added later — fit results for many
+// datasets, extra controls — is never clipped by a fixed max-height.
 function toggleSection(header) {
   header.classList.toggle('open');
   const body = header.nextElementSibling;
-  body.style.maxHeight = header.classList.contains('open') ? '600px' : '0';
+  if (header.classList.contains('open')) {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    const done = e => { if (e.target === body && header.classList.contains('open')) body.style.maxHeight = 'none'; body.removeEventListener('transitionend', done); };
+    body.addEventListener('transitionend', done);
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';   // from "none" to a number so the close animates
+    void body.offsetHeight;
+    body.style.maxHeight = '0';
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.collapsible-header.open').forEach(h => {
+    const body = h.nextElementSibling;
+    if (body && body.classList.contains('collapsible-body')) body.style.maxHeight = 'none';
+  });
+});
 
 /* Quick-nav pills: scroll a numbered group into view within the sidebar,
    and open it briefly if it happens to be a collapsed top-level card. */

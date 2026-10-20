@@ -17,11 +17,29 @@ function setMode(mode) {
 
 
 
+// Collapsible sections animate open to their real content height and are then
+// left unconstrained ("none"), so content added later — fit results for many
+// datasets, extra controls — is never clipped by a fixed max-height.
 function toggleSection(header) {
   header.classList.toggle('open');
   const body = header.nextElementSibling;
-  body.style.maxHeight = header.classList.contains('open') ? '600px' : '0';
+  if (header.classList.contains('open')) {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    const done = e => { if (e.target === body && header.classList.contains('open')) body.style.maxHeight = 'none'; body.removeEventListener('transitionend', done); };
+    body.addEventListener('transitionend', done);
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';   // from "none" to a number so the close animates
+    void body.offsetHeight;
+    body.style.maxHeight = '0';
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.collapsible-header.open').forEach(h => {
+    const body = h.nextElementSibling;
+    if (body && body.classList.contains('collapsible-body')) body.style.maxHeight = 'none';
+  });
+});
 
 /* Quick-nav pills: scroll a numbered group into view within the sidebar,
    and open it briefly if it happens to be a collapsed top-level card. */
