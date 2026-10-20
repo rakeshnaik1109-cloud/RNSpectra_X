@@ -184,11 +184,11 @@ file, so it can be shared as one attachment. Regenerate it with
 `js/config.js` holds the single line that controls the header link:
 
 ```js
-window.RNSPX_HOME_URL = "../index.html";
+window.RNSPX_HOME_URL = "https://rakeshnaik1109-cloud.github.io/RakeshNaik/";
 ```
 
-Change it to your live homepage URL if the two sites are not served from the
-same domain.
+It points to the RakeshNaik homepage. Change it if the homepage moves; the
+app and the homepage are separate GitHub Pages sites.
 
 ---
 
