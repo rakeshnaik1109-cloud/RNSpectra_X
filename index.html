@@ -973,6 +973,14 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <label class="toggle-item"><input type="checkbox" id="xyShowErr" checked>Show Error</label>
                 <label class="toggle-item"><input type="checkbox" id="xyFill">Fill Under</label>
               </div>
+              <div class="grid" style="margin-top:10px;">
+                <div class="field"><label>Colours</label>
+                  <select id="xyColorScheme">
+                    <option value="auto" selected>Distinct (automatic, in plot order)</option>
+                    <option value="cards">Use each dataset's own colour</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>

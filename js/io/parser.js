@@ -253,7 +253,13 @@ function parseXYTable(rows, sourceName) {
   }
 
   for (let c = 1; c < nCols; c++) {
-    const s = { name: labels[c] && !Number.isFinite(cellNum(labels[c])) ? labels[c] : `${sourceName} · column ${c + 1}`, x: [], y: [], ey: null, ex: null, info: "" };
+    // Name: the header row; else the instrument "Filename-->" row (extension
+    // dropped); else an automatic "file · column N", flagged so that grouping
+    // by name never lumps unrelated unnamed columns together.
+    const fnRow = metaRows.find(r => /^file\s*name/i.test(cellText(r[0])));
+    const fromFile = fnRow ? cellText(fnRow[c]).replace(/\.[^.]+$/, "") : "";
+    const named = labels[c] && !Number.isFinite(cellNum(labels[c])) ? labels[c] : fromFile;
+    const s = { name: named || `${sourceName} · column ${c + 1}`, autoName: !named, x: [], y: [], ey: null, ex: null, info: "" };
     data.forEach((r, i) => { const y = cellNum(r[c]); if (Number.isFinite(xs[i]) && Number.isFinite(y)) { s.x.push(xs[i]); s.y.push(y); } });
     if (!s.x.length) continue;
     s.info = metaRows.map(r => {

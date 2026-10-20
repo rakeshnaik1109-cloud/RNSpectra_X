@@ -99,7 +99,10 @@ grouping** panel appears.
 * **Quick grouping** fills the Group boxes of the ticked columns, in order:
   * **Every N columns** — e.g. 15 columns with N = 3 → five groups G1 … G5.
   * **By name** — the label without a trailing number, so `PBS`, `PBS_2`,
-    `PBS_3` become group `PBS`.
+    `PBS_3` become group `PBS`. Columns with no name in the file (shown as
+    "*file* · column *N*") are never grouped this way; give them a Group by
+    hand if they belong together. Unnamed columns take their name from an
+    instrument `Filename-->` row when the file has one.
   * **Clear groups** empties them.
 * **Plot as → Group means ± spread** draws each group's mean, labelled with
   its replicate count (e.g. `PBS (n=3)`), with **± SD** or **± SEM** shown as a
@@ -125,6 +128,11 @@ where that is the convention). It never changes how the data are processed.
   all pasted datasets and every column of an uploaded multi-column file. Tick
   **Show original (unsmoothed) underneath** to draw the raw data faintly behind
   each smoothed curve and judge how much the filter changed it.
+* **Colours** (④ Trace Appearance): *Distinct* (default) gives every plotted
+  curve — each group mean or ungrouped column — its own colour from a
+  12-colour set in plot order; beyond 12 curves the colours repeat with dashed,
+  dotted and dash-dot lines. *Use each dataset's own colour* uses the colour
+  chosen on each card instead.
 * **Trace Style** (④ Trace Appearance): *Lines*, *Markers* (scatter) or
   *Lines + markers*, with adjustable **Marker Size** and **Marker Shape**.
   *Vary per dataset* gives each dataset its own symbol, so curves stay

@@ -138,7 +138,7 @@ async function readXYFiles(e) {
         if (t.xLabel && !xLabel) xLabel = t.xLabel;
         t.series.forEach(sr => {
           const myIdx = xyGlobalIdx++;
-          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
+          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, autoName: !!sr.autoName, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
           xyFileNames[myIdx] = file.name; added++;
         });
       });
@@ -200,12 +200,19 @@ function setAllXYIncluded(on) {
 function autoGroupXY(how) {
   const ids = Object.keys(xyFileNames).filter(g => document.getElementById("xyFileUse" + g)?.checked);
   const n = Math.max(1, parseInt(document.getElementById("xyGroupEveryN").value) || 1);
+  let skipped = 0;
   ids.forEach((g, k) => {
     const box = document.getElementById("xyFileGroup" + g); if (!box) return;
     if (how === "clear") box.value = "";
     else if (how === "every") box.value = "G" + (Math.floor(k / n) + 1);
-    else if (how === "name") box.value = (document.getElementById("xyFileLabel" + g).value || "").trim().replace(/[\s_\-]*\d+$/, "") || (document.getElementById("xyFileLabel" + g).value || "").trim();
+    else if (how === "name") {
+      const label = (document.getElementById("xyFileLabel" + g).value || "").trim();
+      // columns that had no name in the file keep their own curve
+      if (/ · column \d+$/.test(label)) { box.value = ""; skipped++; return; }
+      box.value = label.replace(/[\s_\-]*\d+$/, "") || label;
+    }
   });
+  if (skipped) rxNotify(`${skipped} column${skipped === 1 ? " has" : "s have"} no name in the file and ${skipped === 1 ? "was" : "were"} left ungrouped — type a Group for ${skipped === 1 ? "it" : "them"} if needed.`);
   if (how !== "clear") document.getElementById("xyGroupMode").value = "groups";
   const groups = new Set(ids.map(g => document.getElementById("xyFileGroup" + g)?.value).filter(Boolean));
   if (how !== "clear") rxNotify(`${groups.size} group${groups.size === 1 ? "" : "s"} set — press Plot`);

@@ -23,15 +23,21 @@ let lastXYSeries = [];
 
 let lastFitResults = [];
 
+// Twelve clearly distinguishable trace colours (the Tableau 10 set, which is
+// designed so neighbouring entries never look alike, plus black and grey).
+// Beyond twelve curves the colours repeat with a different dash pattern.
 const GROUP_COLORS = [
-"#2563eb",
-"#dc2626",
-"#16a34a",
-"#7c3aed",
-"#ea580c",
-"#0891b2",
-"#db2777",
-"#ca8a04",
-"#0f766e",
-"#9333ea"
+"#1f77b4", // blue
+"#d62728", // red
+"#2ca02c", // green
+"#ff7f0e", // orange
+"#9467bd", // purple
+"#8c564b", // brown
+"#e377c2", // pink
+"#17becf", // cyan
+"#bcbd22", // olive
+"#000000", // black
+"#7f7f7f", // grey
+"#003f5c"  // dark navy
 ];
+const TRACE_DASHES = ["solid", "dash", "dot", "dashdot"];
