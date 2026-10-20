@@ -195,7 +195,8 @@ function setAllXYIncluded(on) {
 
 // Fill the Group boxes of the ticked datasets, in order:
 //   "every" — consecutive blocks of N columns → G1, G2, …
-//   "name"  — the label without a trailing _2 / -2 / " 2" (PBS, PBS_2 → PBS)
+//   "name"  — the label without a trailing _2 / -2 / " 2" (PBS, PBS_2 → PBS;
+//             0.3125, 0.3125_2 → 0.3125)
 //   "clear" — empty every Group box
 function autoGroupXY(how) {
   const ids = Object.keys(xyFileNames).filter(g => document.getElementById("xyFileUse" + g)?.checked);
@@ -209,7 +210,10 @@ function autoGroupXY(how) {
       const label = (document.getElementById("xyFileLabel" + g).value || "").trim();
       // columns that had no name in the file keep their own curve
       if (/ · column \d+$/.test(label)) { box.value = ""; skipped++; return; }
-      box.value = label.replace(/[\s_\-]*\d+$/, "") || label;
+      // drop a replicate suffix only when a separator precedes it ("PBS_2",
+      // "10-3", "Sample 2"); a bare number such as "0.3125" or "10" is the
+      // name itself and is kept whole
+      box.value = label.replace(/[\s_\-]+\d+$/, "") || label;
     }
   });
   if (skipped) rxNotify(`${skipped} column${skipped === 1 ? " has" : "s have"} no name in the file and ${skipped === 1 ? "was" : "were"} left ungrouped — type a Group for ${skipped === 1 ? "it" : "them"} if needed.`);

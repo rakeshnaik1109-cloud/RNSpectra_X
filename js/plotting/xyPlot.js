@@ -79,6 +79,13 @@ function errorBarStride(n) {
   return n <= 60 ? 1 : Math.ceil(n / 40);
 }
 
+// The XY processing pipeline for each dataset (smoothing, then normalisation),
+// shared by the plot and the resonance analysis so both see the same data.
+function processXYDatasets(raw) {
+  const normSel = document.getElementById("xyNorm").value;
+  return raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+}
+
 function plotXY() {
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
@@ -104,7 +111,7 @@ function plotXY() {
 
   // Smoothing and normalisation act on every column first; groups are then
   // averaged from the processed columns (the same order as Raman mode).
-  const processed = raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+  const processed = processXYDatasets(raw);
   // the same pipeline without smoothing, for the optional "original" overlay
   const unsmoothed = showOriginal ? raw.map(ds => ({ ...ds, y: normalizeData([...ds.y], normSel, ds.x) })) : null;
   const tab = document.querySelector('.xy-tab.active')?.id;

@@ -299,6 +299,57 @@ good fit leaves residuals that look like noise; a poor one leaves a pattern.
 
 ---
 
+## 9. Resonance tracking (XY mode)
+
+For each spectrum, after smoothing and normalisation, the resonance is located
+inside a user-defined window $[\lambda_a, \lambda_b]$:
+
+* **Parabola fit.** Let $i^\*$ be the index of the extreme point. A parabola
+  $y = c_0 + c_1(\lambda-\lambda_{i^\*}) + c_2(\lambda-\lambda_{i^\*})^2$ is fitted
+  by least squares to the points with $|\lambda - \lambda_{i^\*}| \le h$, and the
+  resonance is its vertex $\lambda_{\mathrm{res}} = \lambda_{i^\*} - c_1/(2c_2)$.
+  If the parabola opens the wrong way or its vertex leaves the fitted range,
+  the extreme point is used.
+* **Centroid.** With depth $d = y_{\max} - y_{\min}$ inside the window, the
+  contiguous region around the minimum with $y \le y_{\min} + d/2$ is taken and
+  $\lambda_{\mathrm{res}} = \sum w_i\lambda_i / \sum w_i$, with
+  $w_i = (y_{\min} + d/2) - y_i$.
+* **Lowest point.** $\lambda_{\mathrm{res}} = \lambda_{i^\*}$.
+
+Peaks are handled by applying the same rules to $-y$.
+
+The position is found in **every replicate** and the replicates of a group are
+then summarised by mean, SD and SEM. This is preferred over locating the
+resonance of the averaged spectrum, because the replicate scatter of the
+position is exactly what the error bar should describe.
+
+The shift from a reference (blank) group is
+$\Delta\lambda = \bar\lambda - \bar\lambda_{\mathrm{ref}}$, with
+$\sigma_{\Delta} = \sqrt{\sigma^2 + \sigma_{\mathrm{ref}}^2}$ for every group other
+than the reference.
+
+Calibration models (weighted by $1/\sigma^2$, solved as in §8):
+
+$$
+\text{Langmuir: } \Delta\lambda = y_0 + \frac{A\,C}{K + C},
+\qquad
+\text{Hill: } \Delta\lambda = y_0 + \frac{A\,C^{\,n}}{K^{\,n} + C^{\,n}}
+$$
+
+$K$ is the concentration at half saturation (an apparent dissociation constant
+when the surface response follows a 1:1 isotherm) and $A$ the response at
+saturation. For a **linear** calibration the sensitivity is the slope $S$, and
+the limit of detection is
+
+$$
+\mathrm{LOD} = \frac{3\,\sigma_{\mathrm{blank}}}{|S|},
+$$
+
+with $\sigma_{\mathrm{blank}}$ the SD of the blank group's replicate positions.
+The LOD needs at least two blank replicates; more are better.
+
+---
+
 ## Reporting checklist
 
 For reproducibility, a methods section should state:

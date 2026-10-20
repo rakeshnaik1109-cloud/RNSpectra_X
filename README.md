@@ -68,12 +68,13 @@ reload; your files are not.
 | Capability | Detail |
 |---|---|
 | Data entry | Paste values, paste columns, or upload `.csv` / `.txt` / `.dat` / `.tsv` or Excel (`.xlsx` / `.xls` / `.ods`) files, with optional Y-error and X-error columns. A multi-column table (one X column, many Y columns, e.g. an Avantes spectrometer export) becomes one dataset per column, all on one plot |
+| Resonance tracking | Finds the dip (or peak) position in every replicate — parabola-vertex, centroid or minimum — averages per group, and plots position or shift vs concentration with ± SD/SEM; linear (sensitivity, LOD), logarithmic, Langmuir and Hill (K_D) calibration fits |
 | Column selection & replicate averaging | Tick which columns to plot; group columns (by hand, every N columns, or by name) and plot each group's mean ± SD or SEM as a shaded band or error bars |
 | Axis presets | General, FTIR, UV-Vis, fluorescence/PL, XRD, XPS, I–V, time series/kinetics, thermal analysis and calibration curves. A preset only fills in axis labels; the data are never treated differently |
 | Axis limits | X Min / X Max with Y Min / Y Max directly below. Blank means automatic, and one side can be pinned on its own |
 | Plot styles | Lines, markers (scatter) or lines + markers with selectable symbol and size, bar, fill-under, per-dataset X/Y offsets for stacked plots, inverted X axis |
 | Smoothing | Applied to every dataset at once, with an optional faint overlay of the unsmoothed data |
-| Regression models | Linear, polynomial (up to order 10), exponential, power, logarithmic, Gaussian peak, Lorentzian peak |
+| Regression models | Linear, polynomial (up to order 10), exponential, power, logarithmic, Gaussian peak, Lorentzian peak, Langmuir and Hill binding isotherms |
 | Fitting engine | Exact weighted least squares for linear-in-parameter models; Levenberg–Marquardt for non-linear models. Points are weighted by 1/σ² when Y-errors are given |
 | Fit reporting | Every parameter ± its standard error, plus R², adjusted R², residual sum of squares, reduced χ² (weighted fits), and derived quantities (time constant τ, FWHM, peak area) |
 | Cross-file comparison | Finds maxima shared by all uploaded files and those unique to some |

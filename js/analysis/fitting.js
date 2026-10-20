@@ -237,6 +237,28 @@ function fitModel(xIn, yIn, model, order, sigmaIn) {
         { name: 'area (above baseline)', value: area, se: Math.sqrt(Math.max(varArea, 0)) }
       ];
     };
+  } else if (model === 'langmuir' || model === 'hill') {
+    // Binding isotherms in concentration x ≥ 0:
+    //   Langmuir  y = y0 + A·x / (K + x)
+    //   Hill      y = y0 + A·xⁿ / (Kⁿ + xⁿ)
+    // K is the half-saturation concentration (apparent K_D), A the response at
+    // saturation and y0 the response with no analyte.
+    const hill = model === 'hill';
+    if (n < (hill ? 5 : 4)) return null;
+    if (x.some(v => v < 0)) return null;
+    label = hill ? 'Hill' : 'Langmuir'; names = hill ? ['y0', 'A (max response)', 'K (half-saturation)', 'n (Hill coefficient)'] : ['y0', 'A (max response)', 'K (half-saturation)'];
+    const hv = (xi, K, nh) => { const t = Math.pow(Math.max(xi, 0), nh); return t / (Math.pow(Math.abs(K), nh) + t); };
+    f = hill ? (xi, q) => q[0] + q[1] * hv(xi, q[2], q[3]) : (xi, q) => q[0] + q[1] * xi / (Math.abs(q[2]) + xi);
+    const iLo = 0, iHi = n - 1;                       // x is sorted
+    const y0 = y[iLo], A0 = (y[iHi] - y[iLo]) * 1.2 || 1;
+    const pos = x.filter(v => v > 0);
+    const K0 = pos.length ? pos[Math.floor(pos.length / 2)] : 1;
+    const fit = levenbergMarquardt(f, x, y, w, hill ? [y0, A0, K0, 1] : [y0, A0, K0]);
+    if (!fit) return null;
+    p = fit.p; p[2] = Math.abs(p[2]); converged = fit.converged;
+    eqOf = q => hill
+      ? `y = ${fmtNum(q[0])} + ${fmtNum(q[1])}·xⁿ/(${fmtNum(q[2])}ⁿ + xⁿ), n = ${fmtNum(q[3])}`
+      : `y = ${fmtNum(q[0])} + ${fmtNum(q[1])}·x/(${fmtNum(q[2])} + x)`;
   } else {
     return null;
   }

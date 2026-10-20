@@ -718,6 +718,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecProcess')">② Process</button>
             <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecFit')">③ Fitting</button>
             <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecStyle')">④ Style &amp; Export</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('xyControlPanel','xySecDip')">⑤ Resonance</button>
           </div>
 
           <!-- ① DATA INPUT -->
@@ -897,6 +898,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                     <option value="log">Logarithmic</option>
                     <option value="gaussian">Gaussian peak</option>
                     <option value="lorentzian">Lorentzian peak</option>
+                    <option value="langmuir">Langmuir binding</option>
+                    <option value="hill">Hill binding</option>
                   </select>
                 </div>
                 <div class="field" id="fitOrderWrap" style="display:none"><label>Poly Order</label><input type="number" id="fitOrder" value="2" min="2" max="10"/></div>
@@ -1199,6 +1202,55 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             </div>
           </div>
 
+          <!-- ⑤ RESONANCE TRACKING -->
+          <div class="section-card" id="xySecDip">
+            <div class="collapsible-header" onclick="toggleSection(this)">
+              <div class="section-title" style="margin:0">⑤ Resonance Tracking (dip vs concentration)</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="info-box">Finds the resonance dip (or peak) in every ticked dataset, averages it over the replicates of each <b>Group</b>, and plots the position — or its shift from a reference — against concentration. Uses the same smoothing as the plot.</div>
+              <div class="grid">
+                <div class="field"><label>Search from (X)</label><input type="number" id="xyDipLo" step="any" placeholder="e.g. 550"/></div>
+                <div class="field"><label>Search to (X)</label><input type="number" id="xyDipHi" step="any" placeholder="e.g. 750"/></div>
+                <div class="field"><label>Feature</label>
+                  <select id="xyDipType"><option value="dip" selected>Dip (minimum)</option><option value="peak">Peak (maximum)</option></select>
+                </div>
+                <div class="field"><label>Method</label>
+                  <select id="xyDipMethod">
+                    <option value="parabola" selected>Parabola fit (sub-pixel)</option>
+                    <option value="centroid">Centroid (half depth)</option>
+                    <option value="min">Lowest point</option>
+                  </select>
+                </div>
+                <div class="field"><label>Parabola half-width (X)</label><input type="number" id="xyDipHalfWidth" step="any" min="0" placeholder="Auto (window/10)" title="Points within ± this distance of the lowest point are used for the parabola."/></div>
+                <div class="field"><label>Concentration unit</label><input type="text" id="xyDipUnit" placeholder="e.g. µg/mL, nM"/></div>
+                <div class="field"><label>Plot</label>
+                  <select id="xyDipY" onchange="renderResonancePlot()"><option value="shift" selected>Shift from reference (Δ)</option><option value="position">Absolute position</option></select>
+                </div>
+                <div class="field"><label>Reference (blank)</label><select id="xyDipRef" onchange="renderResonancePlot()"></select></div>
+                <div class="field"><label>Error bars</label>
+                  <select id="xyDipErr" onchange="renderResonancePlot()"><option value="sd" selected>± SD</option><option value="sem">± SEM</option></select>
+                </div>
+                <div class="field"><label>Calibration fit</label>
+                  <select id="xyDipFit" onchange="renderResonancePlot()">
+                    <option value="none">None</option>
+                    <option value="linear" selected>Linear (sensitivity, LOD)</option>
+                    <option value="log">Logarithmic</option>
+                    <option value="langmuir">Langmuir (K_D)</option>
+                    <option value="hill">Hill</option>
+                    <option value="poly">Polynomial (order 2)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="toggles" style="margin-top:10px;">
+                <label class="toggle-item"><input type="checkbox" id="xyDipLogX" onchange="renderResonancePlot()">Log concentration axis</label>
+              </div>
+              <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runResonanceAnalysis()">◎ Find resonances &amp; plot vs concentration</button>
+            </div>
+          </div>
+
         </div><div class="panel-actions">
           <button class="btn btn-primary" onclick="plotXY()" style="flex:1">▶ Plot</button>
           <div class="download-group">
@@ -1241,6 +1293,28 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
         </div>
 
         <div id="xy-plot-wrapper" style="display:none;background:white;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);"></div>
+
+        <div class="peak-table-wrap" id="xyDipSection" style="display:none">
+          <div class="collapsible-header open" onclick="toggleSection(this)">
+            <h3 style="margin:0">◎ Resonance tracking</h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="collapsible-body" style="max-height:none; margin-top:12px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Untick a row to leave it out; edit any concentration. The plot and fit update immediately.</div>
+            <div style="overflow-x:auto">
+            <table class="peak-table">
+              <thead><tr><th>Use</th><th>Group</th><th>Concentration</th><th>n</th><th>Mean position</th><th>SD</th><th>SEM</th><th>Replicates</th></tr></thead>
+              <tbody id="xyDipTableBody"></tbody>
+            </table>
+            </div>
+            <div id="xyDipPlot" style="margin-top:14px;background:white;border:1px solid var(--border);border-radius:var(--radius);"></div>
+            <div id="xyDipFitBox"></div>
+            <div class="peak-dl-group">
+              <button class="btn btn-outline btn-sm" onclick="downloadResonanceCSV()">↓ Results .csv</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadResonancePlot()">↓ Plot .png</button>
+            </div>
+          </div>
+        </div>
 
         <div class="peak-table-wrap" id="xyComparisonSection" style="display:none;border-color:var(--accent-soft-border);background:var(--accent-soft);">
           <div class="collapsible-header open" onclick="toggleSection(this)" style="color:var(--accent); margin-bottom: 12px;">
@@ -1291,6 +1365,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="js/plotting/comparison.js"></script>
 <script src="js/analysis/peaks.js"></script>
 <script src="js/analysis/fitting.js"></script>
+<script src="js/analysis/resonance.js"></script>
 <script src="js/ui/sidebar.js"></script>
 <script src="js/ui/layout.js"></script>
 <script src="js/ui/theme.js"></script>

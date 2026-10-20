@@ -155,6 +155,34 @@ just that limit. Limits update the plot as you type, and work together with
 4. If your data include Y-errors, the fit is weighted by 1/σ² and the reduced χ²
    is reported.
 
+### 3.3a Resonance tracking (dip vs concentration)
+For SPR / LSPR sensors, or any sensor read out by the position of a dip or
+peak: **⑤ Resonance Tracking**.
+1. Load the spectra, tick the ones to use and group the replicates (for
+   example **By name**: `PBS`, `PBS_2`, `PBS_3` → `PBS`; `2.5`, `2.5_2` → `2.5`).
+2. Set the **search window** (e.g. 550–750 nm) around the resonance, choose
+   **Dip** or **Peak**, and a method:
+   * *Parabola fit* (default) — a least-squares parabola through the points
+     within ± the half-width of the lowest point; its vertex gives a sub-pixel
+     position.
+   * *Centroid* — the centre of the part of the dip deeper than half its depth.
+   * *Lowest point* — the lowest data point itself.
+3. Press **◎ Find resonances & plot vs concentration**. The position is found
+   in every replicate, then averaged per group (mean, SD, SEM; the individual
+   replicate positions are listed too).
+4. **Concentrations** are read from group names (`10`, `2.5`, `0.3125`,
+   `10 nM` …; `PBS`, `blank`, `buffer` → 0). Edit any value, or untick a row
+   to leave it out — the plot updates immediately.
+5. Plot the **shift from a reference** (the blank group; its uncertainty is
+   added in quadrature) or the **absolute position**, with ± SD or ± SEM, on a
+   linear or log concentration axis.
+6. **Calibration fit:** *Linear* reports the sensitivity (slope, ± error) and
+   the limit of detection LOD = 3·SD(blank)/|slope|; *Langmuir* and *Hill*
+   report the apparent K<sub>D</sub> and the maximum response; *Logarithmic*
+   and *Polynomial* are also available. Fits are weighted by the error bars.
+7. Download the results table (**.csv**, including every replicate position
+   and the fit parameters) and the calibration plot (**.png**).
+
 ### 3.4 Cross-file comparison
 With two or more files loaded in the Upload File tab, **🔍 Compare** lists the
 maxima that occur in every file and those unique to some files. The match window
