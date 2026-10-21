@@ -2426,6 +2426,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
     · <a data-home-link href="https://rakeshnaik1109-cloud.github.io/RakeshNaik/" target="_blank" rel="noopener noreferrer" title="Research, publications and other work by Rakesh Naik">Rakesh Naik — website ↗</a>
     · <a href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md">Manual</a>
     · © 2026 All rights reserved.
+    <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
 </div><script>
@@ -6841,7 +6842,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 <!-- Anonymous visit and feature-usage counts (GoatCounter: no cookies, no personal data, never any spectral data) -->
+<script>window.goatcounter = { path: function (p) { return p.replace(/index\.html$/, ''); } };</script>
 <script data-goatcounter="https://rakeshnaik.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<script>
+/* Public visitor count in the footer (GoatCounter counter API). Stays hidden
+   until GoatCounter answers, e.g. if "Allow adding visitor counts" is off. */
+(function () {
+  var el = document.querySelector('[data-visit-counter]'); if (!el || !window.fetch) return;
+  fetch('https://rakeshnaik.goatcounter.com/counter/' + encodeURIComponent(el.getAttribute('data-visit-counter')) + '.json')
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function (d) { if (d && d.count) { el.querySelector('[data-count]').textContent = d.count; el.hidden = false; } })
+    .catch(function () {});
+})();
+</script>
 
 <!-- Keyboard reference -->
 <div class="rx-modal" id="shortcutSheet" role="dialog" aria-modal="true" aria-labelledby="shortcutSheetTitle">
