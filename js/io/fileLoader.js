@@ -130,15 +130,17 @@ async function tablesFromFile(file) {
 
 async function readXYFiles(e) {
   const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
-  let added = 0, xLabel = "";
+  let added = 0, xLabel = "", yLabel = "";
   for (const file of files) {
     try {
       const tables = await tablesFromFile(file);
       tables.forEach(t => {
         if (t.xLabel && !xLabel) xLabel = t.xLabel;
+        if (t.yLabel && !yLabel) yLabel = t.yLabel;
         t.series.forEach(sr => {
           const myIdx = xyGlobalIdx++;
-          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, autoName: !!sr.autoName, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
+          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, autoName: !!sr.autoName,
+            quantity: sr.quantity || "", quantityLabel: sr.quantityLabel || "", include: sr.preferred === false ? false : undefined, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
           xyFileNames[myIdx] = file.name; added++;
         });
       });
@@ -150,6 +152,8 @@ async function readXYFiles(e) {
   // Take the X-axis title from the table header while the label is still the default
   const xl = document.getElementById("xyXlabel");
   if (xLabel && xl && (xl.value.trim() === "" || xl.value.trim() === "X")) xl.value = xLabel;
+  const yl = document.getElementById("xyYlabel");
+  if (yLabel && yl && (yl.value.trim() === "" || yl.value.trim() === "Y")) yl.value = yLabel;
   if (added) rxNotify(`Loaded ${added} dataset${added === 1 ? "" : "s"}`);
   renderXYFileCards();
 }
@@ -184,9 +188,33 @@ function renderXYFileCards() {
   });
   const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
   document.getElementById("xyGroupPanel").style.display = nSets > 1 ? "block" : "none";
+  // "Plot quantity" selector for files that hold several quantities per measurement
+  const qs = [...new Set(Object.keys(xyFileNames).map(g => xyFiles[g]?.quantity).filter(Boolean))];
+  const qWrap = document.getElementById("xyQuantityWrap"), qSel = document.getElementById("xyQuantity");
+  if (qWrap && qSel) {
+    qWrap.style.display = qs.length > 1 ? "flex" : "none";
+    const ticked = Object.keys(xyFileNames).filter(g => xyFiles[g]?.quantity && xyFiles[g].include !== false).map(g => xyFiles[g].quantity);
+    const current = new Set(ticked).size === 1 ? ticked[0] : "__mixed";
+    const esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    qSel.innerHTML = qs.map(q => `<option value="${esc(q)}">${esc(q)}</option>`).join("") + `<option value="__all">All quantities</option>` + (current === "__mixed" ? `<option value="__mixed">(custom selection)</option>` : "");
+    qSel.value = current;
+  }
   document.getElementById("xyFileStatus").textContent = nSets ? `${nSets} dataset${nSets === 1 ? "" : "s"} from ${nFiles} file${nFiles === 1 ? "" : "s"}` : "No files";
 }
 
+
+// Tick only the datasets of one quantity (e.g. Reflectance) in files that hold
+// several quantities per measurement; datasets without a quantity are untouched.
+function setXYQuantity(q) {
+  Object.keys(xyFileNames).forEach(g => {
+    const f = xyFiles[g], el = document.getElementById("xyFileUse" + g);
+    if (!f || !f.quantity || !el) return;
+    el.checked = q === "__all" || f.quantity === q;
+    f.include = el.checked;
+  });
+  const yl = document.getElementById("xyYlabel"), sample = Object.keys(xyFileNames).map(g => xyFiles[g]).find(f => f && f.quantity === q);
+  if (yl && sample && sample.quantityLabel) yl.value = sample.quantityLabel;
+}
 
 // Tick or untick every uploaded dataset
 function setAllXYIncluded(on) {
@@ -202,6 +230,9 @@ function autoGroupXY(how) {
   const ids = Object.keys(xyFileNames).filter(g => document.getElementById("xyFileUse" + g)?.checked);
   const n = Math.max(1, parseInt(document.getElementById("xyGroupEveryN").value) || 1);
   let skipped = 0;
+  // when every ticked dataset is the same quantity, groups are named by the
+  // measurement alone ("mmt"), otherwise "mmt · Reflectance"
+  const singleQuantity = new Set(ids.map(g => xyFiles[g]?.quantity || "")).size === 1;
   ids.forEach((g, k) => {
     const box = document.getElementById("xyFileGroup" + g); if (!box) return;
     if (how === "clear") box.value = "";
@@ -213,7 +244,11 @@ function autoGroupXY(how) {
       // drop a replicate suffix only when a separator precedes it ("PBS_2",
       // "10-3", "Sample 2"); a bare number such as "0.3125" or "10" is the
       // name itself and is kept whole
-      box.value = label.replace(/[\s_\-]+\d+$/, "") || label;
+      const qm = label.match(/^(.*?) · (.+)$/);            // "mmt_1 · Reflectance"
+      if (qm) {
+        const base = qm[1].replace(/[\s_\-]+\d+$/, "") || qm[1];
+        box.value = singleQuantity ? base : `${base} · ${qm[2]}`;
+      } else box.value = label.replace(/[\s_\-]+\d+$/, "") || label;
     }
   });
   if (skipped) rxNotify(`${skipped} column${skipped === 1 ? " has" : "s have"} no name in the file and ${skipped === 1 ? "was" : "were"} left ungrouped — type a Group for ${skipped === 1 ? "it" : "them"} if needed.`);

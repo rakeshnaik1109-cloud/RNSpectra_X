@@ -211,6 +211,7 @@ function cellNum(c) {
   if (!t || !/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(t)) return NaN;
   return Number(t);
 }
+function xs0(r) { return cellNum(r[0]); }
 function cellText(c) { return c === undefined || c === null ? "" : String(c).trim(); }
 
 // Returns { series: [{ name, x, y, ey, ex, info }], xLabel, layout }
@@ -234,6 +235,46 @@ function parseXYTable(rows, sourceName) {
   let nCols = 0;
   data.forEach(r => { for (let c = r.length - 1; c >= 0; c--) if (Number.isFinite(cellNum(r[c]))) { nCols = Math.max(nCols, c + 1); break; } });
   out.xLabel = labels[0] && !Number.isFinite(cellNum(labels[0])) ? labels[0] : "";
+
+  // ── One measurement per file, several quantities per column ─────────────
+  // e.g. an AvaSoft export:
+  //   mmt_1
+  //   Integration time [ms]: 500.000
+  //   Wave ;Sample ;Dark ;Reference;Reflectance      ← quantity names
+  //   [nm] ;[counts];[counts];[counts] ;[%]          ← units
+  //   175.20; 50.342; 54.453; 57.850;-121.04529
+  // Each column is one quantity of the same measurement, so the datasets are
+  // named "<measurement> · <quantity>" and only the main result (reflectance,
+  // transmittance, absorbance or irradiance; else the last column) is ticked.
+  const isUnit = c => /^[\[(].*[\])]$/.test(cellText(c));
+  const QUANTITY_RE = /^(wave(length)?|pixel|sample|dark|reference|ref|reflectance|transmittance|absorbance|irradiance|scope|counts?|intensity|signal)\b/i;
+  const nonEmptyAbove = from => { for (let k = from; k >= 0; k--) if ((rows[k] || []).some(c => cellText(c))) return k; return -1; };
+  const kUnits = nonEmptyAbove(start - 1);
+  const unitRow = kUnits >= 0 && rows[kUnits].filter(c => cellText(c)).every(isUnit) ? rows[kUnits] : null;
+  const kNames = unitRow ? nonEmptyAbove(kUnits - 1) : kUnits;
+  const names = kNames >= 0 ? rows[kNames].map(cellText) : [];
+  const quantityNames = names.slice(1, nCols).filter(Boolean);
+  if (nCols >= 3 && (unitRow || (quantityNames.length >= 2 && quantityNames.every(n => QUANTITY_RE.test(n))))) {
+    out.layout = "quantities";
+    const unitOf = c => unitRow && cellText(unitRow[c]) ? " " + cellText(unitRow[c]) : "";
+    out.xLabel = (names[0] || "X") + unitOf(0);
+    // measurement title: a lone text line at the top of the file, else the file name
+    const titleRow = rows.slice(0, kNames).find(r => r && r.filter(c => cellText(c)).length === 1 && !/[:=]/.test(cellText(r[0])) && !Number.isFinite(cellNum(r[0])));
+    const title = titleRow ? cellText(titleRow[0]) : sourceName;
+    const info = rows.slice(0, kNames).map(r => (r || []).map(cellText).filter(Boolean).join(" ")).filter(l => /[:=]/.test(l)).join(" · ");
+    const preferredIdx = (() => {
+      for (const want of [/^reflect/i, /^transmit/i, /^absorb/i, /^irradi/i]) { const c = names.findIndex((n, i) => i > 0 && want.test(n)); if (c > 0) return c; }
+      return nCols - 1;
+    })();
+    for (let c = 1; c < nCols; c++) {
+      const q = names[c] || `column ${c + 1}`;
+      const sr = { name: `${title} · ${q}`, quantity: q, quantityLabel: q + unitOf(c), preferred: c === preferredIdx, x: [], y: [], ey: null, ex: null, info };
+      data.forEach((r, i) => { const y = cellNum(r[c]); if (Number.isFinite(xs0(r)) && Number.isFinite(y)) { sr.x.push(xs0(r)); sr.y.push(y); } });
+      if (sr.x.length) out.series.push(sr);
+    }
+    out.yLabel = names[preferredIdx] ? names[preferredIdx] + unitOf(preferredIdx) : "";
+    return out;
+  }
 
   const errLike = l => /(err|unc|σ|±|\bsd\b|\bsem\b|std|dev)/i.test(l || "");
   const errorLayout = nCols >= 3 && nCols <= 4 && (labels.length ? errLike(labels[2]) : true);

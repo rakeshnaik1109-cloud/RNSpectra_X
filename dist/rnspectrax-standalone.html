@@ -1863,6 +1863,10 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                   <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(true)">☑ All</button>
                   <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(false)">☐ None</button>
                 </div>
+                <div id="xyQuantityWrap" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
+                  <label style="font-size:12px;font-weight:600;white-space:nowrap;">Plot quantity</label>
+                  <select id="xyQuantity" onchange="setXYQuantity(this.value)" title="Files with several quantities per measurement (e.g. Sample, Dark, Reference, Reflectance): tick only this one"></select>
+                </div>
                 <div class="grid">
                   <div class="field"><label>Plot as</label>
                     <select id="xyGroupMode">
@@ -3343,6 +3347,7 @@ function cellNum(c) {
   if (!t || !/^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(t)) return NaN;
   return Number(t);
 }
+function xs0(r) { return cellNum(r[0]); }
 function cellText(c) { return c === undefined || c === null ? "" : String(c).trim(); }
 
 // Returns { series: [{ name, x, y, ey, ex, info }], xLabel, layout }
@@ -3366,6 +3371,46 @@ function parseXYTable(rows, sourceName) {
   let nCols = 0;
   data.forEach(r => { for (let c = r.length - 1; c >= 0; c--) if (Number.isFinite(cellNum(r[c]))) { nCols = Math.max(nCols, c + 1); break; } });
   out.xLabel = labels[0] && !Number.isFinite(cellNum(labels[0])) ? labels[0] : "";
+
+  // ── One measurement per file, several quantities per column ─────────────
+  // e.g. an AvaSoft export:
+  //   mmt_1
+  //   Integration time [ms]: 500.000
+  //   Wave ;Sample ;Dark ;Reference;Reflectance      ← quantity names
+  //   [nm] ;[counts];[counts];[counts] ;[%]          ← units
+  //   175.20; 50.342; 54.453; 57.850;-121.04529
+  // Each column is one quantity of the same measurement, so the datasets are
+  // named "<measurement> · <quantity>" and only the main result (reflectance,
+  // transmittance, absorbance or irradiance; else the last column) is ticked.
+  const isUnit = c => /^[\[(].*[\])]$/.test(cellText(c));
+  const QUANTITY_RE = /^(wave(length)?|pixel|sample|dark|reference|ref|reflectance|transmittance|absorbance|irradiance|scope|counts?|intensity|signal)\b/i;
+  const nonEmptyAbove = from => { for (let k = from; k >= 0; k--) if ((rows[k] || []).some(c => cellText(c))) return k; return -1; };
+  const kUnits = nonEmptyAbove(start - 1);
+  const unitRow = kUnits >= 0 && rows[kUnits].filter(c => cellText(c)).every(isUnit) ? rows[kUnits] : null;
+  const kNames = unitRow ? nonEmptyAbove(kUnits - 1) : kUnits;
+  const names = kNames >= 0 ? rows[kNames].map(cellText) : [];
+  const quantityNames = names.slice(1, nCols).filter(Boolean);
+  if (nCols >= 3 && (unitRow || (quantityNames.length >= 2 && quantityNames.every(n => QUANTITY_RE.test(n))))) {
+    out.layout = "quantities";
+    const unitOf = c => unitRow && cellText(unitRow[c]) ? " " + cellText(unitRow[c]) : "";
+    out.xLabel = (names[0] || "X") + unitOf(0);
+    // measurement title: a lone text line at the top of the file, else the file name
+    const titleRow = rows.slice(0, kNames).find(r => r && r.filter(c => cellText(c)).length === 1 && !/[:=]/.test(cellText(r[0])) && !Number.isFinite(cellNum(r[0])));
+    const title = titleRow ? cellText(titleRow[0]) : sourceName;
+    const info = rows.slice(0, kNames).map(r => (r || []).map(cellText).filter(Boolean).join(" ")).filter(l => /[:=]/.test(l)).join(" · ");
+    const preferredIdx = (() => {
+      for (const want of [/^reflect/i, /^transmit/i, /^absorb/i, /^irradi/i]) { const c = names.findIndex((n, i) => i > 0 && want.test(n)); if (c > 0) return c; }
+      return nCols - 1;
+    })();
+    for (let c = 1; c < nCols; c++) {
+      const q = names[c] || `column ${c + 1}`;
+      const sr = { name: `${title} · ${q}`, quantity: q, quantityLabel: q + unitOf(c), preferred: c === preferredIdx, x: [], y: [], ey: null, ex: null, info };
+      data.forEach((r, i) => { const y = cellNum(r[c]); if (Number.isFinite(xs0(r)) && Number.isFinite(y)) { sr.x.push(xs0(r)); sr.y.push(y); } });
+      if (sr.x.length) out.series.push(sr);
+    }
+    out.yLabel = names[preferredIdx] ? names[preferredIdx] + unitOf(preferredIdx) : "";
+    return out;
+  }
 
   const errLike = l => /(err|unc|σ|±|\bsd\b|\bsem\b|std|dev)/i.test(l || "");
   const errorLayout = nCols >= 3 && nCols <= 4 && (labels.length ? errLike(labels[2]) : true);
@@ -3538,15 +3583,17 @@ async function tablesFromFile(file) {
 
 async function readXYFiles(e) {
   const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
-  let added = 0, xLabel = "";
+  let added = 0, xLabel = "", yLabel = "";
   for (const file of files) {
     try {
       const tables = await tablesFromFile(file);
       tables.forEach(t => {
         if (t.xLabel && !xLabel) xLabel = t.xLabel;
+        if (t.yLabel && !yLabel) yLabel = t.yLabel;
         t.series.forEach(sr => {
           const myIdx = xyGlobalIdx++;
-          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, autoName: !!sr.autoName, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
+          xyFiles[myIdx] = { x: sr.x, y: sr.y, ey: sr.ey, ex: sr.ex, info: sr.info, name: sr.name, autoName: !!sr.autoName,
+            quantity: sr.quantity || "", quantityLabel: sr.quantityLabel || "", include: sr.preferred === false ? false : undefined, color: GROUP_COLORS[myIdx % GROUP_COLORS.length], gIdx: myIdx, filename: file.name };
           xyFileNames[myIdx] = file.name; added++;
         });
       });
@@ -3558,6 +3605,8 @@ async function readXYFiles(e) {
   // Take the X-axis title from the table header while the label is still the default
   const xl = document.getElementById("xyXlabel");
   if (xLabel && xl && (xl.value.trim() === "" || xl.value.trim() === "X")) xl.value = xLabel;
+  const yl = document.getElementById("xyYlabel");
+  if (yLabel && yl && (yl.value.trim() === "" || yl.value.trim() === "Y")) yl.value = yLabel;
   if (added) rxNotify(`Loaded ${added} dataset${added === 1 ? "" : "s"}`);
   renderXYFileCards();
 }
@@ -3592,9 +3641,33 @@ function renderXYFileCards() {
   });
   const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
   document.getElementById("xyGroupPanel").style.display = nSets > 1 ? "block" : "none";
+  // "Plot quantity" selector for files that hold several quantities per measurement
+  const qs = [...new Set(Object.keys(xyFileNames).map(g => xyFiles[g]?.quantity).filter(Boolean))];
+  const qWrap = document.getElementById("xyQuantityWrap"), qSel = document.getElementById("xyQuantity");
+  if (qWrap && qSel) {
+    qWrap.style.display = qs.length > 1 ? "flex" : "none";
+    const ticked = Object.keys(xyFileNames).filter(g => xyFiles[g]?.quantity && xyFiles[g].include !== false).map(g => xyFiles[g].quantity);
+    const current = new Set(ticked).size === 1 ? ticked[0] : "__mixed";
+    const esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+    qSel.innerHTML = qs.map(q => `<option value="${esc(q)}">${esc(q)}</option>`).join("") + `<option value="__all">All quantities</option>` + (current === "__mixed" ? `<option value="__mixed">(custom selection)</option>` : "");
+    qSel.value = current;
+  }
   document.getElementById("xyFileStatus").textContent = nSets ? `${nSets} dataset${nSets === 1 ? "" : "s"} from ${nFiles} file${nFiles === 1 ? "" : "s"}` : "No files";
 }
 
+
+// Tick only the datasets of one quantity (e.g. Reflectance) in files that hold
+// several quantities per measurement; datasets without a quantity are untouched.
+function setXYQuantity(q) {
+  Object.keys(xyFileNames).forEach(g => {
+    const f = xyFiles[g], el = document.getElementById("xyFileUse" + g);
+    if (!f || !f.quantity || !el) return;
+    el.checked = q === "__all" || f.quantity === q;
+    f.include = el.checked;
+  });
+  const yl = document.getElementById("xyYlabel"), sample = Object.keys(xyFileNames).map(g => xyFiles[g]).find(f => f && f.quantity === q);
+  if (yl && sample && sample.quantityLabel) yl.value = sample.quantityLabel;
+}
 
 // Tick or untick every uploaded dataset
 function setAllXYIncluded(on) {
@@ -3610,6 +3683,9 @@ function autoGroupXY(how) {
   const ids = Object.keys(xyFileNames).filter(g => document.getElementById("xyFileUse" + g)?.checked);
   const n = Math.max(1, parseInt(document.getElementById("xyGroupEveryN").value) || 1);
   let skipped = 0;
+  // when every ticked dataset is the same quantity, groups are named by the
+  // measurement alone ("mmt"), otherwise "mmt · Reflectance"
+  const singleQuantity = new Set(ids.map(g => xyFiles[g]?.quantity || "")).size === 1;
   ids.forEach((g, k) => {
     const box = document.getElementById("xyFileGroup" + g); if (!box) return;
     if (how === "clear") box.value = "";
@@ -3621,7 +3697,11 @@ function autoGroupXY(how) {
       // drop a replicate suffix only when a separator precedes it ("PBS_2",
       // "10-3", "Sample 2"); a bare number such as "0.3125" or "10" is the
       // name itself and is kept whole
-      box.value = label.replace(/[\s_\-]+\d+$/, "") || label;
+      const qm = label.match(/^(.*?) · (.+)$/);            // "mmt_1 · Reflectance"
+      if (qm) {
+        const base = qm[1].replace(/[\s_\-]+\d+$/, "") || qm[1];
+        box.value = singleQuantity ? base : `${base} · ${qm[2]}`;
+      } else box.value = label.replace(/[\s_\-]+\d+$/, "") || label;
     }
   });
   if (skipped) rxNotify(`${skipped} column${skipped === 1 ? " has" : "s have"} no name in the file and ${skipped === 1 ? "was" : "were"} left ungrouped — type a Group for ${skipped === 1 ? "it" : "them"} if needed.`);

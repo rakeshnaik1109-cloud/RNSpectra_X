@@ -68,7 +68,7 @@ reload; your files are not.
 
 | Capability | Detail |
 |---|---|
-| Data entry | Paste values, paste columns, or upload `.csv` / `.txt` / `.dat` / `.tsv` or Excel (`.xlsx` / `.xls` / `.ods`) files, with optional Y-error and X-error columns. A multi-column table (one X column, many Y columns, e.g. an Avantes spectrometer export) becomes one dataset per column, all on one plot |
+| Data entry | Paste values, paste columns, or upload `.csv` / `.txt` / `.dat` / `.tsv` or Excel (`.xlsx` / `.xls` / `.ods`) files, with optional Y-error and X-error columns. A multi-column table (one X column, many Y columns, e.g. an Avantes spectrometer export) becomes one dataset per column, all on one plot. Per-measurement files with several quantities (e.g. AvaSoft Sample/Dark/Reference/Reflectance) load with a **Plot quantity** selector |
 | Resonance tracking | Finds the dip (or peak) position in every replicate — parabola-vertex, centroid or minimum — averages per group, and plots position or shift vs concentration with ± SD/SEM; linear (sensitivity, LOD), logarithmic, Langmuir and Hill (K_D) calibration fits |
 | Column selection & replicate averaging | Tick which columns to plot; group columns (by hand, every N columns, or by name) and plot each group's mean ± SD or SEM as a shaded band or error bars |
 | Axis presets | General, FTIR, UV-Vis, fluorescence/PL, XRD, XPS, I–V, time series/kinetics, thermal analysis and calibration curves. A preset only fills in axis labels; the data are never treated differently |

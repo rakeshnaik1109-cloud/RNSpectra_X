@@ -116,6 +116,16 @@ here.
   * Instrument header rows ending in `-->` (e.g. `Int.time[ms]-->`,
     `NrOfAverages-->` in Avantes exports) are shown on each dataset's card.
   * In an Excel workbook every sheet that contains data is read.
+  * **One measurement per file with several quantities** — e.g. an AvaSoft
+    export (`mmt_1.txt`) with a title line, settings lines, a header
+    `Wave;Sample;Dark;Reference;Reflectance` and a units row
+    `[nm];[counts];[counts];[counts];[%]`. Every column is loaded as
+    "*measurement* · *quantity*" (e.g. `mmt_1 · Reflectance`), with the units
+    in the axis titles and the settings on the card. Only **Reflectance** (or
+    transmittance, absorbance or irradiance; otherwise the last column) is
+    ticked; switch with **Plot quantity**. Load several such files together
+    and **By name** groups `mmt_1`, `mmt_2`, `mmt_3` → `mmt`, ready for group
+    means ± SD and resonance tracking.
   * Semicolon-separated files with decimal commas (`175,204;-172,47`) are read
     correctly.
 

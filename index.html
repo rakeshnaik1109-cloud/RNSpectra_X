@@ -855,6 +855,10 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(true)">☑ All</button>
                   <button class="btn btn-outline btn-sm" onclick="setAllXYIncluded(false)">☐ None</button>
                 </div>
+                <div id="xyQuantityWrap" style="display:none;align-items:center;gap:8px;margin-bottom:10px;">
+                  <label style="font-size:12px;font-weight:600;white-space:nowrap;">Plot quantity</label>
+                  <select id="xyQuantity" onchange="setXYQuantity(this.value)" title="Files with several quantities per measurement (e.g. Sample, Dark, Reference, Reflectance): tick only this one"></select>
+                </div>
                 <div class="grid">
                   <div class="field"><label>Plot as</label>
                     <select id="xyGroupMode">
