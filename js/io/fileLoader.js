@@ -86,7 +86,35 @@ function clearAllOceanFiles() {
 }
 
 
-function refreshOceanStatus() { const n = Object.keys(oceanFileNames).length; setStatus(`${n} spectrum${n === 1 ? "" : "s"} loaded`, n > 0 ? "ok" : ""); }
+function refreshOceanStatus() {
+  const n = Object.keys(oceanFileNames).length;
+  setStatus(`${n} spectrum${n === 1 ? "" : "s"} loaded`, n > 0 ? "ok" : "");
+  const tools = document.getElementById("oceanGroupTools"); if (tools) tools.style.display = n > 1 ? "block" : "none";
+}
+
+// Fill the Group / Species box of every loaded Raman file, in card order:
+//   "name"  — the label without a replicate suffix after a separator
+//             (PBS_1, PBS_2 → PBS; 0.3125_2 → 0.3125; "Sample 3" → Sample)
+//   "every" — consecutive blocks of N files → G1, G2, …
+//   "reset" — every file back in "Group 1"
+function autoGroupRaman(how) {
+  const ids = spectra.filter(s => s != null).map(s => s.gIdx).filter(g => document.getElementById("group" + g));
+  if (!ids.length) return;
+  const n = Math.max(1, parseInt(document.getElementById("oceanGroupEveryN").value) || 1);
+  ids.forEach((g, k) => {
+    const box = document.getElementById("group" + g);
+    if (how === "reset") box.value = "Group 1";
+    else if (how === "every") box.value = "G" + (Math.floor(k / n) + 1);
+    else {
+      const label = (document.getElementById("label" + g)?.value || "").trim();
+      box.value = label.replace(/[\s_\-]+\d+$/, "") || label || "Group 1";
+    }
+  });
+  const groups = new Set(ids.map(g => document.getElementById("group" + g).value));
+  document.getElementById("avgMode").value = how === "reset" ? "individual" : "groups";
+  if (how !== "reset") rxNotify(`${groups.size} group${groups.size === 1 ? "" : "s"}: ${[...groups].slice(0, 6).join(", ")}${groups.size > 6 ? " …" : ""} — press Plot`);
+  rxTrack("raman-quick-grouping");
+}
 
 
 const SPREADSHEET_RE = /\.(xlsx|xlsm|xls|ods)$/i;
