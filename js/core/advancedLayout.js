@@ -336,9 +336,13 @@ function computeAxisExtras(prefix, axis /* 'x' | 'y' */) {
   const standoff = standoffRaw !== "" ? parseFloat(standoffRaw) : undefined;
 
   const ticks = $val(fid(prefix, 'TickDir'), 'outside');
+  // axis line ("bold axes") and tick-mark styling
+  const num = (id, d) => { const v = parseFloat($val(fid(prefix, id), "")); return Number.isFinite(v) && v >= 0 ? v : d; };
+  const linewidth = num('AxisLineWidth', 2), tickwidth = num('TickWidth', 1), ticklen = num('TickLen', 5);
+  const axisColor = $val(fid(prefix, 'AxisColor'), '#444444') || '#444444';
 
   return {
-    showline, mirror, linewidth: 2,
+    showline, mirror, linewidth, linecolor: axisColor, tickwidth, ticklen, tickcolor: axisColor,
     showgrid, gridcolor, gridwidth: 1,
     zeroline, zerolinecolor: '#94a3b8', zerolinewidth: 1.2,
     minor, ticks, standoff, exponentformat, showexponent, tickformat

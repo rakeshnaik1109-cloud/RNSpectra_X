@@ -273,6 +273,14 @@ Press `?` for the full sheet. The essentials:
 
 ---
 
+### Axis lines and tick marks
+In **Axis Frame, Grid & Notation** (both workspaces): **Axis Line Width** makes
+the axes / frame bold, **Tick Width** and **Tick Length** style the tick marks,
+and **Axis Colour** sets the colour of both. Text boldness (title, axis labels,
+tick labels, legend) is set separately under **Figure Size & Font → Bold**.
+
+---
+
 ## 6. Getting a figure a journal will accept
 
 1. **Set the canvas size before you export,** not after. Scaling a raster image
