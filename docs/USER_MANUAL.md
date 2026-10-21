@@ -44,7 +44,10 @@ To compare aggregate data:
 1. Ensure your files are assigned matching "Group" names in their respective cards.
    With two or more files loaded, **Quick grouping** (under Plot Mode) fills
    them for you: **By name** (`PBS_1`, `PBS_2`, `PBS_3` → `PBS`;
-   `0.3125_2` → `0.3125`), **Every N files** (→ G1, G2, …) or **Reset** (all
+   `0.3125_2` → `0.3125`; time-stamped saves such as
+   `Giardia_1_D1_RamanShift__0__12-54-42-123` → `Giardia_1_D1`, since the
+   time/date stamp, spectrum index and words like *RamanShift* are ignored),
+   **Every N files** (→ G1, G2, …) or **Reset** (all
    in one group). It also switches Plot Mode to *Group averages*.
 2. Under Averaging & Error Bars, set the Plot Mode to **Group Averages**.
 3. Select your error metric (SD or SEM) and style (Capped Bars or Shaded Band). The engine will calculate and render the statistics dynamically.

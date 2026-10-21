@@ -3825,9 +3825,26 @@ function refreshOceanStatus() {
   const tools = document.getElementById("oceanGroupTools"); if (tools) tools.style.display = n > 1 ? "block" : "none";
 }
 
+// Group key from a file label: drop a trailing time/date stamp written by the
+// acquisition software, then the spectrum / replicate index, then a quantity
+// word such as "RamanShift".
+//   Giardia_1_D1_RamanShift__0__12-54-42-123 → Giardia_1_D1
+//   PBS_2 → PBS · 0.3125_2 → 0.3125 · "Sample 3" → Sample · PBS_10_3 → PBS_10
+function nameGroupKey(label) {
+  let s = String(label || "").trim(), prev;
+  do {
+    prev = s;
+    s = s.replace(/[\s_\-]*\d{1,2}[-_:]\d{2}[-_:]\d{2}(?:[-_:.]\d{1,6})?$/, "")   // 12-54-42-123
+         .replace(/[\s_\-]*\d{4}[-_.]\d{2}[-_.]\d{2}$/, "")                       // 2026-09-19
+         .replace(/[\s_\-]+(?:19|20)\d{6}(?:[_\-T]?\d{4,6})?$/, "");             // 20260919_125442
+  } while (s !== prev && s);
+  s = s.replace(/[\s_\-]+\d+$/, "");
+  s = s.replace(/[\s_\-]+(?:RamanShift|Raman|Wavelength|Wavenumbers?|Intensity|Counts|Spectrum|Scope|Subt\d*|Absorbance|Transmission|Transmittance|Reflection|Reflectance|Irradiance)$/i, "");
+  return s || String(label || "").trim();
+}
+
 // Fill the Group / Species box of every loaded Raman file, in card order:
-//   "name"  — the label without a replicate suffix after a separator
-//             (PBS_1, PBS_2 → PBS; 0.3125_2 → 0.3125; "Sample 3" → Sample)
+//   "name"  — nameGroupKey(label): stamp, replicate index and quantity word removed
 //   "every" — consecutive blocks of N files → G1, G2, …
 //   "reset" — every file back in "Group 1"
 function autoGroupRaman(how) {
@@ -3840,7 +3857,7 @@ function autoGroupRaman(how) {
     else if (how === "every") box.value = "G" + (Math.floor(k / n) + 1);
     else {
       const label = (document.getElementById("label" + g)?.value || "").trim();
-      box.value = label.replace(/[\s_\-]+\d+$/, "") || label || "Group 1";
+      box.value = nameGroupKey(label) || "Group 1";
     }
   });
   const groups = new Set(ids.map(g => document.getElementById("group" + g).value));
@@ -4010,9 +4027,9 @@ function autoGroupXY(how) {
       // name itself and is kept whole
       const qm = label.match(/^(.*?) · (.+)$/);            // "mmt_1 · Reflectance"
       if (qm) {
-        const base = qm[1].replace(/[\s_\-]+\d+$/, "") || qm[1];
+        const base = nameGroupKey(qm[1]);
         box.value = singleQuantity ? base : `${base} · ${qm[2]}`;
-      } else box.value = label.replace(/[\s_\-]+\d+$/, "") || label;
+      } else box.value = nameGroupKey(label);
     }
   });
   if (skipped) rxNotify(`${skipped} column${skipped === 1 ? " has" : "s have"} no name in the file and ${skipped === 1 ? "was" : "were"} left ungrouped — type a Group for ${skipped === 1 ? "it" : "them"} if needed.`);
