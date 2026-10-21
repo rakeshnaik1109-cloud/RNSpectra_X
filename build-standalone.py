@@ -12,7 +12,17 @@ import os
 import re
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
-src = open('index.html', encoding='utf-8').read()
+
+# Cache-busting: stamp every css/js/data link in index.html with ?v=<build
+# time>, so browsers fetch the new files after an update instead of reusing
+# cached copies (GitHub Pages lets browsers cache them for a while).
+import time
+build_id = time.strftime('%Y%m%d%H%M', time.gmtime())
+page = open('index.html', encoding='utf-8').read()
+page = re.sub(r'((?:src|href)="(?:css|js|data)/[^"?]+)(?:\?v=[^"]*)?"', lambda m: '%s?v=%s"' % (m.group(1), build_id), page)
+open('index.html', 'w', encoding='utf-8').write(page)
+
+src = page
 
 
 def inline_css(match):
@@ -25,9 +35,9 @@ def inline_js(match):
     return '<script>\n/* %s */\n%s\n</script>' % (path, open(path, encoding='utf-8').read())
 
 
-src = re.sub(r'<link href="(css/[^"]+)" rel="stylesheet"/>', inline_css, src)
-src = re.sub(r'<link rel="stylesheet" href="(css/[^"]+)"\s*/?>', inline_css, src)
-src = re.sub(r'<script src="(js/[^"]+)"></script>', inline_js, src)
+src = re.sub(r'<link href="(css/[^"?]+)(?:\?v=[^"]*)?" rel="stylesheet"/>', inline_css, src)
+src = re.sub(r'<link rel="stylesheet" href="(css/[^"?]+)(?:\?v=[^"]*)?"\s*/?>', inline_css, src)
+src = re.sub(r'<script src="(js/[^"?]+)(?:\?v=[^"]*)?"></script>', inline_js, src)
 
 icon = base64.b64encode(open('assets/favicon.svg', encoding='utf-8').read().encode()).decode()
 src = src.replace('<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>',

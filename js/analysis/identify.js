@@ -39,7 +39,9 @@ function loadReferenceLibrary() {
   if (inline) { window.RNSPX_LIBRARY_RAMANBIOLIB = JSON.parse(inline.textContent); return Promise.resolve(prepare()); }
   return new Promise((resolve, reject) => {
     const sc = document.createElement("script");
-    sc.src = "data/ramanbiolib.js";
+    // same cache-busting stamp as the page's own scripts
+    const v = (document.querySelector('script[src*="identify.js?v="]')?.getAttribute("src") || "").split("?v=")[1];
+    sc.src = "data/ramanbiolib.js" + (v ? "?v=" + v : "");
     sc.onload = () => window.RNSPX_LIBRARY_RAMANBIOLIB ? resolve(prepare()) : reject(new Error("Reference library did not load"));
     sc.onerror = () => reject(new Error("Could not load the reference library (data/ramanbiolib.js)"));
     document.head.appendChild(sc);
