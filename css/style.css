@@ -337,6 +337,14 @@ table.peak-table td input:focus { border-color: var(--accent); box-shadow: 0 0 0
   display: flex; align-items: center; gap: 8px; padding: 8px 10px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); flex: none;
 }
+.annot-toolbar { flex-direction: column; align-items: stretch; }
+.annot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
+.annot-row select, .annot-row input[type="number"], .annot-row input[type="text"] { font-size: 12px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+.annot-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+.annot-status { font-size: 11px; color: var(--hint); margin-left: auto; }
+.btn.is-armed { background: #2563eb !important; color: #fff !important; border-color: #2563eb !important; }
+g.annotation.rx-ann-selected rect.bg { stroke: #2563eb !important; stroke-width: 2px !important; stroke-dasharray: 4 3; }
+g.annotation.rx-ann-selected { filter: drop-shadow(0 0 2px #2563eb); }
 .annot-toolbar input[type="color"] { width: 28px; height: 26px; padding: 2px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; }
 
 .plot-panel {

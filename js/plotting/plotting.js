@@ -440,7 +440,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   // know where "the user's own additions" start when re-syncing after drags/edits.
   const genAnnCount = layout.annotations.length;
   const genShapeCount = layout.shapes.length;
-  layout.annotations = layout.annotations.concat(customAnnotations[mode] || []);
+  layout.annotations = layout.annotations.concat((customAnnotations[mode] || []).map(a => Object.assign({}, a, { captureevents: true })));
   layout.shapes = layout.shapes.concat(customShapesStore[mode] || []);
 
   try {

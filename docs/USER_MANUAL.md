@@ -287,6 +287,33 @@ under **Figure Size & Font → Bold**.
 
 ---
 
+### Annotating the plot
+The bar above each plot adds labels that are saved with the session and appear
+in every export.
+
+- **🅣 Text / ↗ Arrow**: type the text in the box first (or leave it empty for
+  a bare arrow). **Ω Symbol** inserts cm⁻¹, ±, °, µ, λ, Δ, Å and similar;
+  `H<sub>2</sub>O`, `cm<sup>-1</sup>`, `<b>…</b>` and `<i>…</i>` also work.
+- **📍 Label point**: click the button, then click a point on a curve. An arrow
+  with the X value (e.g. *1004 cm⁻¹*) is pinned to that data point, so it stays
+  put when you zoom or change the axis range.
+- **┆ Marker line**: dashed vertical line(s) at the X values you type, e.g.
+  `1004, 1450, 1655`, each labelled at the top.
+- **▥ Region**: a translucent band between two X values (`1600-1700`) with an
+  optional label such as *Amide I*.
+- Boxes, circles and free lines: ▭ ○ ╱ in the chart's own toolbar.
+
+**Editing one item.** Click a text or arrow to select it (a dashed blue outline
+appears; for shapes, click the shape). Then:
+**Delete** (or the Delete / Backspace key) removes only that item,
+**⧉ Duplicate** copies it, and **🎨 Apply style** gives it the font, size, bold /
+italic, box and colour currently set in the bar (and the typed text, if any).
+Drag to move; double-click text to rewrite it. **↶ Undo** (Ctrl/⌘+Z) reverses
+the last change, including a Delete or **Clear all**. Esc cancels a selection
+or point picking.
+
+---
+
 ## 6. Getting a figure a journal will accept
 
 1. **Set the canvas size before you export,** not after. Scaling a raster image

@@ -90,7 +90,9 @@ nothing about your files or spectra.
 - Journal presets for figure size and fonts, independent bold control for
   title, labels, ticks and legend, and LaTeX in titles and axis labels.
 - Click-to-edit titles, axis labels and legend entries; text, arrow and shape
-  annotations; data-accurate scale bars; zoomed inset plots.
+  annotations that can be selected, restyled, duplicated or deleted one at a
+  time with undo; data-pinned peak labels, marker lines and shaded regions;
+  data-accurate scale bars; zoomed inset plots.
 - High-resolution PNG / JPG / TIFF / SVG export at a chosen DPI.
 - Processed data as CSV (exactly what was plotted), fit reports as `.txt` and
   `.csv`, and PDF / `.txt` peak and comparison tables.
