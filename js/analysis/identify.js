@@ -103,6 +103,7 @@ function deriv5(a) {
 }
 
 async function runIdentify() {
+  rxTrack('raman-identify');
   const status = document.getElementById("idStatus");
   const q = getIdentifyQuery();
   if (!q || q.x.length < 10) { alert("Load Raman spectra first, then choose which spectrum to identify."); return; }

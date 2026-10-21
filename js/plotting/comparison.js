@@ -2,6 +2,7 @@
    COMPREHENSIVE PEAK SEPARATION ENGINE (COMMON VS DISTINCT)
 ═══════════════════════════════════════════════════════════ */
 function runComprehensiveComparisonEngine(mode) {
+  rxTrack(`compare-${mode}`);
   analyzedCommonPeaks = []; analyzedDistinctPeaks = []; analyzedComparisonMode = mode;
   let peakCollections = []; let totalTraces = 0;
 

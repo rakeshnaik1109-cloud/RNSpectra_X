@@ -2524,6 +2524,21 @@ function downloadBlob(content, filename, type) {
 
 
 
+
+// Anonymous feature-usage count (GoatCounter, no cookies or personal data).
+// Each feature is counted at most once per page visit, and only its name is
+// sent — never file names, settings or any spectral data. Does nothing when
+// GoatCounter is not loaded (offline, file://, blocked).
+const rxTracked = new Set();
+function rxTrack(feature) {
+  if (rxTracked.has(feature)) return;
+  rxTracked.add(feature);
+  try {
+    if (window.goatcounter && window.goatcounter.count)
+      window.goatcounter.count({ path: "rnspectrax-feature/" + feature, title: "RNSpectraX: " + feature, event: true });
+  } catch (e) {}
+}
+
 </script>
 <script>
 /* js/core/advancedLayout.js */
@@ -3457,6 +3472,7 @@ function parseXYTable(rows, sourceName) {
 
 
 function addFiles(e) {
+  rxTrack('raman-upload');
   const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
   const existingNames = new Set(Object.values(oceanFileNames));
   const newFiles = files.filter(f => !existingNames.has(f.name));
@@ -3571,6 +3587,7 @@ function readFileAs(file, kind) {
 async function tablesFromFile(file) {
   const base = file.name.replace(/\.[^.]+$/, "");
   if (SPREADSHEET_RE.test(file.name)) {
+    rxTrack('xy-upload-excel');
     const XLSX = await loadSheetJS();
     const wb = XLSX.read(await readFileAs(file, "buffer"), { type: "array" });
     const tables = wb.SheetNames.map(sn => ({ sheet: sn, t: parseXYTable(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: "" }), base) }))
@@ -3582,6 +3599,7 @@ async function tablesFromFile(file) {
 }
 
 async function readXYFiles(e) {
+  rxTrack('xy-upload');
   const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
   let added = 0, xLabel = "", yLabel = "";
   for (const file of files) {
@@ -4414,6 +4432,7 @@ function showPlotArea(mode) {
 
 
 function plotSpectrum() {
+  rxTrack('raman-plot');
   const activeSpectra = spectra.filter(s => s != null);
   if (!activeSpectra.length) { alert("Please load files first."); return; }
   const doPeaks = document.getElementById("showPeaks").checked;
@@ -4958,6 +4977,7 @@ function processXYDatasets(raw) {
 }
 
 function plotXY() {
+  rxTrack('xy-plot');
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
   const traces = []; lastXYSeries = []; lastFitResults = [];
@@ -4991,6 +5011,8 @@ function plotXY() {
   const errStyle = document.getElementById("xyGroupStyle")?.value || 'band';
   const bandOpacity = parseFloat(document.getElementById("xyGroupBandOpacity")?.value) || 0.22;
   const datasets = groupMode ? buildXYGroups(processed, errKind) : processed;
+  if (groupMode) rxTrack('xy-group-means');
+  if (document.getElementById("fitModel").value !== 'none') rxTrack('xy-fit-' + document.getElementById("fitModel").value);
   const originals = unsmoothed ? (groupMode ? buildXYGroups(unsmoothed, errKind) : unsmoothed) : null;
   if (groupMode && !datasets.some(d => d.isGroup)) rxNotify('No Group names set — plotting each column. Fill the Group boxes or use Quick grouping.');
 
@@ -5082,6 +5104,7 @@ function plotXY() {
    COMPREHENSIVE PEAK SEPARATION ENGINE (COMMON VS DISTINCT)
 ═══════════════════════════════════════════════════════════ */
 function runComprehensiveComparisonEngine(mode) {
+  rxTrack(`compare-${mode}`);
   analyzedCommonPeaks = []; analyzedDistinctPeaks = []; analyzedComparisonMode = mode;
   let peakCollections = []; let totalTraces = 0;
 
@@ -5789,6 +5812,7 @@ function readResonanceOptions() {
 
 // Step 1 + 2: positions per replicate, averaged per group
 function runResonanceAnalysis() {
+  rxTrack('xy-resonance-tracking');
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("Load XY data first (and tick the datasets to analyse)."); return; }
   const opts = readResonanceOptions();
@@ -6078,6 +6102,7 @@ function deriv5(a) {
 }
 
 async function runIdentify() {
+  rxTrack('raman-identify');
   const status = document.getElementById("idStatus");
   const q = getIdentifyQuery();
   if (!q || q.x.length < 10) { alert("Load Raman spectra first, then choose which spectrum to identify."); return; }
@@ -6814,6 +6839,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+<!-- Anonymous visit and feature-usage counts (GoatCounter: no cookies, no personal data, never any spectral data) -->
+<script data-goatcounter="https://rakeshnaik.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 
 <!-- Keyboard reference -->
 <div class="rx-modal" id="shortcutSheet" role="dialog" aria-modal="true" aria-labelledby="shortcutSheetTitle">

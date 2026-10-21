@@ -15,6 +15,7 @@ function showPlotArea(mode) {
 
 
 function plotSpectrum() {
+  rxTrack('raman-plot');
   const activeSpectra = spectra.filter(s => s != null);
   if (!activeSpectra.length) { alert("Please load files first."); return; }
   const doPeaks = document.getElementById("showPeaks").checked;

@@ -79,6 +79,7 @@ function readResonanceOptions() {
 
 // Step 1 + 2: positions per replicate, averaged per group
 function runResonanceAnalysis() {
+  rxTrack('xy-resonance-tracking');
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("Load XY data first (and tick the datasets to analyse)."); return; }
   const opts = readResonanceOptions();

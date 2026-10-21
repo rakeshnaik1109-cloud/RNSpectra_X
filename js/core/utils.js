@@ -24,3 +24,18 @@ function downloadBlob(content, filename, type) {
 }
 
 
+
+
+// Anonymous feature-usage count (GoatCounter, no cookies or personal data).
+// Each feature is counted at most once per page visit, and only its name is
+// sent — never file names, settings or any spectral data. Does nothing when
+// GoatCounter is not loaded (offline, file://, blocked).
+const rxTracked = new Set();
+function rxTrack(feature) {
+  if (rxTracked.has(feature)) return;
+  rxTracked.add(feature);
+  try {
+    if (window.goatcounter && window.goatcounter.count)
+      window.goatcounter.count({ path: "rnspectrax-feature/" + feature, title: "RNSpectraX: " + feature, event: true });
+  } catch (e) {}
+}

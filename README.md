@@ -41,9 +41,14 @@ It has two workspaces:
 
 Nowhere. Parsing, despiking, baseline fitting, averaging, peak detection, curve
 fitting and export all run in JavaScript inside your browser tab. There is no
-backend, no analytics, and no network request carrying your data. Processing
+backend, and no network request carrying your data. Processing
 settings are stored in `localStorage` on your own machine so a recipe survives a
 reload; your files are not.
+
+The only thing recorded is an anonymous visit count, plus which features were
+used (for example "XY plot" or "Identify"), sent with
+[GoatCounter](https://www.goatcounter.com): no cookies, no personal data, and
+nothing about your files or spectra.
 
 ---
 

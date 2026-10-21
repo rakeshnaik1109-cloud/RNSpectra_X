@@ -4,6 +4,7 @@
 
 
 function addFiles(e) {
+  rxTrack('raman-upload');
   const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
   const existingNames = new Set(Object.values(oceanFileNames));
   const newFiles = files.filter(f => !existingNames.has(f.name));
@@ -118,6 +119,7 @@ function readFileAs(file, kind) {
 async function tablesFromFile(file) {
   const base = file.name.replace(/\.[^.]+$/, "");
   if (SPREADSHEET_RE.test(file.name)) {
+    rxTrack('xy-upload-excel');
     const XLSX = await loadSheetJS();
     const wb = XLSX.read(await readFileAs(file, "buffer"), { type: "array" });
     const tables = wb.SheetNames.map(sn => ({ sheet: sn, t: parseXYTable(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, raw: true, defval: "" }), base) }))
@@ -129,6 +131,7 @@ async function tablesFromFile(file) {
 }
 
 async function readXYFiles(e) {
+  rxTrack('xy-upload');
   const files = Array.from(e.target.files); e.target.value = ""; if (!files.length) return;
   let added = 0, xLabel = "", yLabel = "";
   for (const file of files) {

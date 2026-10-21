@@ -87,6 +87,7 @@ function processXYDatasets(raw) {
 }
 
 function plotXY() {
+  rxTrack('xy-plot');
   const raw = gatherXYDatasets().filter(ds => ds.x.length && ds.y.length);
   if (!raw.length) { alert("No XY data to plot yet — paste values, add columns or upload a file first (and tick at least one dataset)."); return; }
   const traces = []; lastXYSeries = []; lastFitResults = [];
@@ -120,6 +121,8 @@ function plotXY() {
   const errStyle = document.getElementById("xyGroupStyle")?.value || 'band';
   const bandOpacity = parseFloat(document.getElementById("xyGroupBandOpacity")?.value) || 0.22;
   const datasets = groupMode ? buildXYGroups(processed, errKind) : processed;
+  if (groupMode) rxTrack('xy-group-means');
+  if (document.getElementById("fitModel").value !== 'none') rxTrack('xy-fit-' + document.getElementById("fitModel").value);
   const originals = unsmoothed ? (groupMode ? buildXYGroups(unsmoothed, errKind) : unsmoothed) : null;
   if (groupMode && !datasets.some(d => d.isGroup)) rxNotify('No Group names set — plotting each column. Fill the Group boxes or use Quick grouping.');
 
