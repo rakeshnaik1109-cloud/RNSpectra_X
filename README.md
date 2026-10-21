@@ -60,6 +60,7 @@ reload; your files are not.
 | Normalisation | Max, min–max, area, vector, or a chosen reference band (e.g. 1003 cm⁻¹ phenylalanine, 520.7 cm⁻¹ silicon) |
 | Group statistics | Group averages and grand average with SD or SEM, drawn as capped bars or shaded bands, over the range shared by all spectra |
 | Peak detection | Topographic prominence with an adjustable threshold; every band listed in the peak table and matched against a ~35-band Raman reference library (proteins, nucleic acids, lipids, carotenoids, silicon) |
+| Identify (library match) | Ranks the closest of 202 reference spectra (141 biomolecules, RamanBiolib) by correlation HQI, derivative HQI or peak matching, with an overlay, and cites the RamanBiolib library and the publication each reference spectrum comes from |
 | Cross-file analyser | Clusters peaks across all loaded spectra into common bands and sample-specific bands |
 | Editable peak table | Correct positions, retitle assignments, delete rows, and re-plot from the edited table |
 
@@ -167,8 +168,9 @@ RNSpectra_X/
 │   ├── io/                  parser.js · fileLoader.js · exporter.js
 │   ├── processing/          despike.js · baseline.js · smoothing.js
 │   ├── plotting/            averaging.js · plotting.js · xyPlot.js · comparison.js
-│   ├── analysis/            peaks.js · fitting.js
+│   ├── analysis/            peaks.js · fitting.js · resonance.js · identify.js
 │   └── ui/                  sidebar.js · layout.js · theme.js · session.js · workspaceExtras.js
+├── data/                    Reference spectral library (RamanBiolib, ODbL) + licence
 ├── docs/
 │   ├── USER_MANUAL.md       How to use each workspace
 │   └── METHODS.md           The mathematics behind each processing and fitting step
@@ -192,6 +194,23 @@ window.RNSPX_HOME_URL = "https://rakeshnaik1109-cloud.github.io/RakeshNaik/";
 
 It points to the RakeshNaik homepage. Change it if the homepage moves; the
 app and the homepage are separate GitHub Pages sites.
+
+---
+
+## Reference data
+
+The **Identify** feature uses the open **RamanBiolib** spectral library:
+
+> M. Terán, J. J. Ruiz, P. Loza-Alvarez, D. Masip, D. Merino. *Open Raman
+> spectral library for biomolecule identification.* Chemometrics and
+> Intelligent Laboratory Systems **264**, 105476 (2025).
+> <https://doi.org/10.1016/j.chemolab.2025.105476> ·
+> <https://github.com/mteranm/ramanbiolib>
+
+The library data (`data/ramanbiolib.js`, an adapted, re-formatted copy) is
+licensed under the **Open Database License (ODbL) v1.0**. See
+[`data/README.md`](data/README.md) and [`data/LICENSE-ODbL`](data/LICENSE-ODbL).
+That licence covers the data files only, not RNSpectraX itself.
 
 ---
 

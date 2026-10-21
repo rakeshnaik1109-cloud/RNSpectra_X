@@ -60,6 +60,36 @@ To compare aggregate data:
   * *Distinct/Unique:* found only in some files. Bands closer than **Compare
     Match ±cm⁻¹** are treated as the same band.
 
+### 2.5 Identify — reference-library match
+**🧬 Identify** compares a processed spectrum with the reference spectra of the
+open **RamanBiolib** library (202 spectra of 141 biomolecules: proteins,
+lipids, saccharides, amino acids, nucleic acids, metabolites, pigments,
+vitamins) and ranks the closest matches.
+1. Process the spectra as usual (despiking, baseline, smoothing). Matching uses
+   exactly the processed spectrum you see.
+2. Choose the **spectrum to identify** — a single file, a group average or the
+   grand average.
+3. Choose a **score**:
+   * *Correlation HQI* (default) — 100·r² between the two spectra.
+   * *Derivative HQI* — the same on first derivatives; tolerant of leftover
+     background.
+   * *Peak match* — band positions within ± tolerance; best for sharp-band
+     spectra, less reliable for broad-band molecules such as proteins.
+4. Optionally restrict to a **class** (e.g. Lipids) and press **🔍 Identify**.
+
+The results list the top matches with their score and a quality label, how
+each reference was measured (technique, laser wavelength) and the
+**publication each reference spectrum comes from** (with DOI). Click a row to
+overlay that reference on your spectrum. The box under the plot gives the full
+citation of the selected reference and of the RamanBiolib library;
+**↓ Results with citations** exports all of it as CSV.
+
+**Read the result as a hypothesis.** The references are spontaneous (non-SERS)
+spectra of pure compounds digitised from published figures. SERS enhancement,
+mixtures, substrate bands and a different laser wavelength all change relative
+band intensities. A strong score with a clear lead over the next match is good
+evidence; confirm it against a measured standard before reporting.
+
 ---
 
 ## 3. Operating in XY Mode

@@ -138,6 +138,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecProcess')">② Process</button>
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecAverage')">③ Average</button>
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecStyle')">④ Style &amp; Export</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecIdentify');refreshIdentifyTargets()">🧬 Identify</button>
           </div>
 
           <!-- ① DATA INPUT -->
@@ -609,6 +610,50 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
           </div>
 
           <!-- ⑤ PER-FILE CONTROLS -->
+          <!-- 🧬 IDENTIFY: reference-library match -->
+          <div class="section-card" id="oceanSecIdentify">
+            <div class="collapsible-header" onclick="toggleSection(this);refreshIdentifyTargets()">
+              <div class="section-title" style="margin:0">🧬 Identify — Reference Library Match</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="info-box">Compares a processed spectrum with <b>202 reference spectra of 141 biomolecules</b> from the open RamanBiolib library and ranks the closest matches. Each match shows the publication its reference spectrum comes from. A match is a suggestion to confirm, not proof of identity.</div>
+              <div class="grid">
+                <div class="field" style="grid-column:span 2"><label>Spectrum to identify</label><select id="idTarget" onmousedown="refreshIdentifyTargets()" onfocus="refreshIdentifyTargets()"><option value="">Load spectra first</option></select></div>
+                <div class="field"><label>Score</label>
+                  <select id="idMethod">
+                    <option value="hqi" selected>Correlation HQI</option>
+                    <option value="deriv">Derivative HQI (background-tolerant)</option>
+                    <option value="peaks">Peak match (band positions; best for sharp-band spectra)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Class</label>
+                  <select id="idClass">
+                    <option value="all" selected>All classes</option>
+                    <option value="Proteins">Proteins</option>
+                    <option value="Lipids">Lipids</option>
+                    <option value="Saccharides">Saccharides</option>
+                    <option value="AminoAcids">Amino acids</option>
+                    <option value="NucleicAcids">Nucleic acids</option>
+                    <option value="PrimaryMetabolites">Primary metabolites</option>
+                    <option value="Pigments">Pigments</option>
+                    <option value="Vitamins">Vitamins</option>
+                    <option value="Peptides">Peptides</option>
+                  </select>
+                </div>
+                <div class="field"><label>Show top</label><input type="number" id="idTopN" value="10" min="1" max="50" step="1"/></div>
+                <div class="field"><label>Peak tolerance ±cm⁻¹</label><input type="number" id="idTol" value="8" min="0.5" step="0.5" title="Used by the Peak match score"/></div>
+              </div>
+              <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-top:10px;">
+                <label class="toggle-item"><input type="checkbox" id="idUnique" checked>One result per substance</label>
+                <label class="toggle-item"><input type="checkbox" id="idBaseline" checked title="The reference spectra are baseline-free. A rubber-band baseline is removed from the query before matching (in addition to any baseline correction chosen above).">Remove remaining baseline before matching</label>
+              </div>
+              <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runIdentify()">🔍 Identify</button>
+              <span id="idStatus" style="font-size:12px;color:var(--muted);"></span>
+            </div>
+          </div>
+
           <div id="spectraPanel" style="display:none;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--hint);padding:12px 16px 6px;">⑤ Per-File: Label · Color · Group</div>
             <div id="spectrumControls"></div>
@@ -672,6 +717,29 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               <button class="btn btn-primary btn-sm" onclick="replotWithModifiedPeaks()">🔄 Update Markers</button>
               <button class="btn btn-outline btn-sm" onclick="downloadPeaksTxt()" style="margin-left:auto;">↓ .txt</button>
               <button class="btn btn-outline btn-sm" onclick="downloadPeaksPdf()">↓ PDF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="peak-table-wrap" id="idSection" style="display:none">
+          <div class="collapsible-header open" onclick="toggleSection(this)">
+            <h3 style="margin:0">🧬 Library match</h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="collapsible-body" style="max-height:none; margin-top:12px;">
+            <div id="idSummary" style="font-size:13px;margin-bottom:8px;"></div>
+            <div style="overflow-x:auto">
+            <table class="peak-table">
+              <thead><tr><th>#</th><th>Substance</th><th>Score</th><th>Reference measured by</th><th>Source of reference spectrum</th></tr></thead>
+              <tbody id="idTableBody"></tbody>
+            </table>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin:6px 0 12px;">Click a row to overlay it. Strong / possible: correlation HQI ≥ 90 / ≥ 75; derivative HQI ≥ 55 / ≥ 30; peak match ≥ 60 / ≥ 35. A top match leading the next by ≥ 15 points is marked “clear lead”.</div>
+            <div id="idPlot" style="background:white;border:1px solid var(--border);border-radius:var(--radius);"></div>
+            <div id="idCitation" style="font-size:12px;line-height:1.6;margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--inset);"></div>
+            <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">The reference spectra are spontaneous (non-SERS) Raman spectra of pure compounds, digitised from published figures. SERS spectra, mixtures and different excitation wavelengths change relative band intensities, so treat matches as hypotheses and confirm against a measured standard.</div>
+            <div class="peak-dl-group">
+              <button class="btn btn-outline btn-sm" onclick="downloadIdentifyCSV()">↓ Results with citations (.csv)</button>
             </div>
           </div>
         </div>
@@ -1366,6 +1434,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="js/analysis/peaks.js"></script>
 <script src="js/analysis/fitting.js"></script>
 <script src="js/analysis/resonance.js"></script>
+<script src="js/analysis/identify.js"></script>
 <script src="js/ui/sidebar.js"></script>
 <script src="js/ui/layout.js"></script>
 <script src="js/ui/theme.js"></script>

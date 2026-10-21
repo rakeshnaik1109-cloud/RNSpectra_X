@@ -208,6 +208,36 @@ spectra before reporting. Every assignment can be edited in the peak table.
 
 ---
 
+## 6a. Reference-library identification
+
+The query is the processed spectrum (§1–4). It is linearly interpolated onto
+the library grid (450–1800 cm⁻¹, 1 cm⁻¹) over the range it shares with the
+library (at least 200 cm⁻¹ is required). By default a rubber-band baseline
+(§2) is removed from it again, because the reference spectra are
+baseline-free. Query and every reference are then min–max normalised over
+that common range.
+
+* **Correlation HQI** $= 100\,\max(r,0)^2$, with $r$ the Pearson correlation
+  coefficient of query and reference.
+* **Derivative HQI** — the same on first derivatives computed with the
+  five-point stencil $y'_i = (-y_{i+2} + 8y_{i+1} - 8y_{i-1} + y_{i-2})/12$.
+  Differentiation suppresses slowly varying background and emphasises band
+  position and shape.
+* **Peak match** — bands of the query are detected as in §6. Each is paired
+  with the nearest unused reference band within $\pm\delta$, and the score is
+  $100\,m/(N_q + N_r - m)$, with $m$ the number of pairs and $N_q$, $N_r$ the
+  numbers of query and reference bands in the common range (intersection over
+  union).
+
+Reference spectra: **RamanBiolib** — M. Terán, J. J. Ruiz, P. Loza-Alvarez,
+D. Masip, D. Merino, *Open Raman spectral library for biomolecule
+identification*, Chemometr. Intell. Lab. Syst. 264, 105476 (2025),
+doi:10.1016/j.chemolab.2025.105476; Open Database License v1.0. Every
+reference spectrum in it is digitised from a published figure, and that
+publication is cited with each match.
+
+---
+
 ## 7. Cross-file comparison
 
 Peaks from every loaded spectrum are pooled and clustered along the $x$ axis
