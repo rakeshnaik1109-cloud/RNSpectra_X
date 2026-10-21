@@ -599,3 +599,6 @@ kbd {
 
 /* The product name is the page's h1; the topbar styling already sets its size. */
 h1.app-logo { font-size: 19px; line-height: 1; margin: 0; }
+
+/* header buttons that are <button> rather than <a> */
+button.chrome-link { cursor: pointer; font-family: inherit; }

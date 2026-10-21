@@ -108,7 +108,7 @@ function addXYDataset() {
       <div class="grid-3">
         <div class="field"><label>X Data</label><textarea id="xyXvals${idx}"></textarea></div>
         <div class="field"><label>Y Data</label><textarea id="xyYvals${idx}"></textarea></div>
-        <div class="field"><label>Label</label><input id="xyName${idx}" value="Dataset ${idx + 1}"><input type="color" id="xyColor${idx}" value="${GROUP_COLORS[idx % GROUP_COLORS.length]}"></div>
+        <div class="field"><label>Label</label><input id="xyName${idx}" value="Dataset ${idx + 1}"><input type="color" id="xyColor${idx}" value="${GROUP_COLORS[idx % GROUP_COLORS.length]}"><label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="xyRight${idx}">Right Y axis</label></div>
       </div>
       <div class="grid-3" style="margin-top:8px">
         <div class="field"><label>Y Error (optional)</label><textarea id="xyYerr${idx}"></textarea></div>

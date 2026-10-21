@@ -73,7 +73,7 @@ function getIdentifyQuery() {
   if (!v || !active.length) return null;
   if (v.startsWith("file:")) {
     const s = active.find(sp => String(sp.gIdx) === v.slice(5)); if (!s) return null;
-    const p = processSpec(s);
+    const p = processSpec(s, { skipDerivative: true });
     return { x: p.xx, y: p.yy, label: document.getElementById("label" + s.gIdx)?.value || "spectrum" };
   }
   let members = active, label = "Grand average";
@@ -81,7 +81,7 @@ function getIdentifyQuery() {
     const g = v.slice(6); label = `Group average — ${g}`;
     members = active.filter(s => ((document.getElementById("group" + s.gIdx)?.value || "Group 1").trim() || "Group 1") === g);
   }
-  const agg = averageSpecs(members); if (!agg) return null;
+  const agg = averageSpecs(members, { skipDerivative: true }); if (!agg) return null;
   return { x: agg.x, y: agg.mean, label };
 }
 

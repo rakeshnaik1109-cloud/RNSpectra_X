@@ -60,6 +60,42 @@ function findResonance(x, y, opts) {
   return { pos: v, value: c[0] + c[1] * dv + c[2] * dv * dv, atEdge };
 }
 
+// Line shape of a located resonance inside the search window:
+//   depth — from the mean level at the two window edges to the extreme value
+//   FWHM  — full width where the feature is half as deep (linear interpolation
+//           between samples on each side; NaN if it does not close inside the window)
+//   Q     — quality factor, position / FWHM
+function resonanceShape(x, y, opts, pos, value) {
+  const sgn = opts.type === "peak" ? -1 : 1;
+  const idx = [];
+  for (let i = 0; i < x.length; i++) if (x[i] >= opts.lo && x[i] <= opts.hi && Number.isFinite(y[i])) idx.push(i);
+  if (idx.length < 3 || !Number.isFinite(pos)) return { depth: NaN, fwhm: NaN, q: NaN };
+  const e = Math.max(1, Math.round(idx.length / 20));
+  const edge = (idx.slice(0, e).reduce((a, i) => a + y[i], 0) + idx.slice(-e).reduce((a, i) => a + y[i], 0)) / (2 * e);
+  let iMin = idx[0]; idx.forEach(i => { if (sgn * y[i] < sgn * y[iMin]) iMin = i; });
+  const extreme = Number.isFinite(value) ? value : y[iMin];
+  const depth = sgn * (edge - extreme);
+  if (!(depth > 0)) return { depth, fwhm: NaN, q: NaN };
+  const half = extreme + sgn * depth / 2;
+  const cross = (dir) => {
+    for (let i = iMin; i + dir >= idx[0] && i + dir <= idx[idx.length - 1]; i += dir) {
+      const j = i + dir;
+      if (sgn * y[j] >= sgn * half) return x[i] + (x[j] - x[i]) * (half - y[i]) / ((y[j] - y[i]) || 1e-300);
+    }
+    return NaN;
+  };
+  const fwhm = Math.abs(cross(1) - cross(-1));
+  return { depth, fwhm, q: Number.isFinite(fwhm) && fwhm > 0 ? Math.abs(pos) / fwhm : NaN };
+}
+
+const RES_METRICS = { fwhm: "FWHM", q: "Q factor", depth: "Depth" };
+
+function metricStats(vals) {
+  const v = vals.filter(Number.isFinite), n = v.length, mean = n ? v.reduce((a, b) => a + b, 0) / n : NaN;
+  const sd = n > 1 ? Math.sqrt(v.reduce((a, q) => a + (q - mean) ** 2, 0) / (n - 1)) : 0;
+  return { n, mean, sd, sem: n > 1 ? sd / Math.sqrt(n) : 0 };
+}
+
 // "10", "2.5", "0.3125", "10 nM", "1e-3 mg/mL" → number; buffer/blank names → 0;
 // anything else → null (left for the user to type)
 function concentrationFromName(name) {
@@ -97,16 +133,19 @@ function runResonanceAnalysis() {
   const rows = order.map(key => {
     const reps = buckets[key].map(ds => {
       const ix = ds.x.map((_, i) => i).sort((a, b) => ds.x[a] - ds.x[b]);
-      const r = findResonance(ix.map(i => ds.x[i]), ix.map(i => ds.y[i]), opts);
+      const sx = ix.map(i => ds.x[i]), sy = ix.map(i => ds.y[i]);
+      const r = findResonance(sx, sy, opts);
       if (!r) failed++; else if (r.atEdge) edge++;
-      return { name: ds.name, pos: r ? r.pos : NaN };
+      const shape = r ? resonanceShape(sx, sy, opts, r.pos, r.value) : { depth: NaN, fwhm: NaN, q: NaN };
+      return { name: ds.name, pos: r ? r.pos : NaN, fwhm: shape.fwhm, q: shape.q, depth: shape.depth };
     });
     const vals = reps.map(r => r.pos).filter(Number.isFinite);
     const n = vals.length, mean = n ? vals.reduce((a, b) => a + b, 0) / n : NaN;
     const sd = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : 0;
     // keep a concentration / tick the user already edited for this group
     const keep = prev[key];
-    return { key, label: key, n, reps, mean, sd, sem: n > 1 ? sd / Math.sqrt(n) : 0,
+    const metrics = {}; Object.keys(RES_METRICS).forEach(m => { metrics[m] = metricStats(reps.map(p => p[m])); });
+    return { key, label: key, n, reps, mean, sd, sem: n > 1 ? sd / Math.sqrt(n) : 0, metrics,
              conc: keep ? keep.conc : concentrationFromName(key), use: keep ? keep.use : true };
   });
 
@@ -140,6 +179,9 @@ function buildResonanceTable() {
       <td><b>${f(r.mean)}</b></td>
       <td>${f(r.sd)}</td>
       <td>${f(r.sem)}</td>
+      <td>${f(r.metrics.fwhm.mean)}</td>
+      <td>${f(r.metrics.q.mean)}</td>
+      <td>${f(r.metrics.depth.mean)}</td>
       <td style="font-size:11px;color:var(--muted)">${r.reps.map(p => f(p.pos)).join(", ")}</td>
     </tr>`).join("");
 }
@@ -147,7 +189,9 @@ function buildResonanceTable() {
 // Step 3: calibration plot and fit
 function renderResonancePlot() {
   const R = lastResonance; if (!R) return;
-  const useShift = document.getElementById("xyDipY").value === "shift";
+  const ySel = document.getElementById("xyDipY").value;
+  const metric = RES_METRICS[ySel] ? ySel : null;
+  const useShift = ySel === "shift";
   const errKind = document.getElementById("xyDipErr").value;
   const logX = document.getElementById("xyDipLogX").checked;
   const model = document.getElementById("xyDipFit").value;
@@ -155,7 +199,8 @@ function renderResonancePlot() {
   const refRow = R.rows[parseInt(document.getElementById("xyDipRef").value) || 0];
   const e = r => errKind === "sem" ? r.sem : r.sd;
 
-  const pts = R.rows.filter(r => r.use && r.conc !== null && Number.isFinite(r.conc) && Number.isFinite(r.mean)).map(r => {
+  const pts = R.rows.filter(r => r.use && r.conc !== null && Number.isFinite(r.conc) && Number.isFinite(metric ? r.metrics[metric].mean : r.mean)).map(r => {
+    if (metric) { const m = r.metrics[metric]; return { x: r.conc, y: m.mean, err: errKind === "sem" ? m.sem : m.sd, label: r.label, n: m.n }; }
     let y = r.mean, err = e(r);
     if (useShift) {
       y = r.mean - refRow.mean;
@@ -166,7 +211,8 @@ function renderResonancePlot() {
   }).sort((a, b) => a.x - b.x);
 
   const what = R.type === "peak" ? "Peak" : "Resonance dip";
-  const yTitle = useShift ? `${what} shift, Δ ${R.xLabel}` : `${what} position, ${R.xLabel}`;
+  const yTitle = metric ? (metric === "q" ? `${what} Q factor (position / FWHM)` : `${what} ${RES_METRICS[metric]}${metric === "fwhm" ? ", " + R.xLabel : ""}`)
+    : useShift ? `${what} shift, Δ ${R.xLabel}` : `${what} position, ${R.xLabel}`;
   // unit of the X axis, e.g. "Wavelength [nm]" → "nm"
   const xUnitMatch = R.xLabel.match(/[\[(]([^\])]+)[\])]\s*$/);
   const xUnit = xUnitMatch ? xUnitMatch[1] : "";
@@ -180,7 +226,7 @@ function renderResonancePlot() {
   if (missing) notes.push(`${missing} group${missing === 1 ? " has" : "s have"} no concentration yet — type it in the table to include ${missing === 1 ? "it" : "them"}.`);
 
   const traces = [{
-    x: shown.map(p => p.x), y: shown.map(p => p.y), mode: "markers", name: useShift ? "Shift" : "Position",
+    x: shown.map(p => p.x), y: shown.map(p => p.y), mode: "markers", name: metric ? RES_METRICS[metric] : useShift ? "Shift" : "Position",
     marker: { size: 9, color: "#1f77b4" },
     error_y: { type: "data", array: shown.map(p => p.err), visible: true, thickness: 1.5, width: 5, color: "#1f77b4" },
     text: shown.map(p => `${p.label} (n=${p.n})`), hovertemplate: "%{text}<br>%{x}<br>%{y:.3f} ± %{error_y.array:.3f}<extra></extra>"
@@ -202,17 +248,29 @@ function renderResonancePlot() {
         + (fit.redChi2 != null ? `<tr><td>Reduced χ²</td><td>${fmtNum(fit.redChi2)}</td></tr>` : "")
         + `<tr><td>Points</td><td>${fit.n}${fit.weighted ? " · weighted by 1/σ²" : ""}</td></tr>`;
       let extra = "";
+      lastResonance.lod = null; lastResonance.loq = null; lastResonance.lodRes = null; lastResonance.loqRes = null;
       if (model === "linear") {
         const slope = fit.values[1], slopeErr = fit.errors[1];
-        extra += `<tr><td>Sensitivity (slope)</td><td><b>${fmtWithErr(slope, slopeErr)}</b> ${xUnit || "units"} per ${unit || "unit concentration"}</td></tr>`;
-        // LOD = 3·SD(blank)/|slope| from the replicates of the reference group
+        const yUnit = metric === "q" || metric === "depth" ? "" : (xUnit || "units");
+        extra += `<tr><td>Sensitivity (slope)</td><td><b>${fmtWithErr(slope, slopeErr)}</b> ${yUnit ? yUnit + " " : ""}per ${unit || "unit concentration"}</td></tr>`;
+        // LOD = 3·SD(blank)/|slope|, LOQ = 10·SD(blank)/|slope| from the
+        // replicates of the reference group (of the quantity being plotted)
         const blank = refRow;
-        if (blank && blank.n >= 2 && slope) {
-          const lod = 3 * blank.sd / Math.abs(slope);
-          extra += `<tr><td>Limit of detection (3σ)</td><td><b>${fmtNum(lod)}</b> ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 3 × SD(${blank.label.replace(/</g, "&lt;")}, n=${blank.n}) / |slope|</span></td></tr>`;
-          lastResonance.lod = lod;
+        const bSd = blank ? (metric ? blank.metrics[metric].sd : blank.sd) : NaN, bN = blank ? (metric ? blank.metrics[metric].n : blank.n) : 0;
+        if (blank && bN >= 2 && slope) {
+          const lod = 3 * bSd / Math.abs(slope), loq = 10 * bSd / Math.abs(slope);
+          const who = `SD(${blank.label.replace(/</g, "&lt;")}, n=${bN})`;
+          extra += `<tr><td>Limit of detection (3σ)</td><td><b>${fmtNum(lod)}</b> ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 3 × ${who} / |slope|</span></td></tr>`;
+          extra += `<tr><td>Limit of quantification (10σ)</td><td><b>${fmtNum(loq)}</b> ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 10 × ${who} / |slope|</span></td></tr>`;
+          lastResonance.lod = lod; lastResonance.loq = loq;
         } else {
           extra += `<tr><td>Limit of detection</td><td style="color:var(--muted)">needs ≥ 2 replicates in the reference (blank) group</td></tr>`;
+        }
+        // ICH Q2 alternative from the scatter of the calibration about the line
+        if (fit.n > 2 && slope) {
+          const sRes = Math.sqrt(fit.ssRes / (fit.n - 2));
+          lastResonance.lodRes = 3.3 * sRes / Math.abs(slope); lastResonance.loqRes = 10 * sRes / Math.abs(slope);
+          extra += `<tr><td>LOD / LOQ from calibration residuals</td><td>${fmtNum(lastResonance.lodRes)} / ${fmtNum(lastResonance.loqRes)} ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 3.3 / 10 × s<sub>y/x</sub> / |slope| (ICH Q2), s<sub>y/x</sub> = ${fmtNum(sRes)}</span></td></tr>`;
         }
       }
       if (model === "langmuir" || model === "hill") extra += `<tr><td>Apparent K<sub>D</sub></td><td><b>${fmtWithErr(fit.values[2], fit.errors[2])}</b> ${unit}</td></tr>`;
@@ -227,7 +285,7 @@ function renderResonancePlot() {
 
   const tick = { size: 13 };
   Plotly.newPlot(div, traces, {
-    title: { text: useShift ? "Resonance shift vs concentration" : "Resonance position vs concentration", font: { size: 17 } },
+    title: { text: metric ? `Resonance ${RES_METRICS[metric]} vs concentration` : useShift ? "Resonance shift vs concentration" : "Resonance position vs concentration", font: { size: 17 } },
     // on a log axis, label the measured concentrations themselves (Plotly's
     // default log ticks print 0.3 as a bare "3")
     xaxis: Object.assign({ title: { text: xTitle }, type: logX ? "log" : "linear", tickfont: tick, showline: true, mirror: true, ticks: "outside", zeroline: false },
@@ -242,15 +300,19 @@ function downloadResonanceCSV() {
   const R = lastResonance; if (!R) { alert("Run the resonance analysis first."); return; }
   const q = s => `"${String(s).replace(/"/g, '""')}"`;
   const refRow = R.rows[parseInt(document.getElementById("xyDipRef").value) || 0];
-  let csv = "group,concentration,n,mean_position,sd,sem,shift_from_reference,replicate_positions\n";
+  let csv = "group,concentration,n,mean_position,sd,sem,shift_from_reference,replicate_positions,fwhm_mean,fwhm_sd,q_mean,q_sd,depth_mean,depth_sd\n";
   R.rows.forEach(r => {
-    csv += [q(r.label), r.conc ?? "", r.n, r.mean, r.sd, r.sem, r.mean - refRow.mean, q(r.reps.map(p => p.pos).join(";"))].join(",") + "\n";
+    const m = r.metrics || {}, g = (k, f) => m[k] ? m[k][f] : "";
+    csv += [q(r.label), r.conc ?? "", r.n, r.mean, r.sd, r.sem, r.mean - refRow.mean, q(r.reps.map(p => p.pos).join(";")),
+      g("fwhm", "mean"), g("fwhm", "sd"), g("q", "mean"), g("q", "sd"), g("depth", "mean"), g("depth", "sd")].join(",") + "\n";
   });
   if (R.fit) {
     csv += `\nfit model,${q(R.fit.label)}\n`;
     R.fit.names.forEach((nm, j) => { csv += `${q(nm)},${R.fit.values[j]},±,${Number.isFinite(R.fit.errors[j]) ? R.fit.errors[j] : ""}\n`; });
     csv += `R2,${R.fit.r2}\n`;
-    if (R.lod != null && R.fit.model === "linear") csv += `LOD (3 SD blank / slope),${R.lod}\n`;
+    if (R.lod != null && R.fit.model === "linear") csv += `LOD (3 SD blank / slope),${R.lod}\nLOQ (10 SD blank / slope),${R.loq}\n`;
+    if (R.lodRes != null && R.fit.model === "linear") csv += `LOD (3.3 s_y/x / slope),${R.lodRes}\nLOQ (10 s_y/x / slope),${R.loqRes}\n`;
+    csv += `plotted quantity,${q(document.getElementById("xyDipY").selectedOptions[0]?.text || "")}\n`;
   }
   downloadBlob(csv, "RNSpectraX_Resonance.csv", "text/csv");
 }

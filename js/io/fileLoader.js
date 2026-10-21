@@ -216,6 +216,7 @@ function renderXYFileCards() {
     if (lab) f.name = lab.value; if (col) f.color = col.value;
     const use = document.getElementById("xyFileUse" + gIdx), grp = document.getElementById("xyFileGroup" + gIdx);
     if (use) f.include = use.checked; if (grp) f.group = grp.value;
+    const y2 = document.getElementById("xyFileY2" + gIdx); if (y2) f.y2 = y2.checked;
   });
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
@@ -231,7 +232,10 @@ function renderXYFileCards() {
           <div class="field"><label>Group</label><input id="xyFileGroup${gIdx}" value="${esc(f.group || "")}" placeholder="none — plotted on its own"></div>
         </div>
         <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${esc(f.name)}"></div>
-        <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
+        <div class="grid" style="grid-template-columns:1fr auto;gap:8px;align-items:end;">
+          <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
+          <label class="toggle-item" style="margin-bottom:6px;" title="Plot this dataset against a second Y axis on the right"><input type="checkbox" id="xyFileY2${gIdx}" ${f.y2 ? "checked" : ""}>Right Y axis</label>
+        </div>
       </div>`;
   });
   const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
@@ -353,7 +357,7 @@ function gatherXYDatasets() {
   const tab = document.querySelector('.xy-tab.active').id;
   if (tab === 'tabFile') return Object.keys(xyFileNames)
     .filter(gi => document.getElementById("xyFileUse" + gi)?.checked !== false)
-    .map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value, group: (document.getElementById("xyFileGroup" + gi)?.value || "").trim() }));
+    .map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value, group: (document.getElementById("xyFileGroup" + gi)?.value || "").trim(), y2: !!document.getElementById("xyFileY2" + gi)?.checked }));
   if (tab === 'tabCols') {
     const parsed = parseXYFile(document.getElementById("xyColText").value);
     return [{ x: parsed.x, y: parsed.y, ey: parsed.ey, ex: parsed.ex, name: document.getElementById("xyColName").value, color: "#2563eb" }];
@@ -363,13 +367,13 @@ function gatherXYDatasets() {
   const y1 = parseCSVVals(document.getElementById("xyYvals").value);
   const ey1 = parseCSVVals(document.getElementById("xyYerr").value);
   const ex1 = parseCSVVals(document.getElementById("xyXerr").value);
-  if (x1.length && y1.length) list.push(Object.assign(pairXYLists(x1, y1, ey1, ex1, document.getElementById("xyName1").value), { name: document.getElementById("xyName1").value, color: document.getElementById("xyColor1").value }));
+  if (x1.length && y1.length) list.push(Object.assign(pairXYLists(x1, y1, ey1, ex1, document.getElementById("xyName1").value), { name: document.getElementById("xyName1").value, color: document.getElementById("xyColor1").value, y2: !!document.getElementById("xyRight1")?.checked }));
   for (let i = 1; i <= extraDatasetCount; i++) {
     if (document.getElementById("xyXvals" + i)) {
       const ey = parseCSVVals(document.getElementById("xyYerr" + i)?.value);
       const ex = parseCSVVals(document.getElementById("xyXerr" + i)?.value);
       const nm = document.getElementById("xyName" + i).value;
-      list.push(Object.assign(pairXYLists(parseCSVVals(document.getElementById("xyXvals" + i).value), parseCSVVals(document.getElementById("xyYvals" + i).value), ey, ex, nm), { name: nm, color: document.getElementById("xyColor" + i).value }));
+      list.push(Object.assign(pairXYLists(parseCSVVals(document.getElementById("xyXvals" + i).value), parseCSVVals(document.getElementById("xyYvals" + i).value), ey, ex, nm), { name: nm, color: document.getElementById("xyColor" + i).value, y2: !!document.getElementById("xyRight" + i)?.checked }));
     }
   }
   return list;

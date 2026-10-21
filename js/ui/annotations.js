@@ -129,7 +129,7 @@ function labelPoint(mode, pt) {
 
 function parseXList(s) {
   // accepts "1004, 1450", "1600 1700" and ranges such as "1600-1700" or "1600–1700"
-  return String(s || '').replace(/(\d)\s*[-–—]\s*(?=\d)/g, '$1 ').split(/[,;\s]+/).map(Number).filter(Number.isFinite);
+  return String(s || '').replace(/(\d)\s*[-–—]\s*(?=\d)/g, '$1 ').split(/[,;\s]+/).filter(t => t !== '').map(Number).filter(Number.isFinite);
 }
 
 // ┆ dashed vertical line(s) at given X, each labelled at the top

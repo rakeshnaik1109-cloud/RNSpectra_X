@@ -43,6 +43,16 @@ order: despiking → baseline → smoothing → normalisation.
 * **Normalisation:** *Max*, *Min–Max*, *Area*, *Vector*, or *Reference band*,
   which divides each spectrum by its intensity at a band you choose (e.g.
   1003 cm⁻¹ phenylalanine, 1450 cm⁻¹ CH₂, or 520.7 cm⁻¹ silicon).
+* **Calibration, Regions & Derivative:**
+  * *Shift correction* adds a constant to every Raman shift. To measure it,
+    load a reference spectrum (e.g. a silicon wafer), choose it under
+    **Reference spectrum**, keep 520.7 cm⁻¹ (or type 1001.4 for polystyrene,
+    1332 for diamond) and press **🎯 Measure shift from reference band**.
+  * *Exclude regions* removes ranges such as `1540-1560; 2320-2340` (substrate
+    bands, a detector artefact) before any processing.
+  * *Derivative* (1st or 2nd, Savitzky–Golay) is applied last. A
+    2nd-derivative minimum marks every band, including shoulders hidden in a
+    broad envelope. Identify always matches the spectrum before the derivative.
 
 ### 2.3 Averaging & Error Bands
 To compare aggregate data:
@@ -101,6 +111,38 @@ spectra of pure compounds digitised from published figures. SERS enhancement,
 mixtures, substrate bands and a different laser wavelength all change relative
 band intensities. A strong score with a clear lead over the next match is good
 evidence; confirm it against a measured standard before reporting.
+
+### 2.6 Analysis — peak fitting, band ratios, PCA, difference spectra
+**🔬 Analysis** works on the spectra exactly as processed for the plot. Pick a
+**Tool**; the result (table, plot, **↓ Results .csv**, **↓ Plot .png**) appears
+under the main plot.
+
+* **Peak fitting (deconvolution).** Choose a spectrum (a file, a group average,
+  the grand average, or *Every file, one by one*), the region (e.g. 1580–1720
+  for Amide I) and either type the band positions (`1610, 1655`) or leave them
+  blank and give the number of bands to find them automatically (2nd-derivative
+  minima). Pick *Gaussian*, *Lorentzian* or *Pseudo-Voigt* bands and a *None*,
+  *Constant* or *Linear* background. Each band's centre, FWHM, height, area and
+  share of the total area are reported ± their standard errors; the plot shows
+  the data, every band, their sum and the residual. In batch mode every file is
+  fitted from the same start positions and each band's parameters are summarised
+  per group (mean ± SD), e.g. for comparing secondary-structure fractions.
+* **Band ratio / area.** Band A (a position such as `1004`, used with the ±
+  window, or a range `990-1020`) and optionally band B (`1450`); *Height* or
+  *Area*. Every spectrum gets a value; groups get mean, SD and SEM, a bar chart
+  with the individual spectra as dots, and a significance test: Welch's t-test
+  for two groups, one-way ANOVA (plus pairwise Welch tests) for three or more.
+  Tick *Local baseline* only when no baseline correction was applied; the
+  window must then cover the whole band.
+* **PCA.** Principal component analysis of the individual spectra (≥ 3), over
+  an optional region, mean-centred or autoscaled. The score plot colours each
+  group and draws its 95 % confidence ellipse; the loading plot shows which
+  bands drive each component (a positive loading is stronger in spectra with a
+  high score). Choose which PCs to plot after the run.
+* **Difference spectrum.** A − B for two groups or files, with a ± SD (or SEM)
+  band from the two spreads added in quadrature, and A and B drawn above. The
+  strongest positive and negative differences are listed; * marks those larger
+  than twice the band.
 
 ---
 
@@ -200,6 +242,12 @@ Leave a field blank to let that side follow the data; fill only one side to pin
 just that limit. Limits update the plot as you type, and work together with
 **Invert X**.
 
+**Second Y axis.** Tick **Right Y axis** on a dataset (on its file card, or
+under a pasted dataset) to plot it against an axis on the right, e.g.
+reflectance on the left and phase or transmittance on the right. Its title and
+optional limits are **Right Y label**, **Right Y Min** and **Right Y Max**.
+A fit of that dataset is drawn on the same right axis.
+
 ### 3.3 Curve Fitting & Regression
 1. Choose a model: linear, polynomial, exponential, power, logarithmic, Gaussian
    or Lorentzian.
@@ -230,10 +278,18 @@ peak: **⑤ Resonance Tracking**.
    `10 nM` …; `PBS`, `blank`, `buffer` → 0). Edit any value, or untick a row
    to leave it out — the plot updates immediately.
 5. Plot the **shift from a reference** (the blank group; its uncertainty is
-   added in quadrature) or the **absolute position**, with ± SD or ± SEM, on a
-   linear or log concentration axis.
-6. **Calibration fit:** *Linear* reports the sensitivity (slope, ± error) and
-   the limit of detection LOD = 3·SD(blank)/|slope|; *Langmuir* and *Hill*
+   added in quadrature), the **absolute position**, or the line shape — the
+   **FWHM**, the **Q factor** (position / FWHM) or the **depth** — with ± SD or
+   ± SEM, on a linear or log concentration axis. The table lists the mean FWHM,
+   Q and depth of every group. Width and depth are measured at half the depth
+   below the mean level at the two ends of the search window, so set the window
+   to include some flat signal on both sides of the resonance.
+6. **Calibration fit:** *Linear* reports the sensitivity (slope, ± error), the
+   limit of detection LOD = 3·SD(blank)/|slope| and of quantification
+   LOQ = 10·SD(blank)/|slope|, and the same two limits from the scatter of the
+   calibration points about the line (3.3 and 10 × s<sub>y/x</sub>/|slope|,
+   ICH Q2). For a refractive-index calibration type **RIU** as the
+   concentration unit and the sensitivity is reported in nm/RIU. *Langmuir* and *Hill*
    report the apparent K<sub>D</sub> and the maximum response; *Logarithmic*
    and *Polynomial* are also available. Fits are weighted by the error bars.
 7. Download the results table (**.csv**, including every replicate position
@@ -262,6 +318,23 @@ RNSpectraX™ features sticky action buttons pinned to the bottom of the control
 ### Drag and drop
 Drop spectrum files anywhere on the window. Whichever mode is active receives
 them, so switch to XY mode first if you are loading XY data.
+
+### Project files (Save / Open)
+**Save** in the header downloads one `.rnsx` file holding every loaded spectrum
+and XY dataset, the labels, colours and groups typed on the file cards, every
+setting, renamed legend entries and your annotations. **Open** loads it back
+and redraws the figure exactly, on any computer, so a figure can be revised
+months later or sent to a co-author or supervisor. The file stays on your
+computer; nothing is uploaded.
+
+### Methods text
+**Methods** in the header writes a paragraph for the Methods section of a paper
+from the settings in use: number of spectra and groups, shift calibration,
+excluded regions, despiking, baseline, smoothing, normalisation and derivative
+with their parameters, the averaging, and the last analysis run (peak fit, band
+ratio test, PCA, difference spectrum; in XY mode the fit, resonance method,
+calibration and LOD/LOQ), followed by the references for the methods used.
+Edit it, then **Copy** or download it as `.txt`.
 
 ### Session memory
 Every processing and styling control is written to this browser's local storage

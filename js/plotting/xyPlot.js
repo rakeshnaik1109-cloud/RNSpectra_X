@@ -66,7 +66,7 @@ function buildXYGroups(processed, errKind) {
     return {
       // a one-member group has no spread to show
       x: grid, y: mean, ey: n < 2 ? null : errKind === 'sem' ? sem : errKind === 'sd' ? sd : null, ex: null,
-      name: `${o.group} (n=${n})`, color: first.color, isGroup: true, n, members: buckets[o.group].map(d => d.name)
+      name: `${o.group} (n=${n})`, color: first.color, y2: first.y2, isGroup: true, n, members: buckets[o.group].map(d => d.name)
     };
   });
 }
@@ -185,6 +185,9 @@ function plotXY() {
       traces.push(tr);
     }
 
+    // datasets ticked "Right Y axis" go on a second axis (y3: y2 is the inset's)
+    if (ds.y2) traces.forEach(t => { if (t.legendgroup === 'dataset-' + di && !t.yaxis) t.yaxis = 'y3'; });
+
     lastXYSeries.push({ name: displayName + (ds.isGroup && dsEy ? (errKind === 'sem' ? ' [mean, SEM]' : ' [mean, SD]') : ''), x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
 
     // fitting — done on the processed data before any display offset/divisor,
@@ -202,7 +205,7 @@ function plotXY() {
         const traceColor = fitAll ? ds.color : "#475569";
         const fitDefaultName = `Fit: ${ds.name} (R²=${fit.r2.toFixed(4)})`;
         const fitDisplayName = getDisplayName('xy', 'fit', di, fitDefaultName);
-        traces.push({ x: fineX.map(v => v + shiftX), y: fineY, mode: "lines", line: { width: lw, color: traceColor, dash: "dash" }, name: fitDisplayName, meta: { editable: true, kind: 'fit', idx: di } });
+        traces.push(Object.assign({ x: fineX.map(v => v + shiftX), y: fineY, mode: "lines", line: { width: lw, color: traceColor, dash: "dash" }, name: fitDisplayName, meta: { editable: true, kind: 'fit', idx: di } }, ds.y2 ? { yaxis: 'y3' } : {}));
 
         fit.datasetName = ds.name;
         lastFitResults.push(fit);

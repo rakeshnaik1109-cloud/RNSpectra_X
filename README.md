@@ -66,6 +66,11 @@ nothing about your files or spectra.
 | Group statistics | Group averages and grand average with SD or SEM, drawn as capped bars or shaded bands, over the range shared by all spectra |
 | Peak detection | Topographic prominence with an adjustable threshold; every band listed in the peak table and matched against a ~35-band Raman reference library (proteins, nucleic acids, lipids, carotenoids, silicon) |
 | Identify (library match) | Ranks the closest of 202 reference spectra (141 biomolecules, RamanBiolib) by correlation HQI, derivative HQI or peak matching, with an overlay, and cites the RamanBiolib library and the publication each reference spectrum comes from |
+| Shift calibration, regions, derivatives | Constant shift correction measured from a silicon / polystyrene / diamond reference band; excluded regions; Savitzky–Golay 1st and 2nd derivatives |
+| Peak fitting | Gaussian, Lorentzian or pseudo-Voigt band deconvolution on a flat or sloping background, with centre, FWHM, height and area ± standard errors; one spectrum or every file with per-group summaries |
+| Band ratios and statistics | Band height or area (or a ratio, e.g. 1004/1450) for every spectrum, group mean ± SD/SEM, Welch's t-test or one-way ANOVA |
+| PCA | Score plots coloured by group with 95 % confidence ellipses, loading plots, explained variance |
+| Difference spectra | Group A − group B with an uncertainty band and the strongest differences listed |
 | Cross-file analyser | Clusters peaks across all loaded spectra into common bands and sample-specific bands |
 | Editable peak table | Correct positions, retitle assignments, delete rows, and re-plot from the edited table |
 
@@ -74,10 +79,10 @@ nothing about your files or spectra.
 | Capability | Detail |
 |---|---|
 | Data entry | Paste values, paste columns, or upload `.csv` / `.txt` / `.dat` / `.tsv` or Excel (`.xlsx` / `.xls` / `.ods`) files, with optional Y-error and X-error columns. A multi-column table (one X column, many Y columns, e.g. an Avantes spectrometer export) becomes one dataset per column, all on one plot. Per-measurement files with several quantities (e.g. AvaSoft Sample/Dark/Reference/Reflectance) load with a **Plot quantity** selector |
-| Resonance tracking | Finds the dip (or peak) position in every replicate — parabola-vertex, centroid or minimum — averages per group, and plots position or shift vs concentration with ± SD/SEM; linear (sensitivity, LOD), logarithmic, Langmuir and Hill (K_D) calibration fits |
+| Resonance tracking | Finds the dip (or peak) position in every replicate — parabola-vertex, centroid or minimum — with its FWHM, Q factor and depth; averages per group, and plots shift, position, FWHM, Q or depth vs concentration with ± SD/SEM; linear (sensitivity, LOD, LOQ), logarithmic, Langmuir and Hill (K_D) calibration fits |
 | Column selection & replicate averaging | Tick which columns to plot; group columns (by hand, every N columns, or by name) and plot each group's mean ± SD or SEM as a shaded band or error bars |
 | Axis presets | General, FTIR, UV-Vis, fluorescence/PL, XRD, XPS, I–V, time series/kinetics, thermal analysis and calibration curves. A preset only fills in axis labels; the data are never treated differently |
-| Axis limits | X Min / X Max with Y Min / Y Max directly below. Blank means automatic, and one side can be pinned on its own |
+| Axis limits | X Min / X Max with Y Min / Y Max directly below. Blank means automatic, and one side can be pinned on its own. Any dataset can go on a second Y axis on the right |
 | Plot styles | Lines, markers (scatter) or lines + markers with selectable symbol and size, bar, fill-under, per-dataset X/Y offsets for stacked plots, inverted X axis |
 | Smoothing | Applied to every dataset at once, with an optional faint overlay of the unsmoothed data |
 | Regression models | Linear, polynomial (up to order 10), exponential, power, logarithmic, Gaussian peak, Lorentzian peak, Langmuir and Hill binding isotherms |
@@ -96,6 +101,9 @@ nothing about your files or spectra.
 - High-resolution PNG / JPG / TIFF / SVG export at a chosen DPI.
 - Processed data as CSV (exactly what was plotted), fit reports as `.txt` and
   `.csv`, and PDF / `.txt` peak and comparison tables.
+- Project files (`.rnsx`) that save and reopen everything — data, settings,
+  groups, annotations — and a **Methods** button that writes the Methods
+  paragraph, with references, from the settings in use.
 
 The mathematics behind every processing and fitting step is written out in
 [`docs/METHODS.md`](docs/METHODS.md), so the pipeline can be described exactly in

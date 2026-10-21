@@ -350,7 +350,7 @@ function buildInset(prefix, cleanTraces) {
 
   const insetTraces = [];
   cleanTraces.forEach(t => {
-    if (t.isGuide || t.isPeakMarker || t.isCommonLegend || t.isInsetClone || t.xaxis === 'x2' || !Array.isArray(t.x) || !Array.isArray(t.y)) return;
+    if (t.isGuide || t.isPeakMarker || t.isCommonLegend || t.isInsetClone || t.xaxis === 'x2' || t.yaxis === 'y3' || !Array.isArray(t.x) || !Array.isArray(t.y)) return;
     const ix = [], iy = [];
     for (let i = 0; i < t.x.length; i++) {
       const xv = t.x[i];

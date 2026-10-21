@@ -640,6 +640,9 @@ kbd {
 /* The product name is the page's h1; the topbar styling already sets its size. */
 h1.app-logo { font-size: 19px; line-height: 1; margin: 0; }
 
+/* header buttons that are <button> rather than <a> */
+button.chrome-link { cursor: pointer; font-family: inherit; }
+
 </style>
 <style>
 /* css/layout.css */
@@ -1116,6 +1119,19 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 7l6-5 6 5v6.5a1 1 0 0 1-1 1H9.5V10h-3v4.5H3a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Homepage</span>
       </a>--->
+      <button class="chrome-link" onclick="saveProject()" title="Save everything — spectra, settings, groups, annotations — as one .rnsx project file">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h8l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 2v4h5V2M5 14V9h6v5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span class="chrome-link-text">Save</span>
+      </button>
+      <button class="chrome-link" onclick="openProjectDialog()" title="Open a .rnsx project file">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4.5V12a1 1 0 0 0 1 1h10l1.5-6H5L3.5 12" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H12a1 1 0 0 1 1 1V7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span class="chrome-link-text">Open</span>
+      </button>
+      <input type="file" id="projectFileInput" accept=".rnsx,.json" style="display:none" onchange="openProjectFile(event)"/>
+      <button class="chrome-link" onclick="showMethodsText()" title="Write a Methods paragraph from the current settings">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3h10M3 6.5h10M3 10h7M3 13.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="chrome-link-text">Methods</span>
+      </button>
       <a class="chrome-link" href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md" title="User manual">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h6l4 4v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Manual</span>
@@ -1155,6 +1171,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecAverage')">③ Average</button>
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecStyle')">④ Style &amp; Export</button>
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecIdentify');refreshIdentifyTargets()">🧬 Identify</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecAnalysis');refreshRamanToolTargets()">🔬 Analysis</button>
           </div>
 
           <!-- ① DATA INPUT -->
@@ -1309,6 +1326,37 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Reference band (cm⁻¹)</label><input type="number" id="normRefX" value="1003" step="any" title="e.g. 1003 (phenylalanine), 1450 (CH₂), 520.7 (silicon)"/></div>
                 <div class="field"><label>Search ± (cm⁻¹)</label><input type="number" id="normRefWin" value="10" min="0.5" step="any"/></div>
               </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- 2e. Shift calibration, excluded regions, derivative -->
+            <div class="collapsible-header" onclick="toggleSection(this);refreshCalibrationFiles()">
+              <div class="section-title" style="margin:0">Calibration, Regions &amp; Derivative</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Shift correction (cm⁻¹)</label><input type="number" id="rsShift" value="0" step="any" title="Added to every Raman shift before processing. 0 = no correction."/></div>
+                <div class="field"><label>Reference band (cm⁻¹)</label><input type="number" id="rsCalRef" value="520.7" step="any" title="Literature position of the calibration band, e.g. 520.7 (silicon), 1001.4 (polystyrene), 1332 (diamond)"/></div>
+                <div class="field"><label>Reference spectrum</label><select id="rsCalFile" onmousedown="refreshCalibrationFiles()" onfocus="refreshCalibrationFiles()"><option value="">Load spectra first</option></select></div>
+                <div class="field"><label>Search ± (cm⁻¹)</label><input type="number" id="rsCalWin" value="15" min="1" step="any"/></div>
+              </div>
+              <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%;" onclick="calibrateShiftFromReference()" title="Find the band in the chosen reference spectrum and set the shift correction so it sits at the reference position">🎯 Measure shift from reference band</button>
+              <div class="field" style="margin-top:10px;"><label>Exclude regions (cm⁻¹)</label><input type="text" id="rsExclude" placeholder="e.g. 1540-1560; 2320-2340" title="Points inside these ranges are removed before despiking, baseline and smoothing"/></div>
+              <div class="grid" style="margin-top:10px;">
+                <div class="field"><label>Derivative</label>
+                  <select id="rsDeriv" onchange="updateDerivParams()">
+                    <option value="0" selected>None</option>
+                    <option value="1">1st derivative</option>
+                    <option value="2">2nd derivative</option>
+                  </select>
+                </div>
+                <div class="field" id="rsDerivWinWrap" style="display:none"><label>Window (pts)</label><input type="number" id="rsDerivWin" value="11" min="5" step="2"/></div>
+                <div class="field" id="rsDerivOrderWrap" style="display:none"><label>Poly order</label><input type="number" id="rsDerivOrder" value="3" min="2" max="6"/></div>
+              </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:6px;">Savitzky–Golay derivative, applied last. A 2nd-derivative minimum marks each band, including shoulders. Identify always uses the spectrum before the derivative.</div>
             </div>
           </div>
 
@@ -1690,6 +1738,82 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
             </div>
           </div>
 
+          <!-- 🔬 ANALYSIS TOOLS -->
+          <div class="section-card" id="oceanSecAnalysis">
+            <div class="collapsible-header" onclick="toggleSection(this);refreshRamanToolTargets()">
+              <div class="section-title" style="margin:0">🔬 Analysis — Peak Fit · Band Ratio · PCA · Difference</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="field"><label>Tool</label>
+                <select id="rtTool" onchange="switchRamanTool()">
+                  <option value="peakfit" selected>Peak fitting (deconvolution)</option>
+                  <option value="ratio">Band ratio / area + statistics</option>
+                  <option value="pca">PCA (principal components)</option>
+                  <option value="diff">Difference spectrum (A − B)</option>
+                </select>
+              </div>
+
+              <div id="rtPane_peakfit" style="margin-top:10px;">
+                <div class="info-box">Fits a region as a sum of bands on a background and reports each band's centre, FWHM, height and area with standard errors — e.g. Amide I (1580–1720) or 1200–1350 cm⁻¹.</div>
+                <div class="grid">
+                  <div class="field" style="grid-column:span 2"><label>Spectrum</label><select id="rtFitTarget" onmousedown="refreshRamanToolTargets()" onfocus="refreshRamanToolTargets()"><option value="">Load spectra first</option></select></div>
+                  <div class="field"><label>Region from</label><input type="number" id="rtFitLo" value="1580" step="any"/></div>
+                  <div class="field"><label>Region to</label><input type="number" id="rtFitHi" value="1720" step="any"/></div>
+                  <div class="field" style="grid-column:span 2"><label>Band positions (start values)</label><input type="text" id="rtFitCentres" placeholder="blank = find automatically, or e.g. 1610, 1655"/></div>
+                  <div class="field"><label>Bands (if automatic)</label><input type="number" id="rtFitN" value="2" min="1" max="12"/></div>
+                  <div class="field"><label>Start FWHM</label><input type="number" id="rtFitWidth" placeholder="auto" min="0" step="any"/></div>
+                  <div class="field"><label>Band shape</label>
+                    <select id="rtFitProfile"><option value="gaussian">Gaussian</option><option value="lorentzian">Lorentzian</option><option value="voigt" selected>Pseudo-Voigt</option></select>
+                  </div>
+                  <div class="field"><label>Background</label>
+                    <select id="rtFitBg"><option value="none">None</option><option value="constant">Constant</option><option value="linear" selected>Linear</option></select>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runRamanPeakFit()">⛰ Fit bands</button>
+              </div>
+
+              <div id="rtPane_ratio" style="display:none;margin-top:10px;">
+                <div class="info-box">Height or area of a band — or the ratio of two bands, e.g. 1004 / 1450 — for every spectrum, with group mean ± SD and a t-test (2 groups) or ANOVA (3 or more).</div>
+                <div class="grid">
+                  <div class="field"><label>Band A</label><input type="text" id="rtBandA" value="1004" title="A position (uses ± window) or a range, e.g. 990-1020"/></div>
+                  <div class="field"><label>Band B (blank = A only)</label><input type="text" id="rtBandB" value="1450"/></div>
+                  <div class="field"><label>± window for a position</label><input type="number" id="rtBandWin" value="15" min="0.5" step="any" title="Make it wide enough to hold the whole band"/></div>
+                  <div class="field"><label>Measure</label><select id="rtBandMetric"><option value="height" selected>Height</option><option value="area">Area</option></select></div>
+                  <div class="field"><label>Error bars</label><select id="rtBandErr"><option value="sd" selected>± SD</option><option value="sem">± SEM</option></select></div>
+                </div>
+                <div class="toggles" style="margin-top:8px;"><label class="toggle-item" title="Subtract a straight line joining the two ends of each band window. Use it when no baseline correction was applied; the window must then span the whole band."><input type="checkbox" id="rtBandLocalBl">Local baseline under each band</label></div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runBandRatio()">📊 Compute &amp; compare groups</button>
+              </div>
+
+              <div id="rtPane_pca" style="display:none;margin-top:10px;">
+                <div class="info-box">Principal component analysis of the individual processed spectra. Groups (from the Group boxes) are coloured in the score plot; the loadings show which bands separate them.</div>
+                <div class="grid">
+                  <div class="field"><label>Region from (blank = all)</label><input type="number" id="rtPcaLo" step="any"/></div>
+                  <div class="field"><label>Region to</label><input type="number" id="rtPcaHi" step="any"/></div>
+                  <div class="field"><label>Components</label><input type="number" id="rtPcaN" value="3" min="2" max="10"/></div>
+                  <div class="field"><label>Scaling</label><select id="rtPcaScale"><option value="none" selected>Mean-centred</option><option value="auto">Autoscaled (unit variance)</option></select></div>
+                  <div class="field"><label>X axis</label><select id="rtPcaX" onchange="renderRamanPCA()"><option value="1">PC1</option></select></div>
+                  <div class="field"><label>Y axis</label><select id="rtPcaY" onchange="renderRamanPCA()"><option value="2">PC2</option></select></div>
+                </div>
+                <div class="toggles" style="margin-top:8px;"><label class="toggle-item"><input type="checkbox" id="rtPcaEllipse" checked onchange="renderRamanPCA()">95 % confidence ellipses</label></div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runRamanPCA()">◈ Run PCA</button>
+              </div>
+
+              <div id="rtPane_diff" style="display:none;margin-top:10px;">
+                <div class="info-box">Subtracts B from A point by point. Positive bands are stronger in A, negative in B; the shaded band shows the uncertainty of the difference.</div>
+                <div class="grid">
+                  <div class="field" style="grid-column:span 2"><label>A</label><select id="rtDiffA" onmousedown="refreshRamanToolTargets()" onfocus="refreshRamanToolTargets()"><option value="">Load spectra first</option></select></div>
+                  <div class="field" style="grid-column:span 2"><label>B (subtracted)</label><select id="rtDiffB" onmousedown="refreshRamanToolTargets()" onfocus="refreshRamanToolTargets()"><option value="">Load spectra first</option></select></div>
+                  <div class="field"><label>Uncertainty band</label><select id="rtDiffErr"><option value="sd" selected>± SD</option><option value="sem">± SEM</option></select></div>
+                </div>
+                <div class="toggles" style="margin-top:8px;"><label class="toggle-item"><input type="checkbox" id="rtDiffShowMeans" checked>Show A and B above the difference</label></div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runDifferenceSpectrum()">➖ Compute difference</button>
+              </div>
+            </div>
+          </div>
+
           <div id="spectraPanel" style="display:none;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--hint);padding:12px 16px 6px;">⑤ Per-File: Label · Color · Group</div>
             <div id="spectrumControls"></div>
@@ -1755,6 +1879,23 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
             <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">The reference spectra are spontaneous (non-SERS) Raman spectra of pure compounds, digitised from published figures. SERS spectra, mixtures and different excitation wavelengths change relative band intensities, so treat matches as hypotheses and confirm against a measured standard.</div>
             <div class="peak-dl-group">
               <button class="btn btn-outline btn-sm" onclick="downloadIdentifyCSV()">↓ Results with citations (.csv)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="peak-table-wrap" id="rtSection" style="display:none">
+          <div class="collapsible-header open" onclick="toggleSection(this)">
+            <h3 style="margin:0">🔬 <span id="rtTitle">Analysis</span></h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="collapsible-body" style="max-height:none; margin-top:12px;">
+            <div id="rtBody"></div>
+            <div id="rtPlot" style="margin-top:12px;background:white;border:1px solid var(--border);border-radius:var(--radius);"></div>
+            <div id="rtPlot2" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:var(--radius);"></div>
+            <div class="peak-dl-group">
+              <button class="btn btn-outline btn-sm" onclick="downloadRamanToolCSV()">↓ Results .csv</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadRamanToolPlot('rtPlot')">↓ Plot .png</button>
+              <button class="btn btn-outline btn-sm" id="rtDlLoadings" style="display:none" onclick="downloadRamanToolPlot('rtPlot2')">↓ Loadings .png</button>
             </div>
           </div>
         </div>
@@ -1842,6 +1983,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Label</label><input type="text" id="xyName1" value="Dataset 1"/></div>
                 <div class="field"><label>Color</label><input type="color" id="xyColor1" value="#2563eb"/></div>
               </div>
+              <label class="toggle-item" style="font-size:12px;margin-top:6px;" title="Plot this dataset against a second Y axis on the right"><input type="checkbox" id="xyRight1">Right Y axis</label>
               <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addXYDataset()">+ Add Dataset</button>
               <div id="extraXYDatasets"></div>
             </div>
@@ -2020,8 +2162,11 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>X Max</label><input type="number" id="xyXmax" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Min</label><input type="number" id="xyYmin" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Max</label><input type="number" id="xyYmax" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field" style="grid-column:span 2"><label>Right Y label (2nd axis)</label><input type="text" id="xyY2label" value="" placeholder="e.g. Phase (deg)" title="Used when a dataset has 'Right Y axis' ticked"/></div>
+                <div class="field"><label>Right Y Min</label><input type="number" id="xyY2min" placeholder="Auto" step="any"/></div>
+                <div class="field"><label>Right Y Max</label><input type="number" id="xyY2max" placeholder="Auto" step="any"/></div>
               </div>
-              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Leave a limit blank to let it follow the data. Filling only one side keeps the other automatic.</div>
+              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Leave a limit blank to let it follow the data. Filling only one side keeps the other automatic. Tick <b>Right Y axis</b> on a dataset to plot it against a second axis on the right.</div>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
@@ -2320,7 +2465,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Parabola half-width (X)</label><input type="number" id="xyDipHalfWidth" step="any" min="0" placeholder="Auto (window/10)" title="Points within ± this distance of the lowest point are used for the parabola."/></div>
                 <div class="field"><label>Concentration unit</label><input type="text" id="xyDipUnit" placeholder="e.g. µg/mL, nM"/></div>
                 <div class="field"><label>Plot</label>
-                  <select id="xyDipY" onchange="renderResonancePlot()"><option value="shift" selected>Shift from reference (Δ)</option><option value="position">Absolute position</option></select>
+                  <select id="xyDipY" onchange="renderResonancePlot()"><option value="shift" selected>Shift from reference (Δ)</option><option value="position">Absolute position</option><option value="fwhm">FWHM (width)</option><option value="q">Q factor (position / FWHM)</option><option value="depth">Depth</option></select>
                 </div>
                 <div class="field"><label>Reference (blank)</label><select id="xyDipRef" onchange="renderResonancePlot()"></select></div>
                 <div class="field"><label>Error bars</label>
@@ -2375,7 +2520,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
             <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Untick a row to leave it out; edit any concentration. The plot and fit update immediately.</div>
             <div style="overflow-x:auto">
             <table class="peak-table">
-              <thead><tr><th>Use</th><th>Group</th><th>Concentration</th><th>n</th><th>Mean position</th><th>SD</th><th>SEM</th><th>Replicates</th></tr></thead>
+              <thead><tr><th>Use</th><th>Group</th><th>Concentration</th><th>n</th><th>Mean position</th><th>SD</th><th>SEM</th><th>FWHM</th><th>Q</th><th>Depth</th><th>Replicates</th></tr></thead>
               <tbody id="xyDipTableBody"></tbody>
             </table>
             </div>
@@ -2887,7 +3032,7 @@ function buildInset(prefix, cleanTraces) {
 
   const insetTraces = [];
   cleanTraces.forEach(t => {
-    if (t.isGuide || t.isPeakMarker || t.isCommonLegend || t.isInsetClone || t.xaxis === 'x2' || !Array.isArray(t.x) || !Array.isArray(t.y)) return;
+    if (t.isGuide || t.isPeakMarker || t.isCommonLegend || t.isInsetClone || t.xaxis === 'x2' || t.yaxis === 'y3' || !Array.isArray(t.x) || !Array.isArray(t.y)) return;
     const ix = [], iy = [];
     for (let i = 0; i < t.x.length; i++) {
       const xv = t.x[i];
@@ -3208,7 +3353,7 @@ function labelPoint(mode, pt) {
 
 function parseXList(s) {
   // accepts "1004, 1450", "1600 1700" and ranges such as "1600-1700" or "1600–1700"
-  return String(s || '').replace(/(\d)\s*[-–—]\s*(?=\d)/g, '$1 ').split(/[,;\s]+/).map(Number).filter(Number.isFinite);
+  return String(s || '').replace(/(\d)\s*[-–—]\s*(?=\d)/g, '$1 ').split(/[,;\s]+/).filter(t => t !== '').map(Number).filter(Number.isFinite);
 }
 
 // ┆ dashed vertical line(s) at given X, each labelled at the top
@@ -3953,6 +4098,7 @@ function renderXYFileCards() {
     if (lab) f.name = lab.value; if (col) f.color = col.value;
     const use = document.getElementById("xyFileUse" + gIdx), grp = document.getElementById("xyFileGroup" + gIdx);
     if (use) f.include = use.checked; if (grp) f.group = grp.value;
+    const y2 = document.getElementById("xyFileY2" + gIdx); if (y2) f.y2 = y2.checked;
   });
   chipsEl.innerHTML = ""; cardsEl.innerHTML = "";
   Object.keys(xyFileNames).forEach(gIdx => {
@@ -3968,7 +4114,10 @@ function renderXYFileCards() {
           <div class="field"><label>Group</label><input id="xyFileGroup${gIdx}" value="${esc(f.group || "")}" placeholder="none — plotted on its own"></div>
         </div>
         <div class="field"><label>Label</label><input id="xyFileLabel${gIdx}" value="${esc(f.name)}"></div>
-        <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
+        <div class="grid" style="grid-template-columns:1fr auto;gap:8px;align-items:end;">
+          <div class="field"><label>Color</label><input type="color" id="xyFileColor${gIdx}" value="${f.color}"></div>
+          <label class="toggle-item" style="margin-bottom:6px;" title="Plot this dataset against a second Y axis on the right"><input type="checkbox" id="xyFileY2${gIdx}" ${f.y2 ? "checked" : ""}>Right Y axis</label>
+        </div>
       </div>`;
   });
   const nSets = Object.keys(xyFileNames).length, nFiles = new Set(Object.values(xyFileNames)).size;
@@ -4090,7 +4239,7 @@ function gatherXYDatasets() {
   const tab = document.querySelector('.xy-tab.active').id;
   if (tab === 'tabFile') return Object.keys(xyFileNames)
     .filter(gi => document.getElementById("xyFileUse" + gi)?.checked !== false)
-    .map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value, group: (document.getElementById("xyFileGroup" + gi)?.value || "").trim() }));
+    .map(gi => ({ x: xyFiles[gi].x, y: xyFiles[gi].y, ey: xyFiles[gi].ey, ex: xyFiles[gi].ex, name: document.getElementById("xyFileLabel" + gi).value, color: document.getElementById("xyFileColor" + gi).value, group: (document.getElementById("xyFileGroup" + gi)?.value || "").trim(), y2: !!document.getElementById("xyFileY2" + gi)?.checked }));
   if (tab === 'tabCols') {
     const parsed = parseXYFile(document.getElementById("xyColText").value);
     return [{ x: parsed.x, y: parsed.y, ey: parsed.ey, ex: parsed.ex, name: document.getElementById("xyColName").value, color: "#2563eb" }];
@@ -4100,13 +4249,13 @@ function gatherXYDatasets() {
   const y1 = parseCSVVals(document.getElementById("xyYvals").value);
   const ey1 = parseCSVVals(document.getElementById("xyYerr").value);
   const ex1 = parseCSVVals(document.getElementById("xyXerr").value);
-  if (x1.length && y1.length) list.push(Object.assign(pairXYLists(x1, y1, ey1, ex1, document.getElementById("xyName1").value), { name: document.getElementById("xyName1").value, color: document.getElementById("xyColor1").value }));
+  if (x1.length && y1.length) list.push(Object.assign(pairXYLists(x1, y1, ey1, ex1, document.getElementById("xyName1").value), { name: document.getElementById("xyName1").value, color: document.getElementById("xyColor1").value, y2: !!document.getElementById("xyRight1")?.checked }));
   for (let i = 1; i <= extraDatasetCount; i++) {
     if (document.getElementById("xyXvals" + i)) {
       const ey = parseCSVVals(document.getElementById("xyYerr" + i)?.value);
       const ex = parseCSVVals(document.getElementById("xyXerr" + i)?.value);
       const nm = document.getElementById("xyName" + i).value;
-      list.push(Object.assign(pairXYLists(parseCSVVals(document.getElementById("xyXvals" + i).value), parseCSVVals(document.getElementById("xyYvals" + i).value), ey, ex, nm), { name: nm, color: document.getElementById("xyColor" + i).value }));
+      list.push(Object.assign(pairXYLists(parseCSVVals(document.getElementById("xyXvals" + i).value), parseCSVVals(document.getElementById("xyYvals" + i).value), ey, ex, nm), { name: nm, color: document.getElementById("xyColor" + i).value, y2: !!document.getElementById("xyRight" + i)?.checked }));
     }
   }
   return list;
@@ -4148,17 +4297,21 @@ function downloadProcessingStages() {
     const gIdx = spec.gIdx ?? idx;
     const label = (document.getElementById("label" + gIdx)?.value || spec.name || `Spectrum_${idx + 1}`).replace(/[^\w\-]+/g, "_");
     const p = processSpec(spec);
-    let csv = "X,Raw,Despiked,Baseline,BaselineCorrected,Smoothed,Normalized_Final\n";
+    // a derivative, when chosen, is an extra final column after Normalized
+    const hasDeriv = p.normalized !== p.yy;
+    let csv = "X,Raw,Despiked,Baseline,BaselineCorrected,Smoothed," + (hasDeriv ? "Normalized,Derivative_Final" : "Normalized_Final") + "\n";
     for (let i = 0; i < p.xx.length; i++) {
-      csv += [
+      const row = [
         p.xx[i],
         p.raw[i] ?? "",
         p.despiked ? p.despiked[i] ?? "" : "",
         p.baseline ? p.baseline[i] ?? "" : "",
         p.corrected ? p.corrected[i] ?? "" : "",
         p.smoothed ? p.smoothed[i] ?? "" : "",
-        p.yy[i] ?? ""
-      ].join(",") + "\n";
+        (hasDeriv ? p.normalized[i] : p.yy[i]) ?? ""
+      ];
+      if (hasDeriv) row.push(p.yy[i] ?? "");
+      csv += row.join(",") + "\n";
     }
     downloadBlob(csv, `RNSpectraX_Stages_${label}.csv`, "text/csv");
   });
@@ -4457,6 +4610,105 @@ function rollingBallBaseline(y, r) { const n = y.length; const minArr = new Arra
 
 </script>
 <script>
+/* js/processing/spectralExtras.js */
+/* ═══════════════════════════════════════════════════════════
+   RAMAN PROCESSING EXTRAS
+   • Shift calibration — a constant offset added to every Raman shift, set
+     by hand or measured from a reference band (silicon 520.7 cm⁻¹).
+   • Excluded regions — X ranges removed before any processing (substrate
+     bands, notch-filter edge, a detector artefact).
+   • Derivative spectra — Savitzky–Golay 1st or 2nd derivative, the last
+     step of the pipeline; it separates overlapping bands and shoulders.
+   With the defaults (0 shift, no regions, no derivative) the pipeline is
+   exactly the one without these steps.
+═══════════════════════════════════════════════════════════ */
+
+function getShiftCorrection() {
+  const v = parseFloat(document.getElementById("rsShift")?.value);
+  return Number.isFinite(v) ? v : 0;
+}
+
+// "1540-1560; 2330 2340, 100–150" → [[1540,1560],[2330,2340],[100,150]]
+function parseRanges(s) {
+  const nums = String(s || "").replace(/(\d)\s*[-–—]\s*(?=\d)/g, "$1 ").split(/[,;\s]+/).filter(t => t !== "").map(Number).filter(Number.isFinite);
+  const out = [];
+  for (let i = 0; i + 1 < nums.length; i += 2) out.push([Math.min(nums[i], nums[i + 1]), Math.max(nums[i], nums[i + 1])]);
+  return out;
+}
+
+function getExcludedRanges() { return parseRanges(document.getElementById("rsExclude")?.value); }
+
+function isExcluded(x, ranges) {
+  for (const [a, b] of ranges) if (x >= a && x <= b) return true;
+  return false;
+}
+
+// Savitzky–Golay derivative: local least-squares polynomial in the true
+// offsets x_j − x_i, so the result is in intensity per X unit even when the
+// spacing is uneven. order 1 → dy/dx = c₁, order 2 → d²y/dx² = 2c₂.
+function sgDerivative(x, y, deriv, window, poly) {
+  const n = y.length, hw = Math.max(1, Math.floor((window || 11) / 2));
+  const ord = Math.max(deriv, poly || (deriv === 2 ? 3 : 2));
+  return y.map((_, i) => {
+    const a = Math.max(0, i - hw), b = Math.min(n - 1, i + hw);
+    const t = [], yw = [];
+    for (let j = a; j <= b; j++) { t.push(x[j] - x[i]); yw.push(y[j]); }
+    const o = Math.min(ord, t.length - 1);
+    if (o < deriv) return 0;
+    const c = polyFitCoeffs(t, yw, o);
+    const v = deriv === 1 ? c[1] : 2 * c[2];
+    return Number.isFinite(v) ? v : 0;
+  });
+}
+
+function applyDerivativeStep(xx, yy) {
+  const d = parseInt(document.getElementById("rsDeriv")?.value) || 0;
+  if (!d || yy.length < 3) return yy;
+  return sgDerivative(xx, yy, d, parseInt(document.getElementById("rsDerivWin")?.value) || 11, parseInt(document.getElementById("rsDerivOrder")?.value) || (d === 2 ? 3 : 2));
+}
+
+function updateDerivParams() {
+  const on = (parseInt(document.getElementById("rsDeriv")?.value) || 0) > 0;
+  ["rsDerivWinWrap", "rsDerivOrderWrap"].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = on ? "flex" : "none"; });
+}
+
+// Measure the shift offset from a reference spectrum: the band maximum
+// within ±window of the reference position, refined by a parabola through
+// the top points, compared with its literature value.
+function calibrateShiftFromReference() {
+  const sel = document.getElementById("rsCalFile");
+  const spec = spectra.find(s => s && String(s.gIdx) === sel?.value);
+  if (!spec) { alert("Load the reference spectrum (e.g. a silicon wafer) and choose it in the list first."); return; }
+  const ref = parseFloat(document.getElementById("rsCalRef").value) || 520.7;
+  const win = parseFloat(document.getElementById("rsCalWin").value) || 15;
+  const idx = [];
+  spec.x.forEach((v, i) => { if (Math.abs(v - ref) <= win) idx.push(i); });
+  if (idx.length < 3) { alert(`The reference spectrum has no data within ±${win} of ${ref}.`); return; }
+  let top = idx[0]; idx.forEach(i => { if (spec.y[i] > spec.y[top]) top = i; });
+  let pos = spec.x[top];
+  const near = idx.filter(i => Math.abs(i - top) <= 3);
+  if (near.length >= 3) {
+    const x0 = spec.x[top], c = polyFitCoeffs(near.map(i => spec.x[i] - x0), near.map(i => spec.y[i]), 2);
+    if (c && c[2] < 0) { const v = x0 - c[1] / (2 * c[2]); if (Math.abs(v - x0) <= Math.abs(spec.x[near[near.length - 1]] - spec.x[near[0]])) pos = v; }
+  }
+  const shift = +(ref - pos).toFixed(3);
+  const box = document.getElementById("rsShift"); box.value = shift;
+  box.dispatchEvent(new Event("change", { bubbles: true }));
+  rxNotify(`Measured band at ${pos.toFixed(2)} → shift correction ${shift >= 0 ? "+" : ""}${shift} cm⁻¹ applied to every spectrum. Press Plot.`);
+  rxTrack("raman-shift-calibration");
+}
+
+function refreshCalibrationFiles() {
+  const sel = document.getElementById("rsCalFile"); if (!sel) return;
+  const prev = sel.value;
+  const esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  const act = spectra.filter(s => s != null);
+  sel.innerHTML = act.length ? act.map(s => `<option value="${s.gIdx}">${esc(document.getElementById("label" + s.gIdx)?.value || oceanFileNames[s.gIdx])}</option>`).join("") : `<option value="">Load spectra first</option>`;
+  if (act.some(s => String(s.gIdx) === prev)) sel.value = prev;
+}
+
+</script>
+<script>
 /* js/processing/smoothing.js */
 function updateSmoothParams() { showSmoothParams(document.getElementById('smoothType').value, 'smParam1Wrap','smParam1Label','smParam1','smParam2Wrap','smParam2Label','smParam2','smParam3Wrap','smParam3Label','smParam3'); }
 function updateXYSmoothParams() { showSmoothParams(document.getElementById('xySmoothType').value, 'xySmP1Wrap','xySmP1Label','xySmP1','xySmP2Wrap','xySmP2Label','xySmP2',null,null,null); }
@@ -4559,7 +4811,7 @@ function getPeakProminencePct() {
    RAMAN PROCESSING + GROUP AVERAGING + OFFSETS + ERROR BARS
 ════════════════════════════════════════════════════════════ */
 
-function processSpec(spec) {
+function processSpec(spec, opts) {
 
   let xmin = parseFloat(document.getElementById("xmin").value);
   let xmax = parseFloat(document.getElementById("xmax").value);
@@ -4570,11 +4822,17 @@ function processSpec(spec) {
   if (xmin > xmax) [xmin, xmax] = [xmax, xmin];
 
 
-  const mask = spec.x
-    .map((v, i) => (v >= xmin && v <= xmax ? i : -1))
+  // shift calibration and excluded regions (spectralExtras.js); with no
+  // correction and no regions this is the plain X Min–X Max window
+  const shiftCorr = getShiftCorrection();
+  const sx = shiftCorr ? spec.x.map(v => v + shiftCorr) : spec.x;
+  const excl = getExcludedRanges();
+
+  const mask = sx
+    .map((v, i) => (v >= xmin && v <= xmax && !(excl.length && isExcluded(v, excl)) ? i : -1))
     .filter(i => i >= 0);
 
-  const xx = mask.map(i => spec.x[i]);
+  const xx = mask.map(i => sx[i]);
   const raw = mask.map(i => spec.y[i]);
 
   // Working copy
@@ -4600,10 +4858,14 @@ function processSpec(spec) {
     { refX: parseFloat(document.getElementById("normRefX")?.value) || 1003, window: parseFloat(document.getElementById("normRefWin")?.value) || 10 }
   );
 
+  const normalized = yy;
+  if (!(opts && opts.skipDerivative)) yy = applyDerivativeStep(xx, yy);
+
   return {
     xx,
     raw,
     yy,
+    normalized,
     baseline,
     despiked,
     corrected,
@@ -4615,11 +4877,11 @@ function processSpec(spec) {
    GROUP AVERAGING
 ========================================================== */
 
-function averageSpecs(specList) {
+function averageSpecs(specList, opts) {
 
     if (!specList.length) return null;
 
-    const processed = specList.map(processSpec).filter(p => p.xx.length);
+    const processed = specList.map(s => processSpec(s, opts)).filter(p => p.xx.length);
     if (!processed.length) return null;
 
     // Average only where every spectrum has data: outside the common range
@@ -5188,8 +5450,24 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
 
   // Y-axis range: auto (default, blank fields) or manual, for both modes.
   // A single filled limit keeps the other side at the data extent.
-  const yRange = getManualYRange(prefix, cleanTraces);
+  // a second Y axis on the right (XY datasets ticked "Right Y axis")
+  const rightTraces = isOcean ? [] : cleanTraces.filter(t => t.yaxis === 'y3');
+  const yRange = getManualYRange(prefix, rightTraces.length ? cleanTraces.filter(t => t.yaxis !== 'y3') : cleanTraces);
   if (yRange) layout.yaxis.range = yRange;
+  if (rightTraces.length) {
+    const y2Text = boldWrapText(document.getElementById("xyY2label")?.value || "", boldAxisOn);
+    layout.yaxis3 = Object.assign({}, yExtra, {
+      overlaying: 'y', side: 'right', anchor: 'x', mirror: false, showgrid: false, zeroline: false,
+      title: { text: y2Text, font: layout.yaxis.title.font, standoff: layout.yaxis.title.standoff },
+      tickfont: layout.yaxis.tickfont
+    });
+    delete layout.yaxis3.standoff;
+    const r2 = resolveManualRange('xyY2min', 'xyY2max', rightTraces, 'y');
+    if (r2) layout.yaxis3.range = r2;
+    // the left axis no longer mirrors onto the right, where the second axis sits
+    layout.yaxis.mirror = false;
+    layout.margin.r = Math.max(layout.margin.r, 80);
+  }
 
   if (!isOcean) {
     const xRange = getManualXRange(cleanTraces);
@@ -5318,7 +5596,7 @@ function buildXYGroups(processed, errKind) {
     return {
       // a one-member group has no spread to show
       x: grid, y: mean, ey: n < 2 ? null : errKind === 'sem' ? sem : errKind === 'sd' ? sd : null, ex: null,
-      name: `${o.group} (n=${n})`, color: first.color, isGroup: true, n, members: buckets[o.group].map(d => d.name)
+      name: `${o.group} (n=${n})`, color: first.color, y2: first.y2, isGroup: true, n, members: buckets[o.group].map(d => d.name)
     };
   });
 }
@@ -5437,6 +5715,9 @@ function plotXY() {
       traces.push(tr);
     }
 
+    // datasets ticked "Right Y axis" go on a second axis (y3: y2 is the inset's)
+    if (ds.y2) traces.forEach(t => { if (t.legendgroup === 'dataset-' + di && !t.yaxis) t.yaxis = 'y3'; });
+
     lastXYSeries.push({ name: displayName + (ds.isGroup && dsEy ? (errKind === 'sem' ? ' [mean, SEM]' : ' [mean, SD]') : ''), x: xv.slice(), y: yv.slice(), eY: dsEy ? dsEy.slice() : null, eX: dsEx ? dsEx.slice() : null });
 
     // fitting — done on the processed data before any display offset/divisor,
@@ -5454,7 +5735,7 @@ function plotXY() {
         const traceColor = fitAll ? ds.color : "#475569";
         const fitDefaultName = `Fit: ${ds.name} (R²=${fit.r2.toFixed(4)})`;
         const fitDisplayName = getDisplayName('xy', 'fit', di, fitDefaultName);
-        traces.push({ x: fineX.map(v => v + shiftX), y: fineY, mode: "lines", line: { width: lw, color: traceColor, dash: "dash" }, name: fitDisplayName, meta: { editable: true, kind: 'fit', idx: di } });
+        traces.push(Object.assign({ x: fineX.map(v => v + shiftX), y: fineY, mode: "lines", line: { width: lw, color: traceColor, dash: "dash" }, name: fitDisplayName, meta: { editable: true, kind: 'fit', idx: di } }, ds.y2 ? { yaxis: 'y3' } : {}));
 
         fit.datasetName = ds.name;
         lastFitResults.push(fit);
@@ -6164,6 +6445,42 @@ function findResonance(x, y, opts) {
   return { pos: v, value: c[0] + c[1] * dv + c[2] * dv * dv, atEdge };
 }
 
+// Line shape of a located resonance inside the search window:
+//   depth — from the mean level at the two window edges to the extreme value
+//   FWHM  — full width where the feature is half as deep (linear interpolation
+//           between samples on each side; NaN if it does not close inside the window)
+//   Q     — quality factor, position / FWHM
+function resonanceShape(x, y, opts, pos, value) {
+  const sgn = opts.type === "peak" ? -1 : 1;
+  const idx = [];
+  for (let i = 0; i < x.length; i++) if (x[i] >= opts.lo && x[i] <= opts.hi && Number.isFinite(y[i])) idx.push(i);
+  if (idx.length < 3 || !Number.isFinite(pos)) return { depth: NaN, fwhm: NaN, q: NaN };
+  const e = Math.max(1, Math.round(idx.length / 20));
+  const edge = (idx.slice(0, e).reduce((a, i) => a + y[i], 0) + idx.slice(-e).reduce((a, i) => a + y[i], 0)) / (2 * e);
+  let iMin = idx[0]; idx.forEach(i => { if (sgn * y[i] < sgn * y[iMin]) iMin = i; });
+  const extreme = Number.isFinite(value) ? value : y[iMin];
+  const depth = sgn * (edge - extreme);
+  if (!(depth > 0)) return { depth, fwhm: NaN, q: NaN };
+  const half = extreme + sgn * depth / 2;
+  const cross = (dir) => {
+    for (let i = iMin; i + dir >= idx[0] && i + dir <= idx[idx.length - 1]; i += dir) {
+      const j = i + dir;
+      if (sgn * y[j] >= sgn * half) return x[i] + (x[j] - x[i]) * (half - y[i]) / ((y[j] - y[i]) || 1e-300);
+    }
+    return NaN;
+  };
+  const fwhm = Math.abs(cross(1) - cross(-1));
+  return { depth, fwhm, q: Number.isFinite(fwhm) && fwhm > 0 ? Math.abs(pos) / fwhm : NaN };
+}
+
+const RES_METRICS = { fwhm: "FWHM", q: "Q factor", depth: "Depth" };
+
+function metricStats(vals) {
+  const v = vals.filter(Number.isFinite), n = v.length, mean = n ? v.reduce((a, b) => a + b, 0) / n : NaN;
+  const sd = n > 1 ? Math.sqrt(v.reduce((a, q) => a + (q - mean) ** 2, 0) / (n - 1)) : 0;
+  return { n, mean, sd, sem: n > 1 ? sd / Math.sqrt(n) : 0 };
+}
+
 // "10", "2.5", "0.3125", "10 nM", "1e-3 mg/mL" → number; buffer/blank names → 0;
 // anything else → null (left for the user to type)
 function concentrationFromName(name) {
@@ -6201,16 +6518,19 @@ function runResonanceAnalysis() {
   const rows = order.map(key => {
     const reps = buckets[key].map(ds => {
       const ix = ds.x.map((_, i) => i).sort((a, b) => ds.x[a] - ds.x[b]);
-      const r = findResonance(ix.map(i => ds.x[i]), ix.map(i => ds.y[i]), opts);
+      const sx = ix.map(i => ds.x[i]), sy = ix.map(i => ds.y[i]);
+      const r = findResonance(sx, sy, opts);
       if (!r) failed++; else if (r.atEdge) edge++;
-      return { name: ds.name, pos: r ? r.pos : NaN };
+      const shape = r ? resonanceShape(sx, sy, opts, r.pos, r.value) : { depth: NaN, fwhm: NaN, q: NaN };
+      return { name: ds.name, pos: r ? r.pos : NaN, fwhm: shape.fwhm, q: shape.q, depth: shape.depth };
     });
     const vals = reps.map(r => r.pos).filter(Number.isFinite);
     const n = vals.length, mean = n ? vals.reduce((a, b) => a + b, 0) / n : NaN;
     const sd = n > 1 ? Math.sqrt(vals.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : 0;
     // keep a concentration / tick the user already edited for this group
     const keep = prev[key];
-    return { key, label: key, n, reps, mean, sd, sem: n > 1 ? sd / Math.sqrt(n) : 0,
+    const metrics = {}; Object.keys(RES_METRICS).forEach(m => { metrics[m] = metricStats(reps.map(p => p[m])); });
+    return { key, label: key, n, reps, mean, sd, sem: n > 1 ? sd / Math.sqrt(n) : 0, metrics,
              conc: keep ? keep.conc : concentrationFromName(key), use: keep ? keep.use : true };
   });
 
@@ -6244,6 +6564,9 @@ function buildResonanceTable() {
       <td><b>${f(r.mean)}</b></td>
       <td>${f(r.sd)}</td>
       <td>${f(r.sem)}</td>
+      <td>${f(r.metrics.fwhm.mean)}</td>
+      <td>${f(r.metrics.q.mean)}</td>
+      <td>${f(r.metrics.depth.mean)}</td>
       <td style="font-size:11px;color:var(--muted)">${r.reps.map(p => f(p.pos)).join(", ")}</td>
     </tr>`).join("");
 }
@@ -6251,7 +6574,9 @@ function buildResonanceTable() {
 // Step 3: calibration plot and fit
 function renderResonancePlot() {
   const R = lastResonance; if (!R) return;
-  const useShift = document.getElementById("xyDipY").value === "shift";
+  const ySel = document.getElementById("xyDipY").value;
+  const metric = RES_METRICS[ySel] ? ySel : null;
+  const useShift = ySel === "shift";
   const errKind = document.getElementById("xyDipErr").value;
   const logX = document.getElementById("xyDipLogX").checked;
   const model = document.getElementById("xyDipFit").value;
@@ -6259,7 +6584,8 @@ function renderResonancePlot() {
   const refRow = R.rows[parseInt(document.getElementById("xyDipRef").value) || 0];
   const e = r => errKind === "sem" ? r.sem : r.sd;
 
-  const pts = R.rows.filter(r => r.use && r.conc !== null && Number.isFinite(r.conc) && Number.isFinite(r.mean)).map(r => {
+  const pts = R.rows.filter(r => r.use && r.conc !== null && Number.isFinite(r.conc) && Number.isFinite(metric ? r.metrics[metric].mean : r.mean)).map(r => {
+    if (metric) { const m = r.metrics[metric]; return { x: r.conc, y: m.mean, err: errKind === "sem" ? m.sem : m.sd, label: r.label, n: m.n }; }
     let y = r.mean, err = e(r);
     if (useShift) {
       y = r.mean - refRow.mean;
@@ -6270,7 +6596,8 @@ function renderResonancePlot() {
   }).sort((a, b) => a.x - b.x);
 
   const what = R.type === "peak" ? "Peak" : "Resonance dip";
-  const yTitle = useShift ? `${what} shift, Δ ${R.xLabel}` : `${what} position, ${R.xLabel}`;
+  const yTitle = metric ? (metric === "q" ? `${what} Q factor (position / FWHM)` : `${what} ${RES_METRICS[metric]}${metric === "fwhm" ? ", " + R.xLabel : ""}`)
+    : useShift ? `${what} shift, Δ ${R.xLabel}` : `${what} position, ${R.xLabel}`;
   // unit of the X axis, e.g. "Wavelength [nm]" → "nm"
   const xUnitMatch = R.xLabel.match(/[\[(]([^\])]+)[\])]\s*$/);
   const xUnit = xUnitMatch ? xUnitMatch[1] : "";
@@ -6284,7 +6611,7 @@ function renderResonancePlot() {
   if (missing) notes.push(`${missing} group${missing === 1 ? " has" : "s have"} no concentration yet — type it in the table to include ${missing === 1 ? "it" : "them"}.`);
 
   const traces = [{
-    x: shown.map(p => p.x), y: shown.map(p => p.y), mode: "markers", name: useShift ? "Shift" : "Position",
+    x: shown.map(p => p.x), y: shown.map(p => p.y), mode: "markers", name: metric ? RES_METRICS[metric] : useShift ? "Shift" : "Position",
     marker: { size: 9, color: "#1f77b4" },
     error_y: { type: "data", array: shown.map(p => p.err), visible: true, thickness: 1.5, width: 5, color: "#1f77b4" },
     text: shown.map(p => `${p.label} (n=${p.n})`), hovertemplate: "%{text}<br>%{x}<br>%{y:.3f} ± %{error_y.array:.3f}<extra></extra>"
@@ -6306,17 +6633,29 @@ function renderResonancePlot() {
         + (fit.redChi2 != null ? `<tr><td>Reduced χ²</td><td>${fmtNum(fit.redChi2)}</td></tr>` : "")
         + `<tr><td>Points</td><td>${fit.n}${fit.weighted ? " · weighted by 1/σ²" : ""}</td></tr>`;
       let extra = "";
+      lastResonance.lod = null; lastResonance.loq = null; lastResonance.lodRes = null; lastResonance.loqRes = null;
       if (model === "linear") {
         const slope = fit.values[1], slopeErr = fit.errors[1];
-        extra += `<tr><td>Sensitivity (slope)</td><td><b>${fmtWithErr(slope, slopeErr)}</b> ${xUnit || "units"} per ${unit || "unit concentration"}</td></tr>`;
-        // LOD = 3·SD(blank)/|slope| from the replicates of the reference group
+        const yUnit = metric === "q" || metric === "depth" ? "" : (xUnit || "units");
+        extra += `<tr><td>Sensitivity (slope)</td><td><b>${fmtWithErr(slope, slopeErr)}</b> ${yUnit ? yUnit + " " : ""}per ${unit || "unit concentration"}</td></tr>`;
+        // LOD = 3·SD(blank)/|slope|, LOQ = 10·SD(blank)/|slope| from the
+        // replicates of the reference group (of the quantity being plotted)
         const blank = refRow;
-        if (blank && blank.n >= 2 && slope) {
-          const lod = 3 * blank.sd / Math.abs(slope);
-          extra += `<tr><td>Limit of detection (3σ)</td><td><b>${fmtNum(lod)}</b> ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 3 × SD(${blank.label.replace(/</g, "&lt;")}, n=${blank.n}) / |slope|</span></td></tr>`;
-          lastResonance.lod = lod;
+        const bSd = blank ? (metric ? blank.metrics[metric].sd : blank.sd) : NaN, bN = blank ? (metric ? blank.metrics[metric].n : blank.n) : 0;
+        if (blank && bN >= 2 && slope) {
+          const lod = 3 * bSd / Math.abs(slope), loq = 10 * bSd / Math.abs(slope);
+          const who = `SD(${blank.label.replace(/</g, "&lt;")}, n=${bN})`;
+          extra += `<tr><td>Limit of detection (3σ)</td><td><b>${fmtNum(lod)}</b> ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 3 × ${who} / |slope|</span></td></tr>`;
+          extra += `<tr><td>Limit of quantification (10σ)</td><td><b>${fmtNum(loq)}</b> ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 10 × ${who} / |slope|</span></td></tr>`;
+          lastResonance.lod = lod; lastResonance.loq = loq;
         } else {
           extra += `<tr><td>Limit of detection</td><td style="color:var(--muted)">needs ≥ 2 replicates in the reference (blank) group</td></tr>`;
+        }
+        // ICH Q2 alternative from the scatter of the calibration about the line
+        if (fit.n > 2 && slope) {
+          const sRes = Math.sqrt(fit.ssRes / (fit.n - 2));
+          lastResonance.lodRes = 3.3 * sRes / Math.abs(slope); lastResonance.loqRes = 10 * sRes / Math.abs(slope);
+          extra += `<tr><td>LOD / LOQ from calibration residuals</td><td>${fmtNum(lastResonance.lodRes)} / ${fmtNum(lastResonance.loqRes)} ${unit} &nbsp;<span style="color:var(--muted);font-size:11px">= 3.3 / 10 × s<sub>y/x</sub> / |slope| (ICH Q2), s<sub>y/x</sub> = ${fmtNum(sRes)}</span></td></tr>`;
         }
       }
       if (model === "langmuir" || model === "hill") extra += `<tr><td>Apparent K<sub>D</sub></td><td><b>${fmtWithErr(fit.values[2], fit.errors[2])}</b> ${unit}</td></tr>`;
@@ -6331,7 +6670,7 @@ function renderResonancePlot() {
 
   const tick = { size: 13 };
   Plotly.newPlot(div, traces, {
-    title: { text: useShift ? "Resonance shift vs concentration" : "Resonance position vs concentration", font: { size: 17 } },
+    title: { text: metric ? `Resonance ${RES_METRICS[metric]} vs concentration` : useShift ? "Resonance shift vs concentration" : "Resonance position vs concentration", font: { size: 17 } },
     // on a log axis, label the measured concentrations themselves (Plotly's
     // default log ticks print 0.3 as a bare "3")
     xaxis: Object.assign({ title: { text: xTitle }, type: logX ? "log" : "linear", tickfont: tick, showline: true, mirror: true, ticks: "outside", zeroline: false },
@@ -6346,15 +6685,19 @@ function downloadResonanceCSV() {
   const R = lastResonance; if (!R) { alert("Run the resonance analysis first."); return; }
   const q = s => `"${String(s).replace(/"/g, '""')}"`;
   const refRow = R.rows[parseInt(document.getElementById("xyDipRef").value) || 0];
-  let csv = "group,concentration,n,mean_position,sd,sem,shift_from_reference,replicate_positions\n";
+  let csv = "group,concentration,n,mean_position,sd,sem,shift_from_reference,replicate_positions,fwhm_mean,fwhm_sd,q_mean,q_sd,depth_mean,depth_sd\n";
   R.rows.forEach(r => {
-    csv += [q(r.label), r.conc ?? "", r.n, r.mean, r.sd, r.sem, r.mean - refRow.mean, q(r.reps.map(p => p.pos).join(";"))].join(",") + "\n";
+    const m = r.metrics || {}, g = (k, f) => m[k] ? m[k][f] : "";
+    csv += [q(r.label), r.conc ?? "", r.n, r.mean, r.sd, r.sem, r.mean - refRow.mean, q(r.reps.map(p => p.pos).join(";")),
+      g("fwhm", "mean"), g("fwhm", "sd"), g("q", "mean"), g("q", "sd"), g("depth", "mean"), g("depth", "sd")].join(",") + "\n";
   });
   if (R.fit) {
     csv += `\nfit model,${q(R.fit.label)}\n`;
     R.fit.names.forEach((nm, j) => { csv += `${q(nm)},${R.fit.values[j]},±,${Number.isFinite(R.fit.errors[j]) ? R.fit.errors[j] : ""}\n`; });
     csv += `R2,${R.fit.r2}\n`;
-    if (R.lod != null && R.fit.model === "linear") csv += `LOD (3 SD blank / slope),${R.lod}\n`;
+    if (R.lod != null && R.fit.model === "linear") csv += `LOD (3 SD blank / slope),${R.lod}\nLOQ (10 SD blank / slope),${R.loq}\n`;
+    if (R.lodRes != null && R.fit.model === "linear") csv += `LOD (3.3 s_y/x / slope),${R.lodRes}\nLOQ (10 s_y/x / slope),${R.loqRes}\n`;
+    csv += `plotted quantity,${q(document.getElementById("xyDipY").selectedOptions[0]?.text || "")}\n`;
   }
   downloadBlob(csv, "RNSpectraX_Resonance.csv", "text/csv");
 }
@@ -6363,6 +6706,685 @@ function downloadResonancePlot() {
   const div = document.getElementById("xyDipPlot");
   if (!div || !div.data) { alert("Run the resonance analysis first."); return; }
   Plotly.downloadImage(div, { format: "png", scale: 3, filename: "RNSpectraX_Resonance" });
+}
+
+</script>
+<script>
+/* js/analysis/stats.js */
+/* ═══════════════════════════════════════════════════════════
+   STATISTICS — group tests and principal component analysis
+   • Welch's t-test (two groups, unequal variances) and one-way ANOVA
+     (two or more groups), with exact p-values from the regularised
+     incomplete beta function (Numerical Recipes, §6.4).
+   • PCA of mean-centred spectra by eigen-decomposition of the n×n Gram
+     matrix (Jacobi rotations): with far fewer spectra than points this
+     is exact and much cheaper than decomposing the p×p covariance.
+═══════════════════════════════════════════════════════════ */
+
+function statMean(a) { return a.reduce((s, v) => s + v, 0) / a.length; }
+function statVar(a) { const m = statMean(a); return a.length > 1 ? a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1) : 0; }
+
+function logGamma(x) {
+  const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+  let y = x, t = x + 5.5; t -= (x + 0.5) * Math.log(t);
+  let s = 1.000000000190015; for (let j = 0; j < 6; j++) s += c[j] / ++y;
+  return -t + Math.log(2.5066282746310005 * s / x);
+}
+
+function betacf(a, b, x) {
+  const MAXIT = 300, EPS = 3e-14, FPMIN = 1e-300;
+  let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap;
+  if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d; let h = d;
+  for (let m = 1; m <= MAXIT; m++) {
+    const m2 = 2 * m;
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; h *= d * c;
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d;
+    const del = d * c; h *= del; if (Math.abs(del - 1) < EPS) break;
+  }
+  return h;
+}
+
+// regularised incomplete beta I_x(a, b)
+function incBeta(x, a, b) {
+  if (x <= 0) return 0; if (x >= 1) return 1;
+  const bt = Math.exp(logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+  return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b;
+}
+
+// two-sided p for Student's t with df degrees of freedom
+function tTwoSidedP(t, df) { return Number.isFinite(t) && df > 0 ? incBeta(df / (df + t * t), df / 2, 0.5) : NaN; }
+// upper-tail p for F(d1, d2)
+function fUpperP(F, d1, d2) { return Number.isFinite(F) && F >= 0 ? incBeta(d2 / (d2 + d1 * F), d2 / 2, d1 / 2) : NaN; }
+
+function welchTTest(a, b) {
+  const na = a.length, nb = b.length;
+  if (na < 2 || nb < 2) return null;
+  const va = statVar(a) / na, vb = statVar(b) / nb, se = Math.sqrt(va + vb);
+  const t = (statMean(a) - statMean(b)) / se;
+  const df = (va + vb) ** 2 / (va * va / (na - 1) + vb * vb / (nb - 1));
+  return { test: "Welch's t-test", t, df, p: se > 0 ? tTwoSidedP(t, df) : NaN };
+}
+
+function oneWayAnova(groups) {
+  const gs = groups.filter(g => g.length);
+  const N = gs.reduce((s, g) => s + g.length, 0), k = gs.length;
+  if (k < 2 || N - k < 1) return null;
+  const grand = gs.flat().reduce((s, v) => s + v, 0) / N;
+  let ssb = 0, ssw = 0;
+  gs.forEach(g => { const m = statMean(g); ssb += g.length * (m - grand) ** 2; g.forEach(v => { ssw += (v - m) ** 2; }); });
+  const d1 = k - 1, d2 = N - k, F = (ssb / d1) / (ssw / d2);
+  return { test: "One-way ANOVA", F, df1: d1, df2: d2, p: ssw > 0 ? fUpperP(F, d1, d2) : NaN };
+}
+
+function fmtP(p) {
+  if (!Number.isFinite(p)) return "—";
+  if (p < 1e-4) return "p < 0.0001";
+  return "p = " + (p < 0.001 ? p.toExponential(2) : p.toFixed(4));
+}
+function pStars(p) { return !Number.isFinite(p) ? "" : p < 0.001 ? "***" : p < 0.01 ? "**" : p < 0.05 ? "*" : "n.s."; }
+
+// Symmetric eigen-decomposition by cyclic Jacobi rotations.
+// Returns { values (descending), vectors (columns, as arrays) }.
+function jacobiEigen(Ain) {
+  const n = Ain.length, A = Ain.map(r => r.slice());
+  const V = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)));
+  for (let sweep = 0; sweep < 100; sweep++) {
+    let off = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += A[i][j] * A[i][j];
+    if (off < 1e-22 * (1 + A.reduce((s, r, i) => s + r[i] * r[i], 0))) break;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+      if (Math.abs(A[p][q]) < 1e-300) continue;
+      const theta = (A[q][q] - A[p][p]) / (2 * A[p][q]);
+      const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+      const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+      for (let k = 0; k < n; k++) {
+        const akp = A[k][p], akq = A[k][q];
+        A[k][p] = c * akp - s * akq; A[k][q] = s * akp + c * akq;
+      }
+      for (let k = 0; k < n; k++) {
+        const apk = A[p][k], aqk = A[q][k];
+        A[p][k] = c * apk - s * aqk; A[q][k] = s * apk + c * aqk;
+      }
+      for (let k = 0; k < n; k++) {
+        const vkp = V[k][p], vkq = V[k][q];
+        V[k][p] = c * vkp - s * vkq; V[k][q] = s * vkp + c * vkq;
+      }
+    }
+  }
+  const order = A.map((r, i) => i).sort((a, b) => A[b][b] - A[a][a]);
+  return { values: order.map(i => A[i][i]), vectors: order.map(i => V.map(r => r[i])) };
+}
+
+// PCA of the rows of X (n spectra × p points).
+//   scale: "none" (mean-centred) or "auto" (each point scaled to unit variance)
+// Returns scores[n][k], loadings[k][p], explained[k] (fraction), mean[p]
+function pca(X, nComp, scale) {
+  const n = X.length, p = X[0].length;
+  const mean = new Array(p).fill(0), sd = new Array(p).fill(1);
+  X.forEach(r => r.forEach((v, j) => { mean[j] += v / n; }));
+  if (scale === "auto") for (let j = 0; j < p; j++) { let s = 0; for (let i = 0; i < n; i++) s += (X[i][j] - mean[j]) ** 2; sd[j] = Math.sqrt(s / Math.max(1, n - 1)) || 1; }
+  const Z = X.map(r => r.map((v, j) => (v - mean[j]) / sd[j]));
+  const G = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => { let s = 0; for (let k = 0; k < p; k++) s += Z[i][k] * Z[j][k]; return s; }));
+  const { values, vectors } = jacobiEigen(G);
+  const total = values.reduce((s, v) => s + Math.max(0, v), 0) || 1;
+  const k = Math.min(nComp, n - 1, values.filter(v => v > total * 1e-12).length);
+  const scores = Array.from({ length: n }, () => []), loadings = [], explained = [];
+  for (let c = 0; c < k; c++) {
+    const sv = Math.sqrt(Math.max(values[c], 0)), u = vectors[c];
+    // loading = Zᵀu / σ, a unit vector; score = σu
+    const L = new Array(p).fill(0);
+    for (let i = 0; i < n; i++) for (let j = 0; j < p; j++) L[j] += Z[i][j] * u[i];
+    for (let j = 0; j < p; j++) L[j] /= sv || 1;
+    // sign convention: the largest loading is positive
+    let big = 0; L.forEach((v, j) => { if (Math.abs(v) > Math.abs(L[big])) big = j; });
+    const sg = L[big] < 0 ? -1 : 1;
+    loadings.push(L.map(v => v * sg));
+    for (let i = 0; i < n; i++) scores[i].push(sv * u[i] * sg);
+    explained.push(Math.max(values[c], 0) / total);
+  }
+  return { scores, loadings, explained, mean };
+}
+
+// 95 % confidence ellipse of 2-D points (χ²₂ = 5.991), as a closed path
+function confidenceEllipse(xs, ys, chi2 = 5.991) {
+  const n = xs.length; if (n < 3) return null;
+  const mx = statMean(xs), my = statMean(ys);
+  let sxx = 0, syy = 0, sxy = 0;
+  for (let i = 0; i < n; i++) { sxx += (xs[i] - mx) ** 2; syy += (ys[i] - my) ** 2; sxy += (xs[i] - mx) * (ys[i] - my); }
+  sxx /= n - 1; syy /= n - 1; sxy /= n - 1;
+  const tr = sxx + syy, det = sxx * syy - sxy * sxy, disc = Math.sqrt(Math.max(0, tr * tr / 4 - det));
+  const l1 = tr / 2 + disc, l2 = Math.max(0, tr / 2 - disc);
+  const ang = Math.abs(sxy) < 1e-300 ? (sxx >= syy ? 0 : Math.PI / 2) : Math.atan2(l1 - sxx, sxy);
+  const a = Math.sqrt(chi2 * l1), b = Math.sqrt(chi2 * l2);
+  const ex = [], ey = [];
+  for (let k = 0; k <= 72; k++) {
+    const t = 2 * Math.PI * k / 72, cx = a * Math.cos(t), cy = b * Math.sin(t);
+    ex.push(mx + cx * Math.cos(ang) - cy * Math.sin(ang)); ey.push(my + cx * Math.sin(ang) + cy * Math.cos(ang));
+  }
+  return { x: ex, y: ey };
+}
+
+</script>
+<script>
+/* js/analysis/ramanTools.js */
+/* ═══════════════════════════════════════════════════════════
+   RAMAN ANALYSIS TOOLS (🔬 Analysis panel)
+   All four tools work on the spectra exactly as processed for the plot
+   (despike → baseline → smoothing → normalisation → derivative).
+   • Peak fitting — a region as a sum of Gaussian / Lorentzian /
+     pseudo-Voigt bands on a flat or sloping background (Levenberg–
+     Marquardt), with standard errors on every parameter and area.
+   • Band ratio / area — a band height or area (or a ratio of two) for
+     every spectrum, per-group mean ± SD and a significance test.
+   • PCA — score plot coloured by group with 95 % ellipses, and loadings.
+   • Difference spectrum — mean(A) − mean(B) with its uncertainty band.
+═══════════════════════════════════════════════════════════ */
+
+let lastRamanTool = null;   // { kind, csv, title } of the last result shown
+
+function rtEsc(v) { return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;"); }
+function rtNum(id, dflt) { const v = parseFloat(document.getElementById(id)?.value); return Number.isFinite(v) ? v : dflt; }
+function rtGroupOf(s) { return (document.getElementById("group" + s.gIdx)?.value || "Group 1").trim() || "Group 1"; }
+function rtLabelOf(s) { return document.getElementById("label" + s.gIdx)?.value || oceanFileNames[s.gIdx] || `File ${s.gIdx + 1}`; }
+function rtXLabel() { return document.getElementById("xlabel")?.value || "Raman shift (cm⁻¹)"; }
+function rtYLabel() { return document.getElementById("ylabel")?.value || "Intensity (a.u.)"; }
+
+// Every loaded spectrum, processed as for the plot
+function rtProcessedSpectra() {
+  return spectra.filter(s => s != null).map(s => {
+    const p = processSpec(s);
+    return { gIdx: s.gIdx, label: rtLabelOf(s), group: rtGroupOf(s), x: p.xx, y: p.yy };
+  }).filter(s => s.x.length > 2);
+}
+
+// Option list shared by the tool selectors: files, group averages, grand average
+function rtSpectrumOptions(withBatch) {
+  const active = spectra.filter(s => s != null);
+  const opts = [];
+  if (withBatch && active.length > 1) opts.push(["batch", `Every file, one by one (n=${active.length})`]);
+  active.forEach(s => opts.push([`file:${s.gIdx}`, rtLabelOf(s)]));
+  const groups = {};
+  active.forEach(s => { const g = rtGroupOf(s); (groups[g] = groups[g] || []).push(s); });
+  Object.keys(groups).forEach(g => { if (groups[g].length > 1 || Object.keys(groups).length > 1) opts.push([`group:${g}`, `Group average — ${g} (n=${groups[g].length})`]); });
+  if (active.length > 1) opts.push(["grand", `Grand average (n=${active.length})`]);
+  return opts;
+}
+
+function rtFillSelect(id, withBatch, preferIdx) {
+  const sel = document.getElementById(id); if (!sel) return;
+  const prev = sel.value, opts = rtSpectrumOptions(withBatch);
+  sel.innerHTML = opts.length ? opts.map(([v, t]) => `<option value="${rtEsc(v)}">${rtEsc(t)}</option>`).join("") : `<option value="">Load spectra first</option>`;
+  if (opts.some(o => o[0] === prev)) sel.value = prev;
+  else if (preferIdx != null && opts[preferIdx]) sel.value = opts[preferIdx][0];
+}
+
+function refreshRamanToolTargets() {
+  rtFillSelect("rtFitTarget", true);
+  const groupOpts = rtSpectrumOptions(false).filter(o => o[0].startsWith("group:"));
+  const gi = k => { const all = rtSpectrumOptions(false); const g = all.findIndex(o => o[0] === (groupOpts[k] || [])[0]); return g >= 0 ? g : k; };
+  rtFillSelect("rtDiffA", false, gi(0));
+  rtFillSelect("rtDiffB", false, gi(1));
+}
+
+// Resolve a selector value to { x, y, sd, sem, n, label }
+function rtResolveSpectrum(v) {
+  const active = spectra.filter(s => s != null);
+  if (!v || !active.length) return null;
+  if (v.startsWith("file:")) {
+    const s = active.find(sp => String(sp.gIdx) === v.slice(5)); if (!s) return null;
+    const p = processSpec(s);
+    return { x: p.xx, y: p.yy, sd: null, sem: null, n: 1, label: rtLabelOf(s) };
+  }
+  let members = active, label = "Grand average";
+  if (v.startsWith("group:")) { const g = v.slice(6); label = g; members = active.filter(s => rtGroupOf(s) === g); }
+  const agg = averageSpecs(members); if (!agg) return null;
+  return { x: agg.x, y: agg.mean, sd: agg.sd, sem: agg.sem, n: agg.n, label: `${label} (n=${agg.n})` };
+}
+
+function switchRamanTool() {
+  const t = document.getElementById("rtTool").value;
+  ["peakfit", "ratio", "pca", "diff"].forEach(k => { const el = document.getElementById("rtPane_" + k); if (el) el.style.display = k === t ? "block" : "none"; });
+  refreshRamanToolTargets();
+}
+
+function rtAxis(title, extra) {
+  return Object.assign({ title: { text: title }, showline: true, mirror: true, ticks: "outside", zeroline: false, linecolor: "#334155", tickfont: { size: 12 } }, extra || {});
+}
+
+function rtShowSection(title) {
+  const sec = document.getElementById("rtSection");
+  sec.style.display = "block";
+  document.getElementById("rtTitle").textContent = title;
+  document.getElementById("rtPlot2").style.display = "none";
+  document.getElementById("rtDlLoadings").style.display = "none";
+  Plotly.purge("rtPlot2");
+  return sec;
+}
+
+function rtPlot(div, traces, layout) {
+  const el = document.getElementById(div); el.style.display = "block";
+  Plotly.newPlot(el, traces, Object.assign({ plot_bgcolor: "white", paper_bgcolor: "white", height: 440, margin: { l: 80, r: 30, t: 50, b: 65 },
+    legend: { x: 0.01, y: 0.99, bgcolor: "rgba(255,255,255,0.85)", bordercolor: "#94a3b8", borderwidth: 1 } }, layout),
+    { displaylogo: false, responsive: true, edits: { titleText: true, axisTitleText: true, legendPosition: true } });
+}
+
+function downloadRamanToolCSV() {
+  if (!lastRamanTool) { alert("Run one of the analysis tools first."); return; }
+  downloadBlob(lastRamanTool.csv, `RNSpectraX_${lastRamanTool.kind}.csv`, "text/csv");
+}
+
+function downloadRamanToolPlot(which) {
+  const el = document.getElementById(which || "rtPlot");
+  if (!el || !el.data) { alert("Run one of the analysis tools first."); return; }
+  Plotly.downloadImage(el, { format: "png", scale: 3, filename: `RNSpectraX_${lastRamanTool ? lastRamanTool.kind : "analysis"}` });
+}
+
+const csvq = s => `"${String(s).replace(/"/g, '""')}"`;
+
+
+/* ───────────────────────── PEAK FITTING ───────────────────────── */
+
+const RT_GAUSS_AREA = Math.sqrt(Math.PI / (4 * Math.LN2));   // area = 1.0645·A·FWHM
+
+function rtProfile(kind, x, A, c, w, eta) {
+  const t = (x - c) / w;
+  const G = Math.exp(-4 * Math.LN2 * t * t), L = 1 / (1 + 4 * t * t);
+  return kind === "gaussian" ? A * G : kind === "lorentzian" ? A * L : A * (eta * L + (1 - eta) * G);
+}
+function rtArea(kind, A, w, eta) {
+  const g = A * Math.abs(w) * RT_GAUSS_AREA, l = A * Math.abs(w) * Math.PI / 2;
+  return kind === "gaussian" ? g : kind === "lorentzian" ? l : eta * l + (1 - eta) * g;
+}
+const rtSigmoid = q => 1 / (1 + Math.exp(-q));
+
+// Parameter vector: per band [A, c, w (, q → η = sigmoid(q))], then background
+function rtMakeModel(kind, nPk, bg, xMid) {
+  const per = kind === "voigt" ? 4 : 3;
+  const f = (x, p) => {
+    let s = 0;
+    for (let k = 0; k < nPk; k++) {
+      const o = k * per, w = Math.abs(p[o + 2]) || 1e-9;
+      s += rtProfile(kind, x, p[o], p[o + 1], w, per === 4 ? rtSigmoid(p[o + 3]) : 0);
+    }
+    const b = nPk * per;
+    if (bg === "constant") s += p[b];
+    else if (bg === "linear") s += p[b] + p[b + 1] * (x - xMid);
+    return s;
+  };
+  return { f, per };
+}
+
+// Candidate band centres: minima of the 2nd derivative (they mark shoulders as
+// well as resolved maxima), the deepest first
+function rtAutoCentres(x, y, n) {
+  const d2 = sgDerivative(x, applySmoothing(y.slice(), "savgol", Math.max(5, Math.round(x.length / 25) | 1), 2), 2, Math.max(7, Math.round(x.length / 20) | 1), 3);
+  const cand = [];
+  for (let i = 2; i < x.length - 2; i++) if (d2[i] < 0 && d2[i] <= d2[i - 1] && d2[i] <= d2[i + 1]) cand.push(i);
+  cand.sort((a, b) => d2[a] - d2[b]);
+  const chosen = [];
+  const minSep = (x[x.length - 1] - x[0]) / (4 * n);
+  for (const i of cand) { if (chosen.every(j => Math.abs(x[j] - x[i]) > minSep)) chosen.push(i); if (chosen.length >= n) break; }
+  return chosen.map(i => x[i]).sort((a, b) => a - b);
+}
+
+function fitBandsToSpectrum(xFull, yFull, o) {
+  const x = [], y = [];
+  xFull.forEach((v, i) => { if (v >= o.lo && v <= o.hi && Number.isFinite(yFull[i])) { x.push(v); y.push(yFull[i]); } });
+  const ord = x.map((_, i) => i).sort((a, b) => x[a] - x[b]);
+  const xs = ord.map(i => x[i]), ys = ord.map(i => y[i]);
+  const n = xs.length;
+  if (n < 8) return { error: "fewer than 8 points inside the fit region" };
+  let centres = o.centres && o.centres.length ? o.centres.slice() : rtAutoCentres(xs, ys, o.nAuto);
+  centres = centres.filter(c => c >= xs[0] && c <= xs[n - 1]);
+  if (!centres.length) return { error: "no band centres inside the region (type them, e.g. 1610, 1655)" };
+  const xMid = (xs[0] + xs[n - 1]) / 2;
+  // background start: straight line through the region's end points
+  const e = Math.max(1, Math.round(n / 20));
+  const yL = statMean(ys.slice(0, e)), yR = statMean(ys.slice(-e));
+  const slope = (yR - yL) / ((xs[n - 1] - xs[0]) || 1);
+  const bgAt = xv => o.bg === "none" ? 0 : o.bg === "constant" ? Math.min(yL, yR) : yL + slope * (xv - xs[0]);
+  const { f, per } = rtMakeModel(o.kind, centres.length, o.bg, xMid);
+  const p0 = [];
+  const span = xs[n - 1] - xs[0];
+  centres.forEach(c => {
+    const i = nearestIdx(xs, c), h = Math.max(ys[i] - bgAt(c), (Math.max(...ys) - Math.min(...ys)) * 0.05);
+    let w = o.width > 0 ? o.width : 0;
+    if (!w) { // half-height walk
+      let a = i, b = i; const half = bgAt(c) + h / 2;
+      while (a > 0 && ys[a] > half) a--; while (b < n - 1 && ys[b] > half) b++;
+      w = Math.min(Math.max(xs[b] - xs[a], span / (8 * centres.length)), span / centres.length);
+    }
+    p0.push(h, c, w); if (per === 4) p0.push(0);
+  });
+  if (o.bg === "constant") p0.push(Math.min(yL, yR));
+  else if (o.bg === "linear") p0.push(yL + slope * (xMid - xs[0]), slope);
+  const w8 = new Array(n).fill(1);
+  const res = levenbergMarquardt(f, xs, ys, w8, p0, 500);
+  if (!res) return { error: "the fit did not converge" };
+  const p = res.p, k = p.length, dof = Math.max(1, n - k);
+  const s2 = res.chi2 / dof;
+  const J = fitJacobian(f, xs, p);
+  const { A } = fitNormalEquations(J, w8, new Array(n).fill(0));
+  const inv = fitInverse(A);
+  const cov = inv ? inv.map(r => r.map(v => v * s2)) : null;
+  const se = j => cov && cov[j][j] >= 0 ? Math.sqrt(cov[j][j]) : NaN;
+  const ybar = statMean(ys), ssTot = ys.reduce((s, v) => s + (v - ybar) ** 2, 0);
+  const bands = centres.map((_, b) => {
+    const o0 = b * per, Aamp = p[o0], c = p[o0 + 1], w = Math.abs(p[o0 + 2]);
+    const eta = per === 4 ? rtSigmoid(p[o0 + 3]) : (o.kind === "lorentzian" ? 1 : 0);
+    const area = rtArea(o.kind, Aamp, w, eta);
+    // area error by propagation through the covariance of (A, w, q)
+    let areaErr = NaN;
+    if (cov) {
+      const idx = [o0, o0 + 2].concat(per === 4 ? [o0 + 3] : []);
+      const g = idx.map(j => { const h = Math.abs(p[j]) * 1e-6 || 1e-9; const pp = p.slice(), pm = p.slice(); pp[j] += h; pm[j] -= h;
+        const ar = q => rtArea(o.kind, q[o0], Math.abs(q[o0 + 2]), per === 4 ? rtSigmoid(q[o0 + 3]) : (o.kind === "lorentzian" ? 1 : 0));
+        return (ar(pp) - ar(pm)) / (2 * h); });
+      let v = 0; idx.forEach((a, ia) => idx.forEach((bb, ib) => { v += g[ia] * g[ib] * cov[a][bb]; }));
+      areaErr = v >= 0 ? Math.sqrt(v) : NaN;
+    }
+    const etaErr = per === 4 && cov ? eta * (1 - eta) * se(o0 + 3) : NaN;
+    return { centre: c, centreErr: se(o0 + 1), fwhm: w, fwhmErr: se(o0 + 2), height: Aamp, heightErr: se(o0), area, areaErr, eta, etaErr };
+  });
+  const tot = bands.reduce((s, b) => s + Math.max(0, b.area), 0) || 1;
+  bands.forEach(b => { b.areaPct = 100 * Math.max(0, b.area) / tot; });
+  const fitY = xs.map(v => f(v, p));
+  const bgY = xs.map(v => { const b0 = centres.length * per; return o.bg === "constant" ? p[b0] : o.bg === "linear" ? p[b0] + p[b0 + 1] * (v - xMid) : 0; });
+  const compsRaw = centres.map((_, b) => { const o0 = b * per; return xs.map((v, i) => bgY[i] + rtProfile(o.kind, v, p[o0], p[o0 + 1], Math.abs(p[o0 + 2]) || 1e-9, per === 4 ? rtSigmoid(p[o0 + 3]) : 0)); });
+  // report bands (and their curves) in order of position
+  const order = bands.map((_, i) => i).sort((a, b) => bands[a].centre - bands[b].centre);
+  const comps = order.map(i => compsRaw[i]);
+  bands.splice(0, bands.length, ...order.map(i => bands[i]));
+  return { x: xs, y: ys, fitY, bgY, comps, bands, r2: ssTot > 0 ? 1 - res.chi2 / ssTot : NaN, rmse: Math.sqrt(res.chi2 / n), n, k, converged: res.converged, centresUsed: centres };
+}
+
+function rtFitOptions() {
+  let lo = rtNum("rtFitLo", 1580), hi = rtNum("rtFitHi", 1720); if (lo > hi) [lo, hi] = [hi, lo];
+  return { lo, hi, kind: document.getElementById("rtFitProfile").value, bg: document.getElementById("rtFitBg").value,
+    centres: parseXList(document.getElementById("rtFitCentres").value), nAuto: Math.max(1, Math.min(12, rtNum("rtFitN", 2) | 0)), width: rtNum("rtFitWidth", 0) };
+}
+
+const rtPm = (v, e, d = 2) => Number.isFinite(v) ? (Number.isFinite(e) ? `${v.toFixed(d)} ± ${e.toFixed(d)}` : v.toFixed(d)) : "—";
+const rtSig = v => Number.isFinite(v) ? fmtNum(v) : "—";
+
+function runRamanPeakFit() {
+  rxTrack("raman-peak-fit");
+  if (!spectra.some(s => s)) { alert("Load spectra first."); return; }
+  refreshRamanToolTargets();
+  const o = rtFitOptions(), target = document.getElementById("rtFitTarget").value;
+  const kindName = { gaussian: "Gaussian", lorentzian: "Lorentzian", voigt: "pseudo-Voigt" }[o.kind];
+  rtShowSection(`Peak fitting — ${o.lo}–${o.hi} ${rtXLabel().match(/\(([^)]+)\)/)?.[1] || ""}`);
+  const body = document.getElementById("rtBody");
+
+  if (target === "batch") {
+    const list = rtProcessedSpectra();
+    // the first spectrum's fit seeds the band count and positions for the rest
+    const first = fitBandsToSpectrum(list[0].x, list[0].y, o);
+    if (first.error) { body.innerHTML = `<div class="fit-result" style="color:var(--danger,#dc2626)">${rtEsc(list[0].label)}: ${first.error}</div>`; return; }
+    const seed = Object.assign({}, o, { centres: o.centres.length ? o.centres : first.bands.map(b => b.centre) });
+    const results = list.map(s => ({ s, r: fitBandsToSpectrum(s.x, s.y, seed) }));
+    const nb = seed.centres.length;
+    let rows = "", csv = "file,group,band,centre,centre_se,fwhm,fwhm_se,height,height_se,area,area_se,area_pct,eta,R2\n";
+    results.forEach(({ s, r }) => {
+      if (r.error) { rows += `<tr><td>${rtEsc(s.label)}</td><td colspan="7" style="color:var(--danger)">${r.error}</td></tr>`; return; }
+      r.bands.forEach((b, j) => {
+        rows += `<tr><td>${j === 0 ? rtEsc(s.label) : ""}</td><td>${j === 0 ? rtEsc(s.group) : ""}</td><td>${j + 1}</td><td>${rtPm(b.centre, b.centreErr)}</td><td>${rtPm(b.fwhm, b.fwhmErr)}</td><td>${rtSig(b.area)}</td><td>${b.areaPct.toFixed(1)}</td><td>${j === 0 ? r.r2.toFixed(4) : ""}</td></tr>`;
+        csv += [csvq(s.label), csvq(s.group), j + 1, b.centre, b.centreErr, b.fwhm, b.fwhmErr, b.height, b.heightErr, b.area, b.areaErr, b.areaPct, b.eta, r.r2].join(",") + "\n";
+      });
+    });
+    // per-group summary of every band parameter
+    const groups = {};
+    results.forEach(({ s, r }) => { if (!r.error && r.bands.length === nb) (groups[s.group] = groups[s.group] || []).push(r); });
+    let sum = "", sumCsv = "\ngroup,band,n,centre_mean,centre_sd,fwhm_mean,fwhm_sd,area_mean,area_sd,area_pct_mean,area_pct_sd\n";
+    Object.entries(groups).forEach(([g, rs]) => {
+      for (let j = 0; j < nb; j++) {
+        const col = key => rs.map(r => r.bands[j][key]);
+        const ms = key => { const a = col(key); return [statMean(a), a.length > 1 ? Math.sqrt(statVar(a)) : NaN]; };
+        const [cm, cs] = ms("centre"), [wm, ws] = ms("fwhm"), [am, as] = ms("area"), [pm, ps] = ms("areaPct");
+        sum += `<tr><td>${j === 0 ? rtEsc(g) : ""}</td><td>${j + 1}</td><td>${rs.length}</td><td>${rtPm(cm, cs)}</td><td>${rtPm(wm, ws)}</td><td>${rtSig(am)}${Number.isFinite(as) ? " ± " + rtSig(as) : ""}</td><td>${rtPm(pm, ps, 1)}</td></tr>`;
+        sumCsv += [csvq(g), j + 1, rs.length, cm, cs, wm, ws, am, as, pm, ps].join(",") + "\n";
+      }
+    });
+    body.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${kindName} bands on a ${o.bg === "none" ? "zero" : o.bg} background, fitted to every file with the same starting positions (${seed.centres.map(c => c.toFixed(0)).join(", ")}). ± = 1σ standard error.</div>
+      <h4 style="margin:6px 0">Per group (mean ± SD over files)</h4>
+      <div style="overflow-x:auto"><table class="peak-table"><thead><tr><th>Group</th><th>Band</th><th>n</th><th>Centre</th><th>FWHM</th><th>Area</th><th>Area %</th></tr></thead><tbody>${sum}</tbody></table></div>
+      <h4 style="margin:12px 0 6px">Per file</h4>
+      <div style="overflow-x:auto"><table class="peak-table"><thead><tr><th>File</th><th>Group</th><th>Band</th><th>Centre</th><th>FWHM</th><th>Area</th><th>Area %</th><th>R²</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    lastRamanTool = { kind: "PeakFit_batch", csv: csv + sumCsv, refs: ["lm"],
+      methods: `The ${o.lo}–${o.hi} cm⁻¹ region of every spectrum was fitted with ${nb} ${kindName} band${nb === 1 ? "" : "s"} on a ${o.bg === "none" ? "zero" : o.bg} background by Levenberg–Marquardt least squares; band centres, FWHM and areas are reported as group mean ± SD.` };
+    const ok = results.find(q => !q.r.error);
+    if (ok) rtPlotPeakFit(ok.r, `${ok.s.label} (first of ${results.length})`, kindName);
+    return;
+  }
+
+  const sp = rtResolveSpectrum(target);
+  if (!sp) { body.innerHTML = `<div class="fit-result">Choose a spectrum to fit.</div>`; return; }
+  const r = fitBandsToSpectrum(sp.x, sp.y, o);
+  if (r.error) { body.innerHTML = `<div class="fit-result" style="color:var(--danger,#dc2626)">${r.error}.</div>`; Plotly.purge("rtPlot"); return; }
+  const etaCol = o.kind === "voigt";
+  body.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">${rtEsc(sp.label)} · ${r.bands.length} ${kindName} band${r.bands.length === 1 ? "" : "s"} on a ${o.bg === "none" ? "zero" : o.bg} background · R² = ${r.r2.toFixed(5)} · RMSE = ${rtSig(r.rmse)} · ${r.n} points, ${r.k} parameters${r.converged ? "" : " · <b style='color:var(--danger)'>not fully converged</b>"} · ± = 1σ standard error${o.centres.length ? "" : ` · start positions found automatically (${r.centresUsed.map(c => c.toFixed(0)).join(", ")}); type your own to override`}</div>
+    <div style="overflow-x:auto"><table class="peak-table"><thead><tr><th>Band</th><th>Centre</th><th>FWHM</th><th>Height</th><th>Area</th><th>Area %</th>${etaCol ? "<th>η (Lorentz fraction)</th>" : ""}</tr></thead><tbody>
+    ${r.bands.map((b, j) => `<tr><td>${j + 1}</td><td><b>${rtPm(b.centre, b.centreErr)}</b></td><td>${rtPm(b.fwhm, b.fwhmErr)}</td><td>${rtSig(b.height)} ± ${rtSig(b.heightErr)}</td><td>${rtSig(b.area)} ± ${rtSig(b.areaErr)}</td><td>${b.areaPct.toFixed(1)}</td>${etaCol ? `<td>${rtPm(b.eta, b.etaErr, 2)}</td>` : ""}</tr>`).join("")}
+    </tbody></table></div>`;
+  let csv = `spectrum,${csvq(sp.label)}\nprofile,${kindName}\nbackground,${o.bg}\nregion,${o.lo},${o.hi}\nR2,${r.r2}\nRMSE,${r.rmse}\n\nband,centre,centre_se,fwhm,fwhm_se,height,height_se,area,area_se,area_pct,eta\n`;
+  r.bands.forEach((b, j) => { csv += [j + 1, b.centre, b.centreErr, b.fwhm, b.fwhmErr, b.height, b.heightErr, b.area, b.areaErr, b.areaPct, b.eta].join(",") + "\n"; });
+  csv += "\nx,data,fit,background," + r.comps.map((_, j) => "band" + (j + 1)).join(",") + "\n";
+  r.x.forEach((v, i) => { csv += [v, r.y[i], r.fitY[i], r.bgY[i]].concat(r.comps.map(c => c[i])).join(",") + "\n"; });
+  lastRamanTool = { kind: "PeakFit", csv, refs: ["lm"],
+    methods: `The ${o.lo}–${o.hi} cm⁻¹ region of ${sp.label} was fitted with ${r.bands.length} ${kindName} band${r.bands.length === 1 ? "" : "s"} on a ${o.bg === "none" ? "zero" : o.bg} background by Levenberg–Marquardt least squares (R² = ${r.r2.toFixed(4)}); uncertainties are 1σ standard errors from the covariance matrix.` };
+  rtPlotPeakFit(r, sp.label, kindName);
+}
+
+function rtPlotPeakFit(r, label, kindName) {
+  const pal = ["#1f77b4", "#2ca02c", "#ff7f0e", "#9467bd", "#8c564b", "#e377c2", "#17becf", "#bcbd22", "#7f7f7f", "#003f5c", "#d62728", "#000000"];
+  const tr = [{ x: r.x, y: r.y, mode: "markers", name: "Data", marker: { size: 4, color: "#475569" } }];
+  r.comps.forEach((c, j) => tr.push({ x: r.x, y: c, mode: "lines", name: `Band ${j + 1} (${r.bands[j] ? r.bands[j].centre.toFixed(1) : ""})`, line: { width: 1.5, color: pal[j % pal.length] }, fill: "tonexty", fillcolor: hexToRgba(pal[j % pal.length], 0.15) }));
+  // fill each band down to the background: insert the background before every band
+  const withBg = [tr[0]];
+  r.comps.forEach((c, j) => { withBg.push({ x: r.x, y: r.bgY, mode: "lines", line: { width: 0 }, hoverinfo: "skip", showlegend: false }); withBg.push(tr[j + 1]); });
+  withBg.push({ x: r.x, y: r.fitY, mode: "lines", name: `Sum of ${kindName} bands (R²=${r.r2.toFixed(4)})`, line: { width: 2.2, color: "#d62728" } });
+  if (r.bgY.some(v => v !== 0)) withBg.push({ x: r.x, y: r.bgY, mode: "lines", name: "Background", line: { width: 1, color: "#64748b", dash: "dot" } });
+  withBg.push({ x: r.x, y: r.y.map((v, i) => v - r.fitY[i]), mode: "lines", name: "Residual", line: { width: 1, color: "#64748b" }, xaxis: "x", yaxis: "y2", showlegend: false });
+  rtPlot("rtPlot", withBg, {
+    title: { text: `Band fit — ${rtEsc(label)}`, font: { size: 15 } }, height: 520,
+    xaxis: rtAxis(rtXLabel(), { anchor: "y2" }),
+    yaxis: rtAxis(rtYLabel(), { domain: [0.26, 1] }),
+    yaxis2: rtAxis("Residual", { domain: [0, 0.2], zeroline: true, zerolinecolor: "#cbd5e1" }),
+    legend: { x: 0.01, y: 0.99, bgcolor: "rgba(255,255,255,0.85)", bordercolor: "#94a3b8", borderwidth: 1, font: { size: 11 } }
+  });
+}
+
+
+/* ───────────────────────── BAND RATIO / AREA ───────────────────────── */
+
+// "1004" → ±window around 1004; "990-1020" → that range
+function rtBandRange(text, win) {
+  const v = parseXList(text);
+  if (!v.length) return null;
+  return v.length >= 2 ? [Math.min(v[0], v[1]), Math.max(v[0], v[1])] : [v[0] - win, v[0] + win];
+}
+
+function rtBandValue(x, y, range, metric, localBl) {
+  const idx = []; x.forEach((v, i) => { if (v >= range[0] && v <= range[1] && Number.isFinite(y[i])) idx.push(i); });
+  if (idx.length < 2) return NaN;
+  idx.sort((a, b) => x[a] - x[b]);
+  const i0 = idx[0], i1 = idx[idx.length - 1];
+  const line = xv => localBl ? y[i0] + (y[i1] - y[i0]) * (xv - x[i0]) / ((x[i1] - x[i0]) || 1) : 0;
+  if (metric === "height") { let m = -Infinity; idx.forEach(i => { m = Math.max(m, y[i] - line(x[i])); }); return m; }
+  let a = 0; for (let k = 1; k < idx.length; k++) { const p = idx[k - 1], q = idx[k]; a += (x[q] - x[p]) * ((y[q] - line(x[q])) + (y[p] - line(x[p]))) / 2; }
+  return a;
+}
+
+function runBandRatio() {
+  rxTrack("raman-band-ratio");
+  const list = rtProcessedSpectra();
+  if (!list.length) { alert("Load spectra first."); return; }
+  const win = rtNum("rtBandWin", 10), metric = document.getElementById("rtBandMetric").value, localBl = document.getElementById("rtBandLocalBl").checked;
+  const ra = rtBandRange(document.getElementById("rtBandA").value, win), rb = rtBandRange(document.getElementById("rtBandB").value, win);
+  if (!ra) { alert("Type band A, e.g. 1004 or 990-1020."); return; }
+  const fmtR = r => `${+r[0].toFixed(1)}–${+r[1].toFixed(1)}`;
+  const what = `${metric === "area" ? "Area" : "Height"} ${fmtR(ra)}${rb ? ` / ${metric === "area" ? "Area" : "Height"} ${fmtR(rb)}` : ""}`;
+  const vals = list.map(s => {
+    const a = rtBandValue(s.x, s.y, ra, metric, localBl), b = rb ? rtBandValue(s.x, s.y, rb, metric, localBl) : 1;
+    return { s, a, b, v: rb ? a / b : a };
+  });
+  const groups = [], byG = {};
+  vals.forEach(o => { if (!byG[o.s.group]) { byG[o.s.group] = []; groups.push(o.s.group); } if (Number.isFinite(o.v)) byG[o.s.group].push(o.v); });
+  const summ = groups.map(g => { const a = byG[g]; return { g, n: a.length, mean: a.length ? statMean(a) : NaN, sd: a.length > 1 ? Math.sqrt(statVar(a)) : NaN }; });
+  summ.forEach(r => { r.sem = r.n > 1 ? r.sd / Math.sqrt(r.n) : NaN; });
+  const errKind = document.getElementById("rtBandErr").value;
+  let testHtml = "", testCsv = "";
+  const testable = groups.filter(g => byG[g].length >= 2);
+  if (testable.length === 2) {
+    const t = welchTTest(byG[testable[0]], byG[testable[1]]);
+    if (t) { testHtml = `${t.test}: t = ${t.t.toFixed(3)}, df = ${t.df.toFixed(1)}, <b>${fmtP(t.p)}</b> ${pStars(t.p)}`; testCsv = `${t.test},t,${t.t},df,${t.df},p,${t.p}\n`; }
+  } else if (testable.length > 2) {
+    const an = oneWayAnova(testable.map(g => byG[g]));
+    if (an) { testHtml = `${an.test}: F(${an.df1}, ${an.df2}) = ${an.F.toFixed(3)}, <b>${fmtP(an.p)}</b> ${pStars(an.p)}`; testCsv = `${an.test},F,${an.F},df1,${an.df1},df2,${an.df2},p,${an.p}\n`; }
+    const pw = [];
+    for (let i = 0; i < testable.length; i++) for (let j = i + 1; j < testable.length; j++) {
+      const t = welchTTest(byG[testable[i]], byG[testable[j]]); if (t) pw.push(`${rtEsc(testable[i])} vs ${rtEsc(testable[j])}: ${fmtP(t.p)} ${pStars(t.p)}`);
+      if (t) testCsv += `pairwise Welch,${csvq(testable[i])},${csvq(testable[j])},p,${t.p}\n`;
+    }
+    if (pw.length) testHtml += `<br><span style="font-size:11px;color:var(--muted)">Pairwise Welch t-tests (not corrected for multiple comparisons): ${pw.join(" · ")}</span>`;
+  } else testHtml = `<span style="color:var(--muted)">A significance test needs at least two groups with ≥ 2 spectra each (set the Group boxes or use Quick grouping).</span>`;
+
+  rtShowSection(`Band ${rb ? "ratio" : metric} — ${what}`);
+  document.getElementById("rtBody").innerHTML = `
+    <div class="fit-result" style="margin-bottom:8px;">${testHtml}</div>
+    <div style="overflow-x:auto"><table class="peak-table"><thead><tr><th>Group</th><th>n</th><th>Mean</th><th>SD</th><th>SEM</th></tr></thead><tbody>
+    ${summ.map(r => `<tr><td>${rtEsc(r.g)}</td><td>${r.n}</td><td><b>${rtSig(r.mean)}</b></td><td>${rtSig(r.sd)}</td><td>${rtSig(r.sem)}</td></tr>`).join("")}</tbody></table></div>
+    <details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px">Per-spectrum values</summary>
+    <div style="overflow-x:auto"><table class="peak-table"><thead><tr><th>Spectrum</th><th>Group</th><th>Band A</th>${rb ? "<th>Band B</th>" : ""}<th>Value</th></tr></thead><tbody>
+    ${vals.map(o => `<tr><td>${rtEsc(o.s.label)}</td><td>${rtEsc(o.s.group)}</td><td>${rtSig(o.a)}</td>${rb ? `<td>${rtSig(o.b)}</td>` : ""}<td><b>${rtSig(o.v)}</b></td></tr>`).join("")}</tbody></table></div></details>
+    <div style="font-size:11px;color:var(--hint);margin-top:6px;">${metric === "area" ? "Trapezoidal area" : "Maximum"} inside each band${localBl ? ", above a straight line joining the band edges" : ""}. Error bars: ${errKind === "sem" ? "SEM" : "SD"}; dots are the individual spectra.</div>`;
+  let csv = `measure,${csvq(what)}\nlocal_baseline,${localBl}\n\nspectrum,group,band_A,band_B,value\n`;
+  vals.forEach(o => { csv += [csvq(o.s.label), csvq(o.s.group), o.a, rb ? o.b : "", o.v].join(",") + "\n"; });
+  csv += "\ngroup,n,mean,sd,sem\n"; summ.forEach(r => { csv += [csvq(r.g), r.n, r.mean, r.sd, r.sem].join(",") + "\n"; });
+  if (testCsv) csv += "\n" + testCsv;
+  const testName = testable.length === 2 ? "Welch's t-test" : testable.length > 2 ? "one-way ANOVA" : "";
+  lastRamanTool = { kind: rb ? "BandRatio" : "BandValue", csv, refs: testable.length === 2 ? ["welch"] : [],
+    methods: `The band ${metric} ${rb ? "ratio " : ""}${what} was computed for every spectrum${localBl ? " above a local linear baseline" : ""}${testName ? ` and compared between groups with ${testName}` : ""}.` };
+
+  const pal = GROUP_COLORS;
+  const traces = [{ type: "bar", x: summ.map(r => r.g), y: summ.map(r => r.mean), marker: { color: summ.map((_, i) => hexToRgba(pal[i % pal.length], 0.55)), line: { color: summ.map((_, i) => pal[i % pal.length]), width: 1.5 } },
+    error_y: { type: "data", array: summ.map(r => errKind === "sem" ? r.sem : r.sd), visible: true, thickness: 1.5, width: 8, color: "#1e293b" }, name: "Mean", showlegend: false }];
+  groups.forEach((g, gi) => {
+    const pts = vals.filter(o => o.s.group === g && Number.isFinite(o.v));
+    traces.push({ type: "box", x: pts.map(() => g), y: pts.map(o => o.v), boxpoints: "all", jitter: 0.5, pointpos: 0, fillcolor: "rgba(0,0,0,0)", line: { width: 0 }, marker: { color: "#0f172a", size: 6, opacity: 0.8 }, hoveron: "points", text: pts.map(o => o.s.label), hovertemplate: "%{text}: %{y}<extra></extra>", showlegend: false, name: g });
+  });
+  rtPlot("rtPlot", traces, { title: { text: what, font: { size: 15 } }, xaxis: rtAxis("Group"), yaxis: rtAxis(rb ? "Ratio" : (metric === "area" ? "Band area" : "Band height")), bargap: 0.45 });
+}
+
+
+/* ───────────────────────── PCA ───────────────────────── */
+
+let lastPCA = null;
+
+function runRamanPCA() {
+  rxTrack("raman-pca");
+  const list = rtProcessedSpectra();
+  if (list.length < 3) { alert("PCA needs at least 3 spectra."); return; }
+  let lo = rtNum("rtPcaLo", -Infinity), hi = rtNum("rtPcaHi", Infinity); if (lo > hi) [lo, hi] = [hi, lo];
+  lo = Math.max(lo, ...list.map(s => Math.min(...s.x))); hi = Math.min(hi, ...list.map(s => Math.max(...s.x)));
+  const ord = list[0].x.map((_, i) => i).sort((a, b) => list[0].x[a] - list[0].x[b]);
+  const grid = ord.map(i => list[0].x[i]).filter(v => v >= lo && v <= hi);
+  if (grid.length < 5) { alert("The spectra share too little of the chosen region for PCA."); return; }
+  const X = list.map(s => { const o = s.x.map((_, i) => i).sort((a, b) => s.x[a] - s.x[b]); const xs = o.map(i => s.x[i]), ys = o.map(i => s.y[i]); return grid.map(g => interpolate(xs, ys, g)); });
+  const nComp = Math.max(2, Math.min(10, rtNum("rtPcaN", 3) | 0));
+  const res = pca(X, nComp, document.getElementById("rtPcaScale").value);
+  if (res.explained.length < 2) { alert("The spectra are identical (no variance to analyse)."); return; }
+  lastPCA = { list, grid, res };
+  const sel = (id, d) => { const el = document.getElementById(id); const prev = parseInt(el.value) || d; el.innerHTML = res.explained.map((e, i) => `<option value="${i + 1}">PC${i + 1} (${(100 * e).toFixed(1)} %)</option>`).join(""); el.value = String(Math.min(prev, res.explained.length)); };
+  sel("rtPcaX", 1); sel("rtPcaY", 2);
+  if (document.getElementById("rtPcaX").value === document.getElementById("rtPcaY").value) document.getElementById("rtPcaY").value = "2";
+  renderRamanPCA();
+}
+
+function renderRamanPCA() {
+  const P = lastPCA; if (!P) return;
+  const { list, grid, res } = P;
+  const a = (parseInt(document.getElementById("rtPcaX").value) || 1) - 1, b = (parseInt(document.getElementById("rtPcaY").value) || 2) - 1;
+  const ell = document.getElementById("rtPcaEllipse").checked;
+  rtShowSection(`PCA — ${list.length} spectra, ${grid.length} points (${grid[0].toFixed(0)}–${grid[grid.length - 1].toFixed(0)})`);
+  const groups = [...new Set(list.map(s => s.group))];
+  const traces = [];
+  groups.forEach((g, gi) => {
+    const idx = list.map((s, i) => s.group === g ? i : -1).filter(i => i >= 0);
+    const col = GROUP_COLORS[gi % GROUP_COLORS.length];
+    traces.push({ x: idx.map(i => res.scores[i][a]), y: idx.map(i => res.scores[i][b]), mode: "markers", name: `${g} (n=${idx.length})`, marker: { size: 10, color: col, symbol: ["circle", "square", "diamond", "triangle-up", "cross", "x"][gi % 6], line: { width: 1, color: "#fff" } },
+      text: idx.map(i => list[i].label), hovertemplate: "%{text}<br>PC" + (a + 1) + " %{x:.4g}<br>PC" + (b + 1) + " %{y:.4g}<extra></extra>" });
+    if (ell) { const e = confidenceEllipse(idx.map(i => res.scores[i][a]), idx.map(i => res.scores[i][b])); if (e) traces.push({ x: e.x, y: e.y, mode: "lines", line: { color: col, width: 1.5, dash: "dash" }, fill: "toself", fillcolor: hexToRgba(col, 0.08), hoverinfo: "skip", showlegend: false }); }
+  });
+  const pct = i => (100 * res.explained[i]).toFixed(1);
+  rtPlot("rtPlot", traces, { title: { text: "PCA scores", font: { size: 15 } }, height: 480,
+    xaxis: rtAxis(`PC${a + 1} (${pct(a)} %)`, { zeroline: true, zerolinecolor: "#cbd5e1" }), yaxis: rtAxis(`PC${b + 1} (${pct(b)} %)`, { zeroline: true, zerolinecolor: "#cbd5e1" }) });
+  rtPlot("rtPlot2", [a, b].map((c, k) => ({ x: grid, y: res.loadings[c], mode: "lines", name: `PC${c + 1} loading`, line: { width: 1.8, color: k ? "#d62728" : "#1f77b4" } })),
+    { title: { text: "Loadings (which bands drive each component)", font: { size: 15 } }, height: 380, xaxis: rtAxis(rtXLabel()), yaxis: rtAxis("Loading", { zeroline: true, zerolinecolor: "#94a3b8" }) });
+  document.getElementById("rtDlLoadings").style.display = "";
+  let cum = 0;
+  document.getElementById("rtBody").innerHTML = `<div style="overflow-x:auto"><table class="peak-table"><thead><tr><th>Component</th>${res.explained.map((_, i) => `<th>PC${i + 1}</th>`).join("")}</tr></thead><tbody>
+    <tr><td>Explained variance</td>${res.explained.map(e => `<td>${(100 * e).toFixed(2)} %</td>`).join("")}</tr>
+    <tr><td>Cumulative</td>${res.explained.map(e => { cum += e; return `<td>${(100 * cum).toFixed(2)} %</td>`; }).join("")}</tr></tbody></table></div>
+    <div style="font-size:11px;color:var(--hint);margin-top:6px;">Spectra are ${document.getElementById("rtPcaScale").value === "auto" ? "mean-centred and scaled to unit variance at every point" : "mean-centred"} and interpolated onto the first spectrum's points. ${ell ? "Dashed ellipses: 95 % confidence region of each group's scores (needs ≥ 3 spectra per group). " : ""}A positive loading means that band is stronger in spectra with a high score on that component.</div>`;
+  let csv = "spectrum,group," + res.explained.map((_, i) => `PC${i + 1}`).join(",") + "\n";
+  list.forEach((s, i) => { csv += [csvq(s.label), csvq(s.group)].concat(res.scores[i]).join(",") + "\n"; });
+  csv += "\nexplained_variance,," + res.explained.join(",") + "\n\nx," + res.loadings.map((_, i) => `PC${i + 1}_loading`).join(",") + "\n";
+  grid.forEach((g, j) => { csv += [g].concat(res.loadings.map(L => L[j])).join(",") + "\n"; });
+  lastRamanTool = { kind: "PCA", csv,
+    methods: `Principal component analysis was performed on ${list.length} ${document.getElementById("rtPcaScale").value === "auto" ? "autoscaled" : "mean-centred"} spectra (${grid[0].toFixed(0)}–${grid[grid.length - 1].toFixed(0)} cm⁻¹); PC${a + 1} and PC${b + 1} explain ${pct(a)} % and ${pct(b)} % of the variance${ell ? ", and 95 % confidence ellipses are drawn for each group" : ""}.` };
+}
+
+
+/* ───────────────────────── DIFFERENCE SPECTRUM ───────────────────────── */
+
+function runDifferenceSpectrum() {
+  rxTrack("raman-difference-spectrum");
+  refreshRamanToolTargets();
+  const A = rtResolveSpectrum(document.getElementById("rtDiffA").value), B = rtResolveSpectrum(document.getElementById("rtDiffB").value);
+  if (!A || !B) { alert("Choose the two spectra or groups to compare."); return; }
+  const errKind = document.getElementById("rtDiffErr").value, showMeans = document.getElementById("rtDiffShowMeans").checked;
+  const lo = Math.max(Math.min(...A.x), Math.min(...B.x)), hi = Math.min(Math.max(...A.x), Math.max(...B.x));
+  const ordB = B.x.map((_, i) => i).sort((a, b) => B.x[a] - B.x[b]);
+  const bx = ordB.map(i => B.x[i]), by = ordB.map(i => B.y[i]);
+  const be = B[errKind] ? ordB.map(i => B[errKind][i]) : null;
+  const pts = A.x.map((x, i) => ({ x, i })).filter(o => o.x >= lo && o.x <= hi).sort((p, q) => p.x - q.x);
+  const x = pts.map(o => o.x), yA = pts.map(o => A.y[o.i]), yB = x.map(v => interpolate(bx, by, v));
+  const d = yA.map((v, i) => v - yB[i]);
+  const eA = A[errKind] ? pts.map(o => A[errKind][o.i]) : null, eB = be ? x.map(v => interpolate(bx, be, v)) : null;
+  // uncertainty of a difference of two independent means: add in quadrature
+  const err = (eA || eB) ? x.map((_, i) => Math.sqrt((eA ? eA[i] ** 2 : 0) + (eB ? eB[i] ** 2 : 0))) : null;
+  rtShowSection(`Difference spectrum — ${A.label} − ${B.label}`);
+  const traces = [];
+  if (err) traces.push(buildErrorBandTrace(x, d, err, "#7c3aed", 0.22, "±"));
+  traces.push({ x, y: d, mode: "lines", name: `${A.label} − ${B.label}`, line: { color: "#7c3aed", width: 1.8 } });
+  if (showMeans) {
+    traces.push({ x, y: yA, mode: "lines", name: A.label, line: { color: "#1f77b4", width: 1.2 }, yaxis: "y2" });
+    traces.push({ x, y: yB, mode: "lines", name: B.label, line: { color: "#d62728", width: 1.2 }, yaxis: "y2" });
+  }
+  const layout = { title: { text: `${A.label} − ${B.label}`, font: { size: 15 } }, height: showMeans ? 560 : 440,
+    xaxis: rtAxis(rtXLabel(), showMeans ? { anchor: "y" } : {}),
+    yaxis: rtAxis(`Difference${err ? ` (band: ± ${errKind === "sem" ? "SEM" : "SD"})` : ""}`, Object.assign({ zeroline: true, zerolinecolor: "#64748b", zerolinewidth: 1 }, showMeans ? { domain: [0, 0.48] } : {})) };
+  if (showMeans) layout.yaxis2 = rtAxis(rtYLabel(), { domain: [0.55, 1], anchor: "x" });
+  rtPlot("rtPlot", traces, layout);
+  // the strongest positive and negative differences
+  // local extremes at least 10 % of the largest |difference|, one per 15 X units
+  const ix = d.map((_, i) => i), dMax = Math.max(...d.map(Math.abs)) || 1;
+  const top = (sgn) => {
+    const cand = ix.filter(i => sgn * d[i] >= 0.1 * dMax && (i === 0 || sgn * d[i] >= sgn * d[i - 1]) && (i === d.length - 1 || sgn * d[i] >= sgn * d[i + 1])).sort((p, q) => sgn * (d[q] - d[p]));
+    const out = [];
+    for (const i of cand) { if (out.every(j => Math.abs(x[j] - x[i]) > 15)) out.push(i); if (out.length >= 6) break; }
+    return out;
+  };
+  const fmtList = (sgn) => top(sgn).map(i => `${x[i].toFixed(0)}${err && Math.abs(d[i]) > 2 * err[i] ? "*" : ""}`).join(", ") || "—";
+  document.getElementById("rtBody").innerHTML = `<div class="fit-result" style="font-size:13px">Stronger in <b>${rtEsc(A.label)}</b>: ${fmtList(1)}<br>Stronger in <b>${rtEsc(B.label)}</b>: ${fmtList(-1)}</div>
+    <div style="font-size:11px;color:var(--hint);margin-top:6px;">${err ? `Band: ± ${errKind === "sem" ? "SEM" : "SD"} of the difference (the two spreads added in quadrature). * marks positions where the difference exceeds twice that band.` : "A single spectrum has no spread, so no band is drawn."} B is interpolated onto A's points.</div>`;
+  let csv = `x,${csvq(A.label)},${csvq(B.label)},difference${err ? ",uncertainty" : ""}\n`;
+  x.forEach((v, i) => { csv += [v, yA[i], yB[i], d[i]].concat(err ? [err[i]] : []).join(",") + "\n"; });
+  lastRamanTool = { kind: "Difference", csv,
+    methods: `A difference spectrum (${A.label} − ${B.label}) was computed${err ? ` with its ± ${errKind === "sem" ? "SEM" : "SD"} uncertainty (combined in quadrature)` : ""}.` };
 }
 
 </script>
@@ -6443,7 +7465,7 @@ function getIdentifyQuery() {
   if (!v || !active.length) return null;
   if (v.startsWith("file:")) {
     const s = active.find(sp => String(sp.gIdx) === v.slice(5)); if (!s) return null;
-    const p = processSpec(s);
+    const p = processSpec(s, { skipDerivative: true });
     return { x: p.xx, y: p.yy, label: document.getElementById("label" + s.gIdx)?.value || "spectrum" };
   }
   let members = active, label = "Grand average";
@@ -6451,7 +7473,7 @@ function getIdentifyQuery() {
     const g = v.slice(6); label = `Group average — ${g}`;
     members = active.filter(s => ((document.getElementById("group" + s.gIdx)?.value || "Group 1").trim() || "Group 1") === g);
   }
-  const agg = averageSpecs(members); if (!agg) return null;
+  const agg = averageSpecs(members, { skipDerivative: true }); if (!agg) return null;
   return { x: agg.x, y: agg.mean, label };
 }
 
@@ -6708,7 +7730,7 @@ function addXYDataset() {
       <div class="grid-3">
         <div class="field"><label>X Data</label><textarea id="xyXvals${idx}"></textarea></div>
         <div class="field"><label>Y Data</label><textarea id="xyYvals${idx}"></textarea></div>
-        <div class="field"><label>Label</label><input id="xyName${idx}" value="Dataset ${idx + 1}"><input type="color" id="xyColor${idx}" value="${GROUP_COLORS[idx % GROUP_COLORS.length]}"></div>
+        <div class="field"><label>Label</label><input id="xyName${idx}" value="Dataset ${idx + 1}"><input type="color" id="xyColor${idx}" value="${GROUP_COLORS[idx % GROUP_COLORS.length]}"><label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="xyRight${idx}">Right Y axis</label></div>
       </div>
       <div class="grid-3" style="margin-top:8px">
         <div class="field"><label>Y Error (optional)</label><textarea id="xyYerr${idx}"></textarea></div>
@@ -7098,6 +8120,261 @@ document.addEventListener('DOMContentLoaded', initWorkspaceLayout);
     }
   });
 })();
+
+</script>
+<script>
+/* js/ui/project.js */
+/* ═══════════════════════════════════════════════════════════
+   PROJECT FILES (.rnsx) AND METHODS TEXT
+   A project file is plain JSON holding every loaded spectrum / dataset,
+   the labels, colours and groups typed on the file cards, every control
+   setting, legend renames and annotations — enough to rebuild a figure
+   exactly, months later or on a collaborator's computer. Nothing is sent
+   anywhere: saving downloads the file, opening reads it in this tab.
+═══════════════════════════════════════════════════════════ */
+
+const RNSX_VERSION = 1;
+
+function projectCollectSettings() {
+  const out = {};
+  document.querySelectorAll("input[id], select[id], textarea[id]").forEach(el => {
+    if (!el.id || el.type === "file" || el.type === "button" || el.type === "submit") return;
+    if (/^(label|color|group|pk-|xy-pk-|cmp-|xyFile)/.test(el.id)) return;   // per-file, stored with the file
+    if (el.hasAttribute("data-mirror") || el.closest("#spectrumControls") || el.closest("#xyFileCards")) return;
+    out[el.id] = (el.type === "checkbox" || el.type === "radio") ? el.checked : el.value;
+  });
+  return out;
+}
+
+function projectApplySettings(values) {
+  let n = 0;
+  Object.keys(values || {}).forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const v = values[id];
+    if (el.type === "checkbox" || el.type === "radio") { if (el.checked === v) return; el.checked = !!v; }
+    else { if (el.value === v) return; el.value = v; }
+    n++;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  document.querySelectorAll("[data-mirror]").forEach(m => { const src = document.getElementById(m.getAttribute("data-mirror")); if (src) m.checked = src.checked; });
+  return n;
+}
+
+function saveProject() {
+  rxTrack("project-save");
+  // keep what was typed on the XY file cards
+  if (typeof renderXYFileCards === "function" && Object.keys(xyFileNames).length) renderXYFileCards();
+  const raman = spectra.filter(s => s != null).map(s => ({
+    name: oceanFileNames[s.gIdx], x: Array.from(s.x), y: Array.from(s.y), meta: s.meta,
+    label: document.getElementById("label" + s.gIdx)?.value, color: document.getElementById("color" + s.gIdx)?.value, group: document.getElementById("group" + s.gIdx)?.value
+  }));
+  const xy = Object.keys(xyFileNames).map(g => xyFiles[g]).filter(Boolean).map(f => ({
+    x: Array.from(f.x), y: Array.from(f.y), ey: f.ey ? Array.from(f.ey) : null, ex: f.ex ? Array.from(f.ex) : null,
+    info: f.info, name: f.name, autoName: f.autoName, quantity: f.quantity, quantityLabel: f.quantityLabel,
+    include: f.include, color: f.color, group: f.group, y2: f.y2, filename: f.filename
+  }));
+  const project = {
+    app: "RNSpectraX", format: "rnsx", version: RNSX_VERSION, saved: new Date().toISOString(),
+    mode: currentMode, xyTab: (document.querySelector(".xy-tab.active")?.id || "tabCSV").replace(/^tab/, "").toLowerCase(),
+    settings: projectCollectSettings(), raman, xy,
+    legendNames: legendNameOverrides, annotations: customAnnotations, shapes: customShapesStore
+  };
+  downloadBlob(JSON.stringify(project), `RNSpectraX_project_${new Date().toISOString().slice(0, 10)}.rnsx`, "application/json");
+  rxNotify(`Project saved: ${raman.length} spectra, ${xy.length} XY datasets, all settings and annotations.`);
+}
+
+function openProjectDialog() { document.getElementById("projectFileInput").click(); }
+
+function openProjectFile(e) {
+  const file = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    let p;
+    try { p = JSON.parse(r.result); } catch (err) { alert("This is not a RNSpectraX project file (it is not valid JSON)."); return; }
+    if (!p || p.format !== "rnsx") { alert("This is not a RNSpectraX project file."); return; }
+    loadProject(p);
+  };
+  r.readAsText(file);
+}
+
+function loadProject(p) {
+  rxTrack("project-open");
+  if ((spectra.some(s => s) || Object.keys(xyFileNames).length) && !confirm("Opening a project replaces the spectra and settings now loaded. Continue?")) return;
+  clearAllOceanFiles();
+  clearAllXYFiles();
+  // extra paste-in datasets: recreate the ones the project used
+  document.getElementById("extraXYDatasets").innerHTML = ""; extraDatasetCount = 0;
+  const extra = Object.keys(p.settings || {}).map(k => (k.match(/^xyXvals(\d+)$/) || [])[1]).filter(Boolean).map(Number);
+  const maxExtra = extra.length ? Math.max(...extra) : 0;
+  for (let i = 1; i <= maxExtra; i++) addXYDataset();
+  for (let i = 1; i <= maxExtra; i++) if (!extra.includes(i)) document.getElementById("extraDS" + i)?.remove();
+
+  // Raman spectra and their cards
+  (p.raman || []).forEach(s => {
+    const idx = oceanGlobalIdx++;
+    ingestParsedSpectrum({ x: s.x, y: s.y, meta: s.meta || { format: "Project", points: s.x.length } }, s.name || `Spectrum ${idx + 1}`, idx);
+    if (s.label != null) document.getElementById("label" + idx).value = s.label;
+    if (s.color) document.getElementById("color" + idx).value = s.color;
+    if (s.group != null) document.getElementById("group" + idx).value = s.group;
+  });
+  if ((p.raman || []).length) {
+    refreshOceanStatus();
+    document.getElementById("spectraPanel").style.display = "block";
+    document.getElementById("oceanFileList").style.display = "block";
+  }
+  // XY datasets
+  (p.xy || []).forEach(f => {
+    const idx = xyGlobalIdx++;
+    xyFiles[idx] = Object.assign({}, f, { gIdx: idx });
+    xyFileNames[idx] = f.filename || f.name;
+  });
+  renderXYFileCards();
+
+  projectApplySettings(p.settings);
+  if (p.legendNames) legendNameOverrides = { ocean: p.legendNames.ocean || {}, xy: p.legendNames.xy || {} };
+  if (p.annotations) customAnnotations = { ocean: p.annotations.ocean || [], xy: p.annotations.xy || [] };
+  if (p.shapes) customShapesStore = { ocean: p.shapes.ocean || [], xy: p.shapes.xy || [] };
+  annotHistory.ocean = []; annotHistory.xy = [];
+
+  if (p.xyTab) setXYTab(p.xyTab);
+  setMode(p.mode === "xy" ? "xy" : "ocean");
+  if (p.mode === "xy") { try { plotXY(); } catch (e) { /* nothing to plot yet */ } }
+  else if ((p.raman || []).length) plotSpectrum();
+  rxNotify(`Project opened (saved ${p.saved ? new Date(p.saved).toLocaleString() : "earlier"}): ${(p.raman || []).length} spectra, ${(p.xy || []).length} XY datasets.`);
+}
+
+
+/* ───────────────────────── METHODS TEXT ───────────────────────── */
+
+function mtVal(id) { return document.getElementById(id)?.value; }
+function mtNum(id) { const v = parseFloat(mtVal(id)); return Number.isFinite(v) ? v : null; }
+function mtSel(id) { const el = document.getElementById(id); return el && el.selectedOptions[0] ? el.selectedOptions[0].text : ""; }
+function mtPlural(n, w) { return `${n} ${w}${n === 1 ? "" : "s"}`; }
+
+function smoothingSentence(type, w, poly, sigma) {
+  if (type === "savgol") return { t: `smoothed with a Savitzky–Golay filter (window ${w} points, polynomial order ${poly})`, ref: "sg" };
+  if (type === "moving_avg") return { t: `smoothed with a ${w}-point moving average` };
+  if (type === "gaussian") return { t: `smoothed with a Gaussian kernel (σ = ${sigma} points)` };
+  if (type === "median") return { t: `filtered with a ${w}-point median filter` };
+  return null;
+}
+
+function normalisationSentence(type, scale) {
+  const s = { max: "to their maximum intensity", minmax: "to the range 0–1 (min–max)", area: "to unit area (trapezoidal integral)", vector: "to unit vector length (Euclidean norm)" }[type];
+  if (type === "ref") return `normalised to the maximum of the reference band at ${mtNum("normRefX")} ± ${mtNum("normRefWin")} cm⁻¹`;
+  if (!s) return null;
+  return `normalised ${s}` + (scale && scale !== 1 ? `${type === "minmax" ? ` and scaled to 0–${scale}` : ` and multiplied by ${scale}`}` : "");
+}
+
+const MT_REFS = {
+  als: "Eilers, P. H. C. & Boelens, H. F. M. (2005). Baseline correction with asymmetric least squares smoothing. Leiden University Medical Centre report.",
+  modpoly: "Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. Applied Spectroscopy, 57(11), 1363–1367.",
+  sg: "Savitzky, A. & Golay, M. J. E. (1964). Smoothing and differentiation of data by simplified least squares procedures. Analytical Chemistry, 36(8), 1627–1639.",
+  wh: "Whitaker, D. A. & Hayes, K. (2018). A simple algorithm for despiking Raman spectra. Chemometrics and Intelligent Laboratory Systems, 179, 82–84.",
+  lm: "Marquardt, D. W. (1963). An algorithm for least-squares estimation of nonlinear parameters. Journal of the Society for Industrial and Applied Mathematics, 11(2), 431–441.",
+  welch: "Welch, B. L. (1947). The generalization of 'Student's' problem when several different population variances are involved. Biometrika, 34(1–2), 28–35.",
+  ich: "ICH Q2(R1) (2005). Validation of analytical procedures: text and methodology. International Council for Harmonisation.",
+  biolib: "RamanBiolib reference library (Open Database License): see the citation listed with each match."
+};
+
+function buildRamanMethods() {
+  const act = spectra.filter(s => s);
+  if (!act.length) return null;
+  const refs = new Set(), parts = [];
+  const groups = {};
+  act.forEach(s => { const g = rtGroupOf(s); groups[g] = (groups[g] || 0) + 1; });
+  const gNames = Object.keys(groups);
+  const groupList = gNames.length > 1 ? ` (${gNames.map(g => `${g}, n = ${groups[g]}`).join("; ")})` : "";
+  parts.push(act.length === 1 ? "1 Raman spectrum was processed in RNSpectraX v3.3." : `${act.length} Raman spectra${groupList} were processed in RNSpectraX v3.3.`);
+  const sh = mtNum("rsShift");
+  if (sh) parts.push(`The Raman shift axis was corrected by ${sh > 0 ? "+" : ""}${sh} cm⁻¹ using the ${mtNum("rsCalRef")} cm⁻¹ band of a reference spectrum.`);
+  const lo = mtNum("xmin"), hi = mtNum("xmax");
+  if (lo != null && hi != null) parts.push(`The ${lo}–${hi} cm⁻¹ region was analysed${(mtVal("rsExclude") || "").trim() ? `, excluding ${parseRanges(mtVal("rsExclude")).map(r => `${r[0]}–${r[1]}`).join(", ")} cm⁻¹` : ""}.`);
+  const steps = [];
+  const ds = mtVal("despikeType");
+  if (ds && ds !== "none") { steps.push(`cosmic-ray spikes were removed (${ds === "whitaker" ? "Whitaker–Hayes" : "modified z-score"} detection on the first difference, threshold ${mtNum("dsThresh")}, repair window ${mtNum("dsWin")} points)`); refs.add("wh"); }
+  const bl = mtVal("baselineType");
+  if (bl === "als") { steps.push(`the fluorescence background was removed by asymmetric least squares (λ = 10^${mtNum("blAlsLam")}, p = ${mtNum("blAlsP")})`); refs.add("als"); }
+  else if (bl === "poly") { steps.push(`the fluorescence background was removed with an iterative modified polynomial fit (ModPoly, order ${mtNum("blParam1")})`); refs.add("modpoly"); }
+  else if (bl === "rubberband") steps.push("the background was removed with a rubber-band (lower convex hull) baseline");
+  else if (bl === "rolling_ball") steps.push(`the background was removed with a rolling-ball baseline (radius ${mtNum("blParam2")} points)`);
+  else if (bl === "linear") steps.push(`a linear baseline between ${mtNum("blLinX1")} and ${mtNum("blLinX2")} cm⁻¹ was subtracted`);
+  const sm = smoothingSentence(mtVal("smoothType"), mtNum("smParam1"), mtNum("smParam2"), mtNum("smParam3"));
+  if (sm) { steps.push(`spectra were ${sm.t}`); if (sm.ref) refs.add(sm.ref); }
+  const nm = normalisationSentence(mtVal("normType"));
+  if (nm) steps.push(`spectra were ${nm}`);
+  const dv = parseInt(mtVal("rsDeriv")) || 0;
+  if (dv) { steps.push(`${dv === 1 ? "first" : "second"}-derivative spectra were computed with a Savitzky–Golay filter (window ${mtNum("rsDerivWin")} points, order ${mtNum("rsDerivOrder")})`); refs.add("sg"); }
+  if (steps.length) parts.push(steps.map((s, i) => i === 0 ? s[0].toUpperCase() + s.slice(1) : s).join("; then ") + ", in that order.");
+  const avg = mtVal("avgMode"), eb = mtVal("errBarY");
+  if (avg === "groups" || avg === "grandavg") parts.push(`${avg === "groups" ? "Group" : "Grand"} mean spectra are shown${eb && eb !== "none" ? ` with ± ${eb === "sem" ? "standard error of the mean (SEM)" : "standard deviation (SD)"}` : ""}.`);
+  if (document.getElementById("showPeaks")?.checked) parts.push(`Bands were located as local maxima with a topographic prominence of at least ${getPeakProminencePct()} % of the intensity range.`);
+  if (lastRamanTool && lastRamanTool.methods) { parts.push(lastRamanTool.methods); (lastRamanTool.refs || []).forEach(r => refs.add(r)); }
+  return { text: parts.join(" "), refs: [...refs] };
+}
+
+function buildXYMethods() {
+  const ds = (() => { try { return gatherXYDatasets().filter(d => d.x.length); } catch (e) { return []; } })();
+  if (!ds.length) return null;
+  const refs = new Set(), parts = [];
+  const groups = [...new Set(ds.map(d => d.group).filter(Boolean))];
+  parts.push(`${mtPlural(ds.length, "dataset")}${groups.length ? ` in ${mtPlural(groups.length, "group")}` : ""} ${ds.length === 1 ? "was" : "were"} analysed in RNSpectraX v3.3.`);
+  const sm = smoothingSentence(mtVal("xySmoothType"), mtNum("xySmP1"), mtNum("xySmP2"), mtNum("xySmP1"));
+  if (sm) { parts.push(`Data were ${sm.t}.`); if (sm.ref) refs.add(sm.ref); }
+  const nm = normalisationSentence(mtVal("xyNorm"), mtNum("xyNormScale"));
+  if (nm) parts.push(`Each dataset was ${nm}.`);
+  if (mtVal("xyGroupMode") === "groups" && groups.length) parts.push(`Replicates sharing a group name were averaged point by point and shown as mean ± ${mtVal("xyGroupErr") === "sem" ? "SEM" : "SD"}.`);
+  const fm = mtVal("fitModel");
+  if (fm && fm !== "none") { parts.push(`A ${mtSel("fitModel").toLowerCase()} model was fitted by ${/linear|poly/.test(fm) ? "weighted linear" : "non-linear (Levenberg–Marquardt)"} least squares; parameter uncertainties are 1σ standard errors from the covariance matrix scaled by the reduced χ².`); if (!/linear|poly/.test(fm)) refs.add("lm"); }
+  if (typeof lastResonance !== "undefined" && lastResonance) {
+    const R = lastResonance;
+    const meth = { parabola: `the vertex of a least-squares parabola through the points within ±${mtVal("xyDipHalfWidth") || "1/10 of the window"} of the extreme point`, centroid: "the centroid of the part deeper than half its depth", min: "the extreme data point" }[mtVal("xyDipMethod")];
+    parts.push(`The resonance ${R.type} was located in every replicate between ${mtVal("xyDipLo") || "the start"} and ${mtVal("xyDipHi") || "the end"} of the X axis as ${meth}; positions were averaged per group (mean ± ${mtVal("xyDipErr") === "sem" ? "SEM" : "SD"}).`);
+    const ySel = mtVal("xyDipY");
+    if (ySel === "fwhm" || ySel === "q" || ySel === "depth") parts.push(`The ${mtSel("xyDipY")} was taken at half the resonance depth, measured from the mean level at the window edges.`);
+    if (R.fit) {
+      const what = { shift: "resonance shift relative to the reference group", position: "resonance position", fwhm: "resonance FWHM", q: "Q factor (position / FWHM)", depth: "resonance depth" }[ySel] || "resonance position";
+      parts.push(`The ${what} was plotted against concentration and fitted with a ${R.fit.label.toLowerCase()} model (R² = ${R.fit.r2.toFixed(4)}).`);
+      if (R.fit.model === "linear") {
+        if (R.lod != null) parts.push(`The limit of detection (LOD = 3σ/S) and quantification (LOQ = 10σ/S), with σ the standard deviation of the blank replicates and S the slope, were ${fmtNum(R.lod)} and ${fmtNum(R.loq)}${mtVal("xyDipUnit") ? " " + mtVal("xyDipUnit") : ""}.`);
+        if (R.lodRes != null) { parts.push(`From the residual standard deviation of the calibration (ICH Q2), LOD = 3.3 s_y/x / S = ${fmtNum(R.lodRes)} and LOQ = 10 s_y/x / S = ${fmtNum(R.loqRes)}${mtVal("xyDipUnit") ? " " + mtVal("xyDipUnit") : ""}.`); refs.add("ich"); }
+      }
+    }
+  }
+  return { text: parts.join(" "), refs: [...refs] };
+}
+
+function showMethodsText() {
+  rxTrack("methods-text");
+  const m = currentMode === "xy" ? buildXYMethods() : buildRamanMethods();
+  if (!m) { alert("Load and plot some data first: the text describes the settings used for it."); return; }
+  const refsTxt = m.refs.length ? "\n\nReferences\n" + m.refs.map(r => "• " + MT_REFS[r]).join("\n") : "";
+  let ov = document.getElementById("methodsOverlay");
+  if (!ov) {
+    ov = document.createElement("div"); ov.id = "methodsOverlay"; ov.className = "rx-modal";
+    ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-labelledby", "methodsTitle");
+    ov.innerHTML = `<div class="rx-modal-card" style="width:min(760px,100%)">
+      <div class="rx-modal-head"><h2 id="methodsTitle">📝 Methods text</h2><button class="rx-modal-close" onclick="closeMethodsText()" aria-label="Close">✕</button></div>
+      <div class="rx-modal-body">
+      <div style="font-size:12px;color:var(--muted);margin:6px 0 8px;">Generated from the current settings. Edit freely before pasting into your manuscript.</div>
+      <textarea id="methodsTextBox" style="width:100%;min-height:280px;font-size:13px;line-height:1.55;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button class="btn btn-outline btn-sm" onclick="downloadBlob(document.getElementById('methodsTextBox').value,'RNSpectraX_methods.txt','text/plain')">↓ .txt</button>
+        <button class="btn btn-primary btn-sm" onclick="copyMethodsText()">⧉ Copy</button>
+      </div></div></div>`;
+    ov.addEventListener("click", ev => { if (ev.target === ov) closeMethodsText(); });
+    document.body.appendChild(ov);
+  }
+  document.getElementById("methodsTextBox").value = m.text + refsTxt;
+  ov.classList.add("is-open");
+}
+function closeMethodsText() { const ov = document.getElementById("methodsOverlay"); if (ov) ov.classList.remove("is-open"); }
+function copyMethodsText() {
+  const box = document.getElementById("methodsTextBox"); box.select();
+  (navigator.clipboard ? navigator.clipboard.writeText(box.value) : Promise.reject()).then(() => rxNotify("Methods text copied"), () => { document.execCommand("copy"); rxNotify("Methods text copied"); });
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeMethodsText(); });
 
 </script>
 <script>

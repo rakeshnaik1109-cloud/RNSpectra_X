@@ -2,7 +2,7 @@
    RAMAN PROCESSING + GROUP AVERAGING + OFFSETS + ERROR BARS
 ════════════════════════════════════════════════════════════ */
 
-function processSpec(spec) {
+function processSpec(spec, opts) {
 
   let xmin = parseFloat(document.getElementById("xmin").value);
   let xmax = parseFloat(document.getElementById("xmax").value);
@@ -13,11 +13,17 @@ function processSpec(spec) {
   if (xmin > xmax) [xmin, xmax] = [xmax, xmin];
 
 
-  const mask = spec.x
-    .map((v, i) => (v >= xmin && v <= xmax ? i : -1))
+  // shift calibration and excluded regions (spectralExtras.js); with no
+  // correction and no regions this is the plain X Min–X Max window
+  const shiftCorr = getShiftCorrection();
+  const sx = shiftCorr ? spec.x.map(v => v + shiftCorr) : spec.x;
+  const excl = getExcludedRanges();
+
+  const mask = sx
+    .map((v, i) => (v >= xmin && v <= xmax && !(excl.length && isExcluded(v, excl)) ? i : -1))
     .filter(i => i >= 0);
 
-  const xx = mask.map(i => spec.x[i]);
+  const xx = mask.map(i => sx[i]);
   const raw = mask.map(i => spec.y[i]);
 
   // Working copy
@@ -43,10 +49,14 @@ function processSpec(spec) {
     { refX: parseFloat(document.getElementById("normRefX")?.value) || 1003, window: parseFloat(document.getElementById("normRefWin")?.value) || 10 }
   );
 
+  const normalized = yy;
+  if (!(opts && opts.skipDerivative)) yy = applyDerivativeStep(xx, yy);
+
   return {
     xx,
     raw,
     yy,
+    normalized,
     baseline,
     despiked,
     corrected,
@@ -58,11 +68,11 @@ function processSpec(spec) {
    GROUP AVERAGING
 ========================================================== */
 
-function averageSpecs(specList) {
+function averageSpecs(specList, opts) {
 
     if (!specList.length) return null;
 
-    const processed = specList.map(processSpec).filter(p => p.xx.length);
+    const processed = specList.map(s => processSpec(s, opts)).filter(p => p.xx.length);
     if (!processed.length) return null;
 
     // Average only where every spectrum has data: outside the common range

@@ -411,8 +411,24 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
 
   // Y-axis range: auto (default, blank fields) or manual, for both modes.
   // A single filled limit keeps the other side at the data extent.
-  const yRange = getManualYRange(prefix, cleanTraces);
+  // a second Y axis on the right (XY datasets ticked "Right Y axis")
+  const rightTraces = isOcean ? [] : cleanTraces.filter(t => t.yaxis === 'y3');
+  const yRange = getManualYRange(prefix, rightTraces.length ? cleanTraces.filter(t => t.yaxis !== 'y3') : cleanTraces);
   if (yRange) layout.yaxis.range = yRange;
+  if (rightTraces.length) {
+    const y2Text = boldWrapText(document.getElementById("xyY2label")?.value || "", boldAxisOn);
+    layout.yaxis3 = Object.assign({}, yExtra, {
+      overlaying: 'y', side: 'right', anchor: 'x', mirror: false, showgrid: false, zeroline: false,
+      title: { text: y2Text, font: layout.yaxis.title.font, standoff: layout.yaxis.title.standoff },
+      tickfont: layout.yaxis.tickfont
+    });
+    delete layout.yaxis3.standoff;
+    const r2 = resolveManualRange('xyY2min', 'xyY2max', rightTraces, 'y');
+    if (r2) layout.yaxis3.range = r2;
+    // the left axis no longer mirrors onto the right, where the second axis sits
+    layout.yaxis.mirror = false;
+    layout.margin.r = Math.max(layout.margin.r, 80);
+  }
 
   if (!isOcean) {
     const xRange = getManualXRange(cleanTraces);

@@ -27,17 +27,21 @@ function downloadProcessingStages() {
     const gIdx = spec.gIdx ?? idx;
     const label = (document.getElementById("label" + gIdx)?.value || spec.name || `Spectrum_${idx + 1}`).replace(/[^\w\-]+/g, "_");
     const p = processSpec(spec);
-    let csv = "X,Raw,Despiked,Baseline,BaselineCorrected,Smoothed,Normalized_Final\n";
+    // a derivative, when chosen, is an extra final column after Normalized
+    const hasDeriv = p.normalized !== p.yy;
+    let csv = "X,Raw,Despiked,Baseline,BaselineCorrected,Smoothed," + (hasDeriv ? "Normalized,Derivative_Final" : "Normalized_Final") + "\n";
     for (let i = 0; i < p.xx.length; i++) {
-      csv += [
+      const row = [
         p.xx[i],
         p.raw[i] ?? "",
         p.despiked ? p.despiked[i] ?? "" : "",
         p.baseline ? p.baseline[i] ?? "" : "",
         p.corrected ? p.corrected[i] ?? "" : "",
         p.smoothed ? p.smoothed[i] ?? "" : "",
-        p.yy[i] ?? ""
-      ].join(",") + "\n";
+        (hasDeriv ? p.normalized[i] : p.yy[i]) ?? ""
+      ];
+      if (hasDeriv) row.push(p.yy[i] ?? "");
+      csv += row.join(",") + "\n";
     }
     downloadBlob(csv, `RNSpectraX_Stages_${label}.csv`, "text/csv");
   });

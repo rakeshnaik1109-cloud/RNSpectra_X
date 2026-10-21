@@ -398,6 +398,77 @@ The LOD needs at least two blank replicates; more are better.
 
 ---
 
+## 10. Shift calibration, excluded regions and derivatives
+
+The shift correction $\delta$ is added to every abscissa before processing,
+$\tilde\nu' = \tilde\nu + \delta$. Measured from a reference spectrum, the
+band maximum within $\pm w$ of the literature position $\tilde\nu_{\mathrm{ref}}$
+is refined by a parabola through the seven points around it, and
+$\delta = \tilde\nu_{\mathrm{ref}} - \tilde\nu_{\mathrm{measured}}$.
+
+Points inside excluded ranges are removed before despiking.
+
+Derivatives use a Savitzky–Golay filter evaluated in the true abscissa offsets
+$t_j = x_j - x_i$, so the result is in intensity per cm⁻¹ even for uneven
+spacing: a local least-squares polynomial $\sum_k c_k t^k$ over the window
+gives $dy/dx = c_1$ and $d^2y/dx^2 = 2c_2$.
+
+## 11. Band fitting (deconvolution)
+
+A region is modelled as
+$y(x) = \sum_k A_k\,f(x; c_k, w_k) + b_0 + b_1 (x - \bar x)$ with
+Gaussian $f = \exp[-4\ln 2\,(x-c)^2/w^2]$, Lorentzian
+$f = 1/[1 + 4(x-c)^2/w^2]$ or pseudo-Voigt
+$f = \eta L + (1-\eta) G$ ($w$ = FWHM, $0 \le \eta \le 1$ through a logistic
+transform). Parameters are found by Levenberg–Marquardt. Start positions are
+typed or taken from the deepest minima of the second derivative; start
+heights from the data above a straight line through the region ends; start
+widths from the half-height crossing. Standard errors come from
+$(J^\top J)^{-1} s^2$ with $s^2 = \mathrm{RSS}/(n-p)$. Areas are
+$1.0645\,A w$ (Gaussian), $\tfrac{\pi}{2} A w$ (Lorentzian) and their
+η-weighted mean (pseudo-Voigt); their errors are propagated through the full
+covariance matrix of $(A, w, \eta)$.
+
+## 12. Band ratios and group tests
+
+A band height is the maximum inside the band window, and its area the
+trapezoidal integral; with *local baseline*, a straight line joining the
+window ends is subtracted first. Two groups are compared by Welch's t-test,
+$t = (\bar a - \bar b)/\sqrt{s_a^2/n_a + s_b^2/n_b}$ with the
+Welch–Satterthwaite degrees of freedom; three or more by one-way ANOVA,
+$F = [\mathrm{SS_B}/(k-1)]/[\mathrm{SS_W}/(N-k)]$. p-values come from the
+regularised incomplete beta function. Pairwise tests after an ANOVA are not
+corrected for multiple comparisons.
+
+## 13. Principal component analysis
+
+The $n$ spectra are interpolated onto the first spectrum's points, mean-centred
+(optionally divided by the standard deviation at every point), and the $n\times n$
+matrix $ZZ^\top$ is diagonalised by Jacobi rotations. With eigenvalues
+$\lambda_k$ and unit eigenvectors $u_k$, the scores are $\sqrt{\lambda_k}\,u_k$,
+the loadings $Z^\top u_k/\sqrt{\lambda_k}$, and the explained variance
+$\lambda_k/\sum\lambda$. The 95 % ellipse of a group is
+$\{z : (z-\bar z)^\top S^{-1}(z-\bar z) \le \chi^2_{2,0.95} = 5.991\}$ for its
+score covariance $S$.
+
+## 14. Difference spectra
+
+$\Delta(x) = \bar y_A(x) - \bar y_B(x)$, with B linearly interpolated onto A's
+points, and uncertainty $\sqrt{e_A^2 + e_B^2}$ with $e$ the SD or SEM of each
+mean.
+
+## 15. Resonance line shape, LOQ
+
+For each replicate the depth is $D = |\bar y_{\mathrm{edge}} - y_{\mathrm{res}}|$,
+with $\bar y_{\mathrm{edge}}$ the mean of the outer 5 % of the search window at
+each end; the FWHM is the distance between the two half-depth crossings
+(linearly interpolated), and $Q = \lambda_{\mathrm{res}}/\mathrm{FWHM}$.
+$\mathrm{LOQ} = 10\,\sigma_{\mathrm{blank}}/|S|$. From the calibration
+itself (ICH Q2), $\mathrm{LOD} = 3.3\,s_{y/x}/|S|$ and
+$\mathrm{LOQ} = 10\,s_{y/x}/|S|$ with $s_{y/x} = \sqrt{\mathrm{RSS}/(n-2)}$.
+
+---
+
 ## Reporting checklist
 
 For reproducibility, a methods section should state:
@@ -409,6 +480,9 @@ For reproducibility, a methods section should state:
 5. Number of replicates per group, and whether bands are SD or SEM.
 6. Peak detection minimum prominence, and the band library used for assignment.
 7. Fit model, whether it was weighted, the parameters with their standard errors, and R² (or reduced χ²).
+8. Any shift correction, excluded regions and derivative order/window.
+
+The **Methods** button writes most of this from the settings in use.
 
 ---
 
@@ -417,6 +491,8 @@ For reproducibility, a methods section should state:
 - Whitaker, D. A. & Hayes, K. (2018). A simple algorithm for despiking Raman spectra. *Chemometrics and Intelligent Laboratory Systems*, 179, 82–84.
 - Savitzky, A. & Golay, M. J. E. (1964). Smoothing and differentiation of data by simplified least squares procedures. *Analytical Chemistry*, 36(8), 1627–1639.
 - Eilers, P. H. C. & Boelens, H. F. M. (2005). *Baseline correction with asymmetric least squares smoothing*. Leiden University Medical Centre report.
+- Welch, B. L. (1947). The generalization of 'Student's' problem when several different population variances are involved. *Biometrika*, 34(1–2), 28–35.
+- ICH Q2(R1) (2005). *Validation of analytical procedures: text and methodology*. International Council for Harmonisation.
 - Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. *Applied Spectroscopy*, 57(11), 1363–1367.
 - Movasaghi, Z., Rehman, S. & Rehman, I. U. (2007). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 42(5), 493–541.
 - Talari, A. C. S., Movasaghi, Z., Rehman, S. & Rehman, I. U. (2015). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 50(1), 46–111.

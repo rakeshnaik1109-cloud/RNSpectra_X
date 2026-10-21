@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610211942" rel="stylesheet"/>
-<link href="css/layout.css?v=202610211942" rel="stylesheet"/>
+<link href="css/style.css?v=202610212010" rel="stylesheet"/>
+<link href="css/layout.css?v=202610212010" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -100,6 +100,19 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 7l6-5 6 5v6.5a1 1 0 0 1-1 1H9.5V10h-3v4.5H3a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Homepage</span>
       </a>--->
+      <button class="chrome-link" onclick="saveProject()" title="Save everything — spectra, settings, groups, annotations — as one .rnsx project file">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h8l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 2v4h5V2M5 14V9h6v5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span class="chrome-link-text">Save</span>
+      </button>
+      <button class="chrome-link" onclick="openProjectDialog()" title="Open a .rnsx project file">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4.5V12a1 1 0 0 0 1 1h10l1.5-6H5L3.5 12" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H12a1 1 0 0 1 1 1V7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        <span class="chrome-link-text">Open</span>
+      </button>
+      <input type="file" id="projectFileInput" accept=".rnsx,.json" style="display:none" onchange="openProjectFile(event)"/>
+      <button class="chrome-link" onclick="showMethodsText()" title="Write a Methods paragraph from the current settings">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3h10M3 6.5h10M3 10h7M3 13.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="chrome-link-text">Methods</span>
+      </button>
       <a class="chrome-link" href="docs/USER_MANUAL.md" title="User manual">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h6l4 4v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Manual</span>
@@ -139,6 +152,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecAverage')">③ Average</button>
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecStyle')">④ Style &amp; Export</button>
             <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecIdentify');refreshIdentifyTargets()">🧬 Identify</button>
+            <button class="quick-nav-pill" onclick="jumpToSection('oceanControlPanel','oceanSecAnalysis');refreshRamanToolTargets()">🔬 Analysis</button>
           </div>
 
           <!-- ① DATA INPUT -->
@@ -293,6 +307,37 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Reference band (cm⁻¹)</label><input type="number" id="normRefX" value="1003" step="any" title="e.g. 1003 (phenylalanine), 1450 (CH₂), 520.7 (silicon)"/></div>
                 <div class="field"><label>Search ± (cm⁻¹)</label><input type="number" id="normRefWin" value="10" min="0.5" step="any"/></div>
               </div>
+            </div>
+
+            <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
+
+            <!-- 2e. Shift calibration, excluded regions, derivative -->
+            <div class="collapsible-header" onclick="toggleSection(this);refreshCalibrationFiles()">
+              <div class="section-title" style="margin:0">Calibration, Regions &amp; Derivative</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="grid">
+                <div class="field"><label>Shift correction (cm⁻¹)</label><input type="number" id="rsShift" value="0" step="any" title="Added to every Raman shift before processing. 0 = no correction."/></div>
+                <div class="field"><label>Reference band (cm⁻¹)</label><input type="number" id="rsCalRef" value="520.7" step="any" title="Literature position of the calibration band, e.g. 520.7 (silicon), 1001.4 (polystyrene), 1332 (diamond)"/></div>
+                <div class="field"><label>Reference spectrum</label><select id="rsCalFile" onmousedown="refreshCalibrationFiles()" onfocus="refreshCalibrationFiles()"><option value="">Load spectra first</option></select></div>
+                <div class="field"><label>Search ± (cm⁻¹)</label><input type="number" id="rsCalWin" value="15" min="1" step="any"/></div>
+              </div>
+              <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%;" onclick="calibrateShiftFromReference()" title="Find the band in the chosen reference spectrum and set the shift correction so it sits at the reference position">🎯 Measure shift from reference band</button>
+              <div class="field" style="margin-top:10px;"><label>Exclude regions (cm⁻¹)</label><input type="text" id="rsExclude" placeholder="e.g. 1540-1560; 2320-2340" title="Points inside these ranges are removed before despiking, baseline and smoothing"/></div>
+              <div class="grid" style="margin-top:10px;">
+                <div class="field"><label>Derivative</label>
+                  <select id="rsDeriv" onchange="updateDerivParams()">
+                    <option value="0" selected>None</option>
+                    <option value="1">1st derivative</option>
+                    <option value="2">2nd derivative</option>
+                  </select>
+                </div>
+                <div class="field" id="rsDerivWinWrap" style="display:none"><label>Window (pts)</label><input type="number" id="rsDerivWin" value="11" min="5" step="2"/></div>
+                <div class="field" id="rsDerivOrderWrap" style="display:none"><label>Poly order</label><input type="number" id="rsDerivOrder" value="3" min="2" max="6"/></div>
+              </div>
+              <div style="font-size:11px;color:var(--hint);margin-top:6px;">Savitzky–Golay derivative, applied last. A 2nd-derivative minimum marks each band, including shoulders. Identify always uses the spectrum before the derivative.</div>
             </div>
           </div>
 
@@ -674,6 +719,82 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             </div>
           </div>
 
+          <!-- 🔬 ANALYSIS TOOLS -->
+          <div class="section-card" id="oceanSecAnalysis">
+            <div class="collapsible-header" onclick="toggleSection(this);refreshRamanToolTargets()">
+              <div class="section-title" style="margin:0">🔬 Analysis — Peak Fit · Band Ratio · PCA · Difference</div>
+              <span class="chevron">▼</span>
+            </div>
+            <div class="collapsible-body" style="max-height:0px">
+              <div style="height:10px"></div>
+              <div class="field"><label>Tool</label>
+                <select id="rtTool" onchange="switchRamanTool()">
+                  <option value="peakfit" selected>Peak fitting (deconvolution)</option>
+                  <option value="ratio">Band ratio / area + statistics</option>
+                  <option value="pca">PCA (principal components)</option>
+                  <option value="diff">Difference spectrum (A − B)</option>
+                </select>
+              </div>
+
+              <div id="rtPane_peakfit" style="margin-top:10px;">
+                <div class="info-box">Fits a region as a sum of bands on a background and reports each band's centre, FWHM, height and area with standard errors — e.g. Amide I (1580–1720) or 1200–1350 cm⁻¹.</div>
+                <div class="grid">
+                  <div class="field" style="grid-column:span 2"><label>Spectrum</label><select id="rtFitTarget" onmousedown="refreshRamanToolTargets()" onfocus="refreshRamanToolTargets()"><option value="">Load spectra first</option></select></div>
+                  <div class="field"><label>Region from</label><input type="number" id="rtFitLo" value="1580" step="any"/></div>
+                  <div class="field"><label>Region to</label><input type="number" id="rtFitHi" value="1720" step="any"/></div>
+                  <div class="field" style="grid-column:span 2"><label>Band positions (start values)</label><input type="text" id="rtFitCentres" placeholder="blank = find automatically, or e.g. 1610, 1655"/></div>
+                  <div class="field"><label>Bands (if automatic)</label><input type="number" id="rtFitN" value="2" min="1" max="12"/></div>
+                  <div class="field"><label>Start FWHM</label><input type="number" id="rtFitWidth" placeholder="auto" min="0" step="any"/></div>
+                  <div class="field"><label>Band shape</label>
+                    <select id="rtFitProfile"><option value="gaussian">Gaussian</option><option value="lorentzian">Lorentzian</option><option value="voigt" selected>Pseudo-Voigt</option></select>
+                  </div>
+                  <div class="field"><label>Background</label>
+                    <select id="rtFitBg"><option value="none">None</option><option value="constant">Constant</option><option value="linear" selected>Linear</option></select>
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runRamanPeakFit()">⛰ Fit bands</button>
+              </div>
+
+              <div id="rtPane_ratio" style="display:none;margin-top:10px;">
+                <div class="info-box">Height or area of a band — or the ratio of two bands, e.g. 1004 / 1450 — for every spectrum, with group mean ± SD and a t-test (2 groups) or ANOVA (3 or more).</div>
+                <div class="grid">
+                  <div class="field"><label>Band A</label><input type="text" id="rtBandA" value="1004" title="A position (uses ± window) or a range, e.g. 990-1020"/></div>
+                  <div class="field"><label>Band B (blank = A only)</label><input type="text" id="rtBandB" value="1450"/></div>
+                  <div class="field"><label>± window for a position</label><input type="number" id="rtBandWin" value="15" min="0.5" step="any" title="Make it wide enough to hold the whole band"/></div>
+                  <div class="field"><label>Measure</label><select id="rtBandMetric"><option value="height" selected>Height</option><option value="area">Area</option></select></div>
+                  <div class="field"><label>Error bars</label><select id="rtBandErr"><option value="sd" selected>± SD</option><option value="sem">± SEM</option></select></div>
+                </div>
+                <div class="toggles" style="margin-top:8px;"><label class="toggle-item" title="Subtract a straight line joining the two ends of each band window. Use it when no baseline correction was applied; the window must then span the whole band."><input type="checkbox" id="rtBandLocalBl">Local baseline under each band</label></div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runBandRatio()">📊 Compute &amp; compare groups</button>
+              </div>
+
+              <div id="rtPane_pca" style="display:none;margin-top:10px;">
+                <div class="info-box">Principal component analysis of the individual processed spectra. Groups (from the Group boxes) are coloured in the score plot; the loadings show which bands separate them.</div>
+                <div class="grid">
+                  <div class="field"><label>Region from (blank = all)</label><input type="number" id="rtPcaLo" step="any"/></div>
+                  <div class="field"><label>Region to</label><input type="number" id="rtPcaHi" step="any"/></div>
+                  <div class="field"><label>Components</label><input type="number" id="rtPcaN" value="3" min="2" max="10"/></div>
+                  <div class="field"><label>Scaling</label><select id="rtPcaScale"><option value="none" selected>Mean-centred</option><option value="auto">Autoscaled (unit variance)</option></select></div>
+                  <div class="field"><label>X axis</label><select id="rtPcaX" onchange="renderRamanPCA()"><option value="1">PC1</option></select></div>
+                  <div class="field"><label>Y axis</label><select id="rtPcaY" onchange="renderRamanPCA()"><option value="2">PC2</option></select></div>
+                </div>
+                <div class="toggles" style="margin-top:8px;"><label class="toggle-item"><input type="checkbox" id="rtPcaEllipse" checked onchange="renderRamanPCA()">95 % confidence ellipses</label></div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runRamanPCA()">◈ Run PCA</button>
+              </div>
+
+              <div id="rtPane_diff" style="display:none;margin-top:10px;">
+                <div class="info-box">Subtracts B from A point by point. Positive bands are stronger in A, negative in B; the shaded band shows the uncertainty of the difference.</div>
+                <div class="grid">
+                  <div class="field" style="grid-column:span 2"><label>A</label><select id="rtDiffA" onmousedown="refreshRamanToolTargets()" onfocus="refreshRamanToolTargets()"><option value="">Load spectra first</option></select></div>
+                  <div class="field" style="grid-column:span 2"><label>B (subtracted)</label><select id="rtDiffB" onmousedown="refreshRamanToolTargets()" onfocus="refreshRamanToolTargets()"><option value="">Load spectra first</option></select></div>
+                  <div class="field"><label>Uncertainty band</label><select id="rtDiffErr"><option value="sd" selected>± SD</option><option value="sem">± SEM</option></select></div>
+                </div>
+                <div class="toggles" style="margin-top:8px;"><label class="toggle-item"><input type="checkbox" id="rtDiffShowMeans" checked>Show A and B above the difference</label></div>
+                <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%;" onclick="runDifferenceSpectrum()">➖ Compute difference</button>
+              </div>
+            </div>
+          </div>
+
           <div id="spectraPanel" style="display:none;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--hint);padding:12px 16px 6px;">⑤ Per-File: Label · Color · Group</div>
             <div id="spectrumControls"></div>
@@ -739,6 +860,23 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">The reference spectra are spontaneous (non-SERS) Raman spectra of pure compounds, digitised from published figures. SERS spectra, mixtures and different excitation wavelengths change relative band intensities, so treat matches as hypotheses and confirm against a measured standard.</div>
             <div class="peak-dl-group">
               <button class="btn btn-outline btn-sm" onclick="downloadIdentifyCSV()">↓ Results with citations (.csv)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="peak-table-wrap" id="rtSection" style="display:none">
+          <div class="collapsible-header open" onclick="toggleSection(this)">
+            <h3 style="margin:0">🔬 <span id="rtTitle">Analysis</span></h3>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="collapsible-body" style="max-height:none; margin-top:12px;">
+            <div id="rtBody"></div>
+            <div id="rtPlot" style="margin-top:12px;background:white;border:1px solid var(--border);border-radius:var(--radius);"></div>
+            <div id="rtPlot2" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:var(--radius);"></div>
+            <div class="peak-dl-group">
+              <button class="btn btn-outline btn-sm" onclick="downloadRamanToolCSV()">↓ Results .csv</button>
+              <button class="btn btn-outline btn-sm" onclick="downloadRamanToolPlot('rtPlot')">↓ Plot .png</button>
+              <button class="btn btn-outline btn-sm" id="rtDlLoadings" style="display:none" onclick="downloadRamanToolPlot('rtPlot2')">↓ Loadings .png</button>
             </div>
           </div>
         </div>
@@ -826,6 +964,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Label</label><input type="text" id="xyName1" value="Dataset 1"/></div>
                 <div class="field"><label>Color</label><input type="color" id="xyColor1" value="#2563eb"/></div>
               </div>
+              <label class="toggle-item" style="font-size:12px;margin-top:6px;" title="Plot this dataset against a second Y axis on the right"><input type="checkbox" id="xyRight1">Right Y axis</label>
               <button class="btn btn-outline btn-sm" style="margin-top:8px" onclick="addXYDataset()">+ Add Dataset</button>
               <div id="extraXYDatasets"></div>
             </div>
@@ -1004,8 +1143,11 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>X Max</label><input type="number" id="xyXmax" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Min</label><input type="number" id="xyYmin" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Max</label><input type="number" id="xyYmax" placeholder="Auto" step="any" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field" style="grid-column:span 2"><label>Right Y label (2nd axis)</label><input type="text" id="xyY2label" value="" placeholder="e.g. Phase (deg)" title="Used when a dataset has 'Right Y axis' ticked"/></div>
+                <div class="field"><label>Right Y Min</label><input type="number" id="xyY2min" placeholder="Auto" step="any"/></div>
+                <div class="field"><label>Right Y Max</label><input type="number" id="xyY2max" placeholder="Auto" step="any"/></div>
               </div>
-              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Leave a limit blank to let it follow the data. Filling only one side keeps the other automatic.</div>
+              <div style="font-size:11px;color:var(--hint);margin-top:8px;line-height:1.5;">Leave a limit blank to let it follow the data. Filling only one side keeps the other automatic. Tick <b>Right Y axis</b> on a dataset to plot it against a second axis on the right.</div>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
@@ -1304,7 +1446,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Parabola half-width (X)</label><input type="number" id="xyDipHalfWidth" step="any" min="0" placeholder="Auto (window/10)" title="Points within ± this distance of the lowest point are used for the parabola."/></div>
                 <div class="field"><label>Concentration unit</label><input type="text" id="xyDipUnit" placeholder="e.g. µg/mL, nM"/></div>
                 <div class="field"><label>Plot</label>
-                  <select id="xyDipY" onchange="renderResonancePlot()"><option value="shift" selected>Shift from reference (Δ)</option><option value="position">Absolute position</option></select>
+                  <select id="xyDipY" onchange="renderResonancePlot()"><option value="shift" selected>Shift from reference (Δ)</option><option value="position">Absolute position</option><option value="fwhm">FWHM (width)</option><option value="q">Q factor (position / FWHM)</option><option value="depth">Depth</option></select>
                 </div>
                 <div class="field"><label>Reference (blank)</label><select id="xyDipRef" onchange="renderResonancePlot()"></select></div>
                 <div class="field"><label>Error bars</label>
@@ -1359,7 +1501,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
             <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Untick a row to leave it out; edit any concentration. The plot and fit update immediately.</div>
             <div style="overflow-x:auto">
             <table class="peak-table">
-              <thead><tr><th>Use</th><th>Group</th><th>Concentration</th><th>n</th><th>Mean position</th><th>SD</th><th>SEM</th><th>Replicates</th></tr></thead>
+              <thead><tr><th>Use</th><th>Group</th><th>Concentration</th><th>n</th><th>Mean position</th><th>SD</th><th>SEM</th><th>FWHM</th><th>Q</th><th>Depth</th><th>Replicates</th></tr></thead>
               <tbody id="xyDipTableBody"></tbody>
             </table>
             </div>
@@ -1405,32 +1547,36 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610211942"></script>
-<script src="js/core/state.js?v=202610211942"></script>
-<script src="js/core/utils.js?v=202610211942"></script>
-<script src="js/core/advancedLayout.js?v=202610211942"></script>
-<script src="js/ui/annotations.js?v=202610211942"></script>
-<script src="js/io/parser.js?v=202610211942"></script>
-<script src="js/io/fileLoader.js?v=202610211942"></script>
-<script src="js/io/exporter.js?v=202610211942"></script>
+</div><script src="js/config.js?v=202610212010"></script>
+<script src="js/core/state.js?v=202610212010"></script>
+<script src="js/core/utils.js?v=202610212010"></script>
+<script src="js/core/advancedLayout.js?v=202610212010"></script>
+<script src="js/ui/annotations.js?v=202610212010"></script>
+<script src="js/io/parser.js?v=202610212010"></script>
+<script src="js/io/fileLoader.js?v=202610212010"></script>
+<script src="js/io/exporter.js?v=202610212010"></script>
 
-<script src="js/processing/despike.js?v=202610211942"></script>
-<script src="js/processing/baseline.js?v=202610211942"></script>
-<script src="js/processing/smoothing.js?v=202610211942"></script>
-<script src="js/plotting/averaging.js?v=202610211942"></script>
-<script src="js/plotting/plotting.js?v=202610211942"></script>
-<script src="js/plotting/xyPlot.js?v=202610211942"></script>
-<script src="js/plotting/comparison.js?v=202610211942"></script>
-<script src="js/analysis/peaks.js?v=202610211942"></script>
-<script src="js/analysis/fitting.js?v=202610211942"></script>
-<script src="js/analysis/resonance.js?v=202610211942"></script>
-<script src="js/analysis/identify.js?v=202610211942"></script>
-<script src="js/ui/sidebar.js?v=202610211942"></script>
-<script src="js/ui/layout.js?v=202610211942"></script>
-<script src="js/ui/theme.js?v=202610211942"></script>
-<script src="js/ui/workspaceExtras.js?v=202610211942"></script>
-<script src="js/ui/session.js?v=202610211942"></script>
-<script src="js/app.js?v=202610211942"></script>
+<script src="js/processing/despike.js?v=202610212010"></script>
+<script src="js/processing/baseline.js?v=202610212010"></script>
+<script src="js/processing/spectralExtras.js?v=202610212010"></script>
+<script src="js/processing/smoothing.js?v=202610212010"></script>
+<script src="js/plotting/averaging.js?v=202610212010"></script>
+<script src="js/plotting/plotting.js?v=202610212010"></script>
+<script src="js/plotting/xyPlot.js?v=202610212010"></script>
+<script src="js/plotting/comparison.js?v=202610212010"></script>
+<script src="js/analysis/peaks.js?v=202610212010"></script>
+<script src="js/analysis/fitting.js?v=202610212010"></script>
+<script src="js/analysis/resonance.js?v=202610212010"></script>
+<script src="js/analysis/stats.js?v=202610212010"></script>
+<script src="js/analysis/ramanTools.js?v=202610212010"></script>
+<script src="js/analysis/identify.js?v=202610212010"></script>
+<script src="js/ui/sidebar.js?v=202610212010"></script>
+<script src="js/ui/layout.js?v=202610212010"></script>
+<script src="js/ui/theme.js?v=202610212010"></script>
+<script src="js/ui/workspaceExtras.js?v=202610212010"></script>
+<script src="js/ui/project.js?v=202610212010"></script>
+<script src="js/ui/session.js?v=202610212010"></script>
+<script src="js/app.js?v=202610212010"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
