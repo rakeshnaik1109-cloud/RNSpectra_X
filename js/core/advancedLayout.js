@@ -271,11 +271,15 @@ function resolveFont(prefix, boldCheckboxId) {
   const key = $val(fid(prefix, 'FontFamily'), 'auto');
   const bold = $chk(boldCheckboxId, false);
   const base = (!key || key === 'auto') ? 'Georgia, serif' : (FONT_FAMILIES[key] || 'Georgia, serif');
-  // Plotly's font objects (tickfont, legend.font) have no weight property, so bold is
-  // simulated with a heavier face — this used to only kick in for "Auto", silently
-  // ignoring the Bold checkbox whenever a specific family was chosen. Now it always applies.
-  return bold ? ('Arial Black, ' + base) : base;
+  // Returns the chosen family only. Bold is applied separately with Plotly's
+  // font.weight (available since Plotly 2.33), so a bold Times tick label is
+  // Times Bold — not a swap to a different typeface such as Arial Black.
+  void bold;
+  return base;
 }
+
+// "bold" / "normal" for a Bold tick-box, for Plotly font.weight
+function fontWeight(boldCheckboxId) { return $chk(boldCheckboxId, false) ? "bold" : "normal"; }
 
 /* True bold via Plotly's rich-text tag support (works regardless of font family) —
    used for Title/Axis Labels, which are single strings we fully control. Left alone

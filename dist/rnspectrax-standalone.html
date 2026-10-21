@@ -2816,11 +2816,15 @@ function resolveFont(prefix, boldCheckboxId) {
   const key = $val(fid(prefix, 'FontFamily'), 'auto');
   const bold = $chk(boldCheckboxId, false);
   const base = (!key || key === 'auto') ? 'Georgia, serif' : (FONT_FAMILIES[key] || 'Georgia, serif');
-  // Plotly's font objects (tickfont, legend.font) have no weight property, so bold is
-  // simulated with a heavier face — this used to only kick in for "Auto", silently
-  // ignoring the Bold checkbox whenever a specific family was chosen. Now it always applies.
-  return bold ? ('Arial Black, ' + base) : base;
+  // Returns the chosen family only. Bold is applied separately with Plotly's
+  // font.weight (available since Plotly 2.33), so a bold Times tick label is
+  // Times Bold — not a swap to a different typeface such as Arial Black.
+  void bold;
+  return base;
 }
+
+// "bold" / "normal" for a Bold tick-box, for Plotly font.weight
+function fontWeight(boldCheckboxId) { return $chk(boldCheckboxId, false) ? "bold" : "normal"; }
 
 /* True bold via Plotly's rich-text tag support (works regardless of font family) —
    used for Title/Axis Labels, which are single strings we fully control. Left alone
@@ -4774,7 +4778,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
         annotations.push({
             x: pk.x, y: pk.y, text: String(Math.round(pk.x)),
             showarrow: true, arrowhead: 0, arrowsize: 1, arrowwidth: 1, arrowcolor: "#555",
-            ax: 0, ay: -25, font: { family: font, size: 10, color: "#111" }
+            ax: 0, ay: -25, font: { family: font, size: 10, color: "#111", weight: fontWeight(isOcean ? "boldTick" : "xyBoldTick") }
         });
     });
   }
@@ -4793,6 +4797,8 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   const boldAxisOn = $chk(fid(prefix, 'BoldAxisLabel'), false);
   const tickFont = resolveFont(prefix, fid(prefix, 'BoldTick'));
   const legendFont = resolveFont(prefix, fid(prefix, 'BoldLegend'));
+  const tickWeight = fontWeight(fid(prefix, 'BoldTick'));
+  const legendWeight = fontWeight(fid(prefix, 'BoldLegend'));
 
   const titleText = boldWrapText(document.getElementById(isOcean ? "title" : "xyTitle").value, boldTitleOn);
   const xLabelText = boldWrapText(document.getElementById(isOcean ? "xlabel" : "xyXlabel").value || "", boldAxisOn);
@@ -4811,14 +4817,14 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
     plot_bgcolor: "white", paper_bgcolor: "white", margin: { l: 70, r: 30, t: 60, b: 70 },
     xaxis: Object.assign({
       title: { text: xLabelText, font: { size: parseInt(document.getElementById(isOcean ? "labelSize" : "xyLabelSize").value), family: familyOnly } },
-      tickfont: { size: parseInt(document.getElementById(isOcean ? "tickSize" : "xyTickSize").value), family: tickFont },
+      tickfont: { size: parseInt(document.getElementById(isOcean ? "tickSize" : "xyTickSize").value), family: tickFont, weight: tickWeight },
       range: isOcean ? [parseFloat(document.getElementById("xmin").value), parseFloat(document.getElementById("xmax").value)] : undefined
     }, xExtra),
     yaxis: Object.assign({
       title: { text: yLabelText, font: { size: parseInt(document.getElementById(isOcean ? "labelSize" : "xyLabelSize").value), family: familyOnly } },
-      tickfont: { size: parseInt(document.getElementById(isOcean ? "tickSize" : "xyTickSize").value), family: tickFont }
+      tickfont: { size: parseInt(document.getElementById(isOcean ? "tickSize" : "xyTickSize").value), family: tickFont, weight: tickWeight }
     }, yExtra),
-    legend: Object.assign({ x: legX, y: legY, xanchor: legX > 0.8 ? "right" : "left", yanchor: "top", font: { size: parseInt(document.getElementById(isOcean ? "legendSize" : "xyLegendSize").value), family: legendFont } }, legendCfg)
+    legend: Object.assign({ x: legX, y: legY, xanchor: legX > 0.8 ? "right" : "left", yanchor: "top", font: { size: parseInt(document.getElementById(isOcean ? "legendSize" : "xyLegendSize").value), family: legendFont, weight: legendWeight } }, legendCfg)
   };
 
   // Plotly expects axis label standoff nested under axis.title, not top-level
