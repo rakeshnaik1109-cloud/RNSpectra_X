@@ -30,7 +30,12 @@ order: despiking → baseline → smoothing → normalisation.
   sharp bands are left alone. Start with a threshold of 6.
 * **Baseline Correction:** *Linear* (two anchor points), *Polynomial*
   (iterative ModPoly, which runs underneath the bands instead of through them),
-  *Rubber Band* (lower convex hull, no parameters), or *Rolling Ball*. Turn on
+  *Rubber Band* (lower convex hull, no parameters), *Rolling Ball*, or
+  *Asymmetric Least Squares (ALS)*. For ALS, **λ** (entered as log₁₀ λ, start
+  at 5) sets how stiff the baseline is (raise it if the baseline climbs into
+  broad bands) and **p** (start at 0.01) how tightly it hugs the bottom of the
+  spectrum. ALS copes well with the curved fluorescence background of
+  biological samples. Turn on
   "Show Baseline Overlay" to check the estimated baseline against the raw data.
 * **Smoothing:** *Moving Average*, *Savitzky–Golay* (recommended: keeps band
   positions and heights), *Gaussian* (set σ in points) or *Median*. Keep the
@@ -160,6 +165,10 @@ grouping** panel appears.
   the field blank for automatic spacing (every point up to 60 points,
   otherwise about 40 bars), or enter N for a bar every N points. Individual
   datasets with an error column use the same spacing.
+
+**Scale normalized Y to** (under Normalization) multiplies the normalised
+curves: enter 100 to put *Max* or *Min–Max* on a 0–100 scale (%), or keep 1
+for 0–1. It has no effect when Normalization is *None*.
 
 Smoothing and normalisation are applied to every column before averaging. If
 the columns of a group do not share the same X values, they are interpolated

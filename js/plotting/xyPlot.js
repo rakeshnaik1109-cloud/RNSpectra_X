@@ -82,8 +82,17 @@ function errorBarStride(n) {
 // The XY processing pipeline for each dataset (smoothing, then normalisation),
 // shared by the plot and the resonance analysis so both see the same data.
 function processXYDatasets(raw) {
+  return raw.map(ds => ({ ...ds, y: xyNormalize(xySmooth(ds.y), ds.x) }));
+}
+
+// Normalisation chosen in the XY panel, then the optional "Scale to" factor
+// (100 puts Max / Min-Max on a 0–100 scale).
+function xyNormalize(y, x) {
   const normSel = document.getElementById("xyNorm").value;
-  return raw.map(ds => ({ ...ds, y: normalizeData(xySmooth(ds.y), normSel, ds.x) }));
+  if (normSel === "none") return y;
+  const k = parseFloat(document.getElementById("xyNormScale")?.value);
+  const out = normalizeData(y, normSel, x);
+  return Number.isFinite(k) && k !== 1 && k !== 0 ? out.map(v => v * k) : out;
 }
 
 function plotXY() {
@@ -114,7 +123,7 @@ function plotXY() {
   // averaged from the processed columns (the same order as Raman mode).
   const processed = processXYDatasets(raw);
   // the same pipeline without smoothing, for the optional "original" overlay
-  const unsmoothed = showOriginal ? raw.map(ds => ({ ...ds, y: normalizeData([...ds.y], normSel, ds.x) })) : null;
+  const unsmoothed = showOriginal ? raw.map(ds => ({ ...ds, y: xyNormalize([...ds.y], ds.x) })) : null;
   const tab = document.querySelector('.xy-tab.active')?.id;
   const groupMode = tab === 'tabFile' && document.getElementById("xyGroupMode")?.value === 'groups';
   const errKind = document.getElementById("xyGroupErr")?.value || 'sd';

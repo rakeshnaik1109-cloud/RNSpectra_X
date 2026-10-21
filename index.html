@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610211929" rel="stylesheet"/>
-<link href="css/layout.css?v=202610211929" rel="stylesheet"/>
+<link href="css/style.css?v=202610211942" rel="stylesheet"/>
+<link href="css/layout.css?v=202610211942" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -219,8 +219,11 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                     <option value="poly">Polynomial (iterative ModPoly)</option>
                     <option value="rubberband">Rubber Band</option>
                     <option value="rolling_ball">Rolling Ball</option>
+                    <option value="als">Asymmetric Least Squares (ALS)</option>
                   </select>
                 </div>
+                <div class="field" id="blAlsLamWrap" style="display:none"><label>Smoothness λ (log₁₀)</label><input type="number" id="blAlsLam" value="5" min="1" max="10" step="0.5" title="log10 of λ. Larger = stiffer, smoother baseline (typical 4–7)"/></div>
+                <div class="field" id="blAlsPWrap" style="display:none"><label>Asymmetry p</label><input type="number" id="blAlsP" value="0.01" min="0.0001" max="0.5" step="0.001" title="Weight given to points above the baseline (typical 0.001–0.05). Smaller = baseline hugs the bottom of the spectrum"/></div>
                 <div class="field" id="blParam1Wrap" style="display:none"><label id="blParam1Label">Poly Order</label><input type="number" id="blParam1" value="3" min="1" max="10"/></div>
                 <div class="field" id="blParam2Wrap" style="display:none"><label id="blParam2Label">Ball Radius (pts)</label><input type="number" id="blParam2" value="50" min="5" max="500"/></div>
                 <div class="field" id="blLinX1Wrap"  style="display:none"><label>Start X (cm⁻¹)</label><input type="number" id="blLinX1" value="400"/></div>
@@ -943,6 +946,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   <option value="vector">Vector</option>
                 </select>
               </div>
+              <div class="field" style="margin-top:8px;"><label>Scale normalized Y to</label><input type="number" id="xyNormScale" value="1" step="any" title="Multiplies the normalized curve: 100 gives Max / Min-Max on a 0–100 scale (%), 1 keeps 0–1"/></div>
             </div>
           </div>
 
@@ -1401,32 +1405,32 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610211929"></script>
-<script src="js/core/state.js?v=202610211929"></script>
-<script src="js/core/utils.js?v=202610211929"></script>
-<script src="js/core/advancedLayout.js?v=202610211929"></script>
-<script src="js/ui/annotations.js?v=202610211929"></script>
-<script src="js/io/parser.js?v=202610211929"></script>
-<script src="js/io/fileLoader.js?v=202610211929"></script>
-<script src="js/io/exporter.js?v=202610211929"></script>
+</div><script src="js/config.js?v=202610211942"></script>
+<script src="js/core/state.js?v=202610211942"></script>
+<script src="js/core/utils.js?v=202610211942"></script>
+<script src="js/core/advancedLayout.js?v=202610211942"></script>
+<script src="js/ui/annotations.js?v=202610211942"></script>
+<script src="js/io/parser.js?v=202610211942"></script>
+<script src="js/io/fileLoader.js?v=202610211942"></script>
+<script src="js/io/exporter.js?v=202610211942"></script>
 
-<script src="js/processing/despike.js?v=202610211929"></script>
-<script src="js/processing/baseline.js?v=202610211929"></script>
-<script src="js/processing/smoothing.js?v=202610211929"></script>
-<script src="js/plotting/averaging.js?v=202610211929"></script>
-<script src="js/plotting/plotting.js?v=202610211929"></script>
-<script src="js/plotting/xyPlot.js?v=202610211929"></script>
-<script src="js/plotting/comparison.js?v=202610211929"></script>
-<script src="js/analysis/peaks.js?v=202610211929"></script>
-<script src="js/analysis/fitting.js?v=202610211929"></script>
-<script src="js/analysis/resonance.js?v=202610211929"></script>
-<script src="js/analysis/identify.js?v=202610211929"></script>
-<script src="js/ui/sidebar.js?v=202610211929"></script>
-<script src="js/ui/layout.js?v=202610211929"></script>
-<script src="js/ui/theme.js?v=202610211929"></script>
-<script src="js/ui/workspaceExtras.js?v=202610211929"></script>
-<script src="js/ui/session.js?v=202610211929"></script>
-<script src="js/app.js?v=202610211929"></script>
+<script src="js/processing/despike.js?v=202610211942"></script>
+<script src="js/processing/baseline.js?v=202610211942"></script>
+<script src="js/processing/smoothing.js?v=202610211942"></script>
+<script src="js/plotting/averaging.js?v=202610211942"></script>
+<script src="js/plotting/plotting.js?v=202610211942"></script>
+<script src="js/plotting/xyPlot.js?v=202610211942"></script>
+<script src="js/plotting/comparison.js?v=202610211942"></script>
+<script src="js/analysis/peaks.js?v=202610211942"></script>
+<script src="js/analysis/fitting.js?v=202610211942"></script>
+<script src="js/analysis/resonance.js?v=202610211942"></script>
+<script src="js/analysis/identify.js?v=202610211942"></script>
+<script src="js/ui/sidebar.js?v=202610211942"></script>
+<script src="js/ui/layout.js?v=202610211942"></script>
+<script src="js/ui/theme.js?v=202610211942"></script>
+<script src="js/ui/workspaceExtras.js?v=202610211942"></script>
+<script src="js/ui/session.js?v=202610211942"></script>
+<script src="js/app.js?v=202610211942"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

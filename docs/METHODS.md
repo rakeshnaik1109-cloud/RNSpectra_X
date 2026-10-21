@@ -109,6 +109,21 @@ a running minimum over $\pm r$ points (erosion) followed by a running maximum
 over $\pm r$ points (dilation), with a flat element. Set $r$ larger than the
 widest genuine band and smaller than the scale of the background curvature.
 
+### Asymmetric least squares (ALS)
+
+Following Eilers & Boelens (2005), the baseline $z$ minimises
+
+$$\sum_i w_i (y_i - z_i)^2 + \lambda \sum_i (\Delta^2 z_i)^2,$$
+
+where $\Delta^2$ is the second difference. Points above the current baseline
+get weight $p$ and points below it $1-p$; with $p \ll 1$ the baseline is pushed
+under the bands. The weights are updated and the system re-solved until they
+stop changing (at most 15 passes). $W + \lambda D^\top D$ is pentadiagonal, so
+each pass is an $O(n)$ banded Cholesky solve. λ is entered as $\log_{10}\lambda$
+(typically 4–7, default 5); $p$ is typically 0.001–0.05 (default 0.01). λ is
+per sample point, so a spectrum with a finer point spacing needs a larger λ
+for the same stiffness.
+
 ---
 
 ## 3. Smoothing
@@ -144,6 +159,9 @@ time).
 | Area | $\int \lvert y \rvert\,dx$, by the trapezoidal rule over its own $x$ values |
 | Vector | its Euclidean norm $\sqrt{\sum y_i^2}$ |
 | Reference band | its maximum within $\pm\Delta$ of a chosen band position, e.g. 1003 cm⁻¹ (phenylalanine), 1450 cm⁻¹ (CH₂) or 520.7 cm⁻¹ (silicon). Spectra with no positive signal there are left unscaled |
+
+In XY mode the normalised curve can then be multiplied by a constant
+(**Scale normalized Y to**), e.g. 100 to report Max or Min–Max as a percentage.
 
 ---
 
@@ -385,7 +403,7 @@ The LOD needs at least two blank replicates; more are better.
 For reproducibility, a methods section should state:
 
 1. Despiking method, threshold, and repair window.
-2. Baseline method, and its order (ModPoly) or radius.
+2. Baseline method, and its order (ModPoly), radius (rolling ball) or λ and p (ALS).
 3. Smoothing filter, window length, and polynomial order.
 4. Normalisation basis (and the reference band, if used).
 5. Number of replicates per group, and whether bands are SD or SEM.
@@ -398,6 +416,7 @@ For reproducibility, a methods section should state:
 
 - Whitaker, D. A. & Hayes, K. (2018). A simple algorithm for despiking Raman spectra. *Chemometrics and Intelligent Laboratory Systems*, 179, 82–84.
 - Savitzky, A. & Golay, M. J. E. (1964). Smoothing and differentiation of data by simplified least squares procedures. *Analytical Chemistry*, 36(8), 1627–1639.
+- Eilers, P. H. C. & Boelens, H. F. M. (2005). *Baseline correction with asymmetric least squares smoothing*. Leiden University Medical Centre report.
 - Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. *Applied Spectroscopy*, 57(11), 1363–1367.
 - Movasaghi, Z., Rehman, S. & Rehman, I. U. (2007). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 42(5), 493–541.
 - Talari, A. C. S., Movasaghi, Z., Rehman, S. & Rehman, I. U. (2015). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 50(1), 46–111.

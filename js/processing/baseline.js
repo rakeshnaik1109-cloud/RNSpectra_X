@@ -3,6 +3,8 @@ function updateBaselineParams() {
   const p1 = document.getElementById('blParam1Wrap'), p2 = document.getElementById('blParam2Wrap');
   const lx1 = document.getElementById('blLinX1Wrap'), lx2 = document.getElementById('blLinX2Wrap');
   p1.style.display = 'none'; p2.style.display = 'none'; lx1.style.display = 'none'; lx2.style.display = 'none';
+  const showAls = type === 'als' ? 'flex' : 'none';
+  ['blAlsLamWrap', 'blAlsPWrap'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = showAls; });
   if (type === 'poly') p1.style.display = 'flex';
   else if (type === 'rolling_ball') p2.style.display = 'flex';
   else if (type === 'linear') { lx1.style.display = 'flex'; lx2.style.display = 'flex'; }
@@ -18,7 +20,51 @@ function applyBaseline(x, y) {
   if (type === 'poly') { const baseline = modPolyBaseline(x, y, parseInt(document.getElementById('blParam1').value) || 3); return { corrected: y.map((yi, i) => yi - baseline[i]), baseline }; }
   if (type === 'rubberband') { const baseline = rubberbandBaseline(x, y); return { corrected: y.map((yi, i) => Math.max(0, yi - baseline[i])), baseline }; }
   if (type === 'rolling_ball') { const baseline = rollingBallBaseline(y, parseInt(document.getElementById('blParam2').value) || 50); return { corrected: y.map((yi, i) => yi - baseline[i]), baseline }; }
+  if (type === 'als') {
+    const lam = Math.pow(10, parseFloat(document.getElementById('blAlsLam').value) || 5);
+    const p = Math.min(0.5, Math.max(1e-4, parseFloat(document.getElementById('blAlsP').value) || 0.01));
+    const baseline = alsBaseline(y, lam, p); return { corrected: y.map((yi, i) => yi - baseline[i]), baseline };
+  }
   return { corrected: y, baseline: null };
+}
+
+// Asymmetric least squares (Eilers & Boelens, 2005). Minimise
+//   Σ wᵢ (yᵢ − zᵢ)² + λ Σ (Δ²zᵢ)²
+// with wᵢ = p where the signal is above the baseline and 1 − p below it, and
+// re-weight until the weights settle. W + λD'D is pentadiagonal, so each pass
+// is an O(n) banded Cholesky solve.
+function alsBaseline(y, lam, p, maxIter = 15) {
+  const n = y.length; if (n < 5) return y.slice();
+  // D'D for the second-difference operator: bands 0, 1 and 2
+  const d0 = new Float64Array(n), d1 = new Float64Array(n - 1), d2 = new Float64Array(n - 2);
+  for (let i = 0; i < n - 2; i++) {
+    d0[i] += 1; d0[i + 1] += 4; d0[i + 2] += 1;
+    d1[i] -= 2; d1[i + 1] -= 2; d2[i] += 1;
+  }
+  let w = new Float64Array(n).fill(1), z = new Float64Array(n);
+  for (let it = 0; it < maxIter; it++) {
+    z = solvePentaSPD(Array.from(d0, (v, i) => w[i] + lam * v), Array.from(d1, v => lam * v), Array.from(d2, v => lam * v), y.map((v, i) => w[i] * v));
+    let changed = 0;
+    for (let i = 0; i < n; i++) { const nw = y[i] > z[i] ? p : 1 - p; if (nw !== w[i]) { changed++; w[i] = nw; } }
+    if (!changed) break;
+  }
+  return Array.from(z);
+}
+
+// Solve A z = b for a symmetric positive-definite pentadiagonal A given by its
+// main (a0), first (a1) and second (a2) diagonals, via banded Cholesky A = LLᵀ.
+function solvePentaSPD(a0, a1, a2, b) {
+  const n = a0.length, l0 = new Float64Array(n), l1 = new Float64Array(n), l2 = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    if (i >= 2) l2[i] = a2[i - 2] / l0[i - 2];
+    if (i >= 1) l1[i] = (a1[i - 1] - (i >= 2 ? l2[i] * l1[i - 1] : 0)) / l0[i - 1];
+    l0[i] = Math.sqrt(Math.max(1e-300, a0[i] - l1[i] * l1[i] - l2[i] * l2[i]));
+  }
+  const t = new Float64Array(n);
+  for (let i = 0; i < n; i++) t[i] = (b[i] - (i >= 1 ? l1[i] * t[i - 1] : 0) - (i >= 2 ? l2[i] * t[i - 2] : 0)) / l0[i];
+  const z = new Float64Array(n);
+  for (let i = n - 1; i >= 0; i--) z[i] = (t[i] - (i + 1 < n ? l1[i + 1] * z[i + 1] : 0) - (i + 2 < n ? l2[i + 2] * z[i + 2] : 0)) / l0[i];
+  return z;
 }
 
 
