@@ -69,6 +69,7 @@ function renderComparisonTableUI(mode) {
   
   tbody.innerHTML = ""; 
   section.style.display = "block";
+  if (window.rxShowResult) rxShowResult(section.id);
   
   let targetData = (activeComparisonSubTab === 'common') ? analyzedCommonPeaks : analyzedDistinctPeaks;
   

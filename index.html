@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610212010" rel="stylesheet"/>
-<link href="css/layout.css?v=202610212010" rel="stylesheet"/>
+<link href="css/style.css?v=202610212024" rel="stylesheet"/>
+<link href="css/layout.css?v=202610212024" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -100,19 +100,18 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 7l6-5 6 5v6.5a1 1 0 0 1-1 1H9.5V10h-3v4.5H3a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Homepage</span>
       </a>--->
-      <button class="chrome-link" onclick="saveProject()" title="Save everything — spectra, settings, groups, annotations — as one .rnsx project file">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h8l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 2v4h5V2M5 14V9h6v5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-        <span class="chrome-link-text">Save</span>
-      </button>
-      <button class="chrome-link" onclick="openProjectDialog()" title="Open a .rnsx project file">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 4.5V12a1 1 0 0 0 1 1h10l1.5-6H5L3.5 12" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H12a1 1 0 0 1 1 1V7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
-        <span class="chrome-link-text">Open</span>
-      </button>
+      <details class="rx-menu rx-file-menu">
+        <summary class="chrome-link" title="Save or open a project, or write the Methods text">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h8l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 2v4h5V2M5 14V9h6v5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          <span class="chrome-link-text">File ▾</span>
+        </summary>
+        <div class="rx-menu-pop">
+          <button type="button" class="rx-menu-item" onclick="saveProject()" title="Save everything — spectra, settings, groups, annotations — as one .rnsx project file">💾 Save project (.rnsx)</button>
+          <button type="button" class="rx-menu-item" onclick="openProjectDialog()" title="Open a .rnsx project file">📂 Open project…</button>
+          <button type="button" class="rx-menu-item" onclick="showMethodsText()" title="Write a Methods paragraph from the current settings">📝 Methods text</button>
+        </div>
+      </details>
       <input type="file" id="projectFileInput" accept=".rnsx,.json" style="display:none" onchange="openProjectFile(event)"/>
-      <button class="chrome-link" onclick="showMethodsText()" title="Write a Methods paragraph from the current settings">
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 3h10M3 6.5h10M3 10h7M3 13.5h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span class="chrome-link-text">Methods</span>
-      </button>
       <a class="chrome-link" href="docs/USER_MANUAL.md" title="User manual">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h6l4 4v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Manual</span>
@@ -243,6 +242,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field" id="blLinX1Wrap"  style="display:none"><label>Start X (cm⁻¹)</label><input type="number" id="blLinX1" value="400"/></div>
                 <div class="field" id="blLinX2Wrap"  style="display:none"><label>End X (cm⁻¹)</label><input type="number" id="blLinX2" value="1800"/></div>
               </div>
+              <details class="adv-fold">
+                <summary>Baseline overlay style</summary>
               <div class="grid" style="margin-top:10px;">
                 <div class="field"><label>Overlay Color</label><input type="color" id="baselineColor" value="#ff3b30"/></div>
                 <div class="field"><label>Overlay Width</label><input type="number" id="baselineWidth" value="1.5" min="0.5" max="8" step="0.5"/></div>
@@ -256,6 +257,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
               </div>
+              </details>
             </div>
 
             <div style="height:12px;border-top:1px solid var(--border);margin-top:12px;"></div>
@@ -487,6 +489,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   <span id="legendY_val">0.98</span>
                 </div>
               </div>
+              <details class="adv-fold">
+                <summary>Legend box style</summary>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">▢ Legend Box Style</div>
               <div class="grid">
                 <div class="field"><label>Box Type</label>
@@ -508,6 +512,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Border Color</label><input type="color" id="legendBorderColor" value="#94a3b8" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Border Width</label><input type="number" id="legendBorderWidth" value="1" min="0" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
               </div>
+              </details>
               <div style="font-size:11px;color:var(--hint);margin-top:10px;line-height:1.5;">
                 ✎ Click directly on a legend entry's <b>text</b> (not its color swatch) to rename it in place, or drag the whole legend box to reposition it. Clicking the swatch/line still toggles that trace's visibility. The plot title and axis labels are click-to-edit too — click right on the text on the chart.
               </div>
@@ -546,10 +551,16 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
                 <div class="field"><label>Axis Line Width (px)</label><input type="number" id="axisLineWidth" value="2" min="0.5" max="8" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')" title="Thickness of the axis lines / frame (“bold axes”)"/></div>
+                <div class="field"><label>Y Min</label><input type="number" id="ymin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field"><label>Y Max</label><input type="number" id="ymax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="axisBoldTicks" data-mirror="boldTick" onchange="document.getElementById('boldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Bold tick numbers</label></div>
+              </div>
+              <details class="adv-fold">
+                <summary>Ticks, colours, label spacing &amp; notation</summary>
+                <div class="grid">
                 <div class="field"><label>Tick Width (px)</label><input type="number" id="tickWidth" value="1" min="0.5" max="6" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Tick Length (px)</label><input type="number" id="tickLen" value="5" min="0" max="20" step="1" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Axis Colour</label><input type="color" id="axisColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
-                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="axisBoldTicks" data-mirror="boldTick" onchange="document.getElementById('boldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Bold tick numbers</label></div>
                 <div class="field"><label>Grid Color</label><input type="color" id="gridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="yStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
@@ -572,9 +583,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
                 <div class="field"><label>Y Scale Divisor</label><input type="number" id="yDivisor" value="1" min="0.0001" step="any" onchange="if(document.getElementById('plot-wrapper').data) plotSpectrum();" title="e.g. 1000 to show 5000 as 5, with ×10³ auto-added to the Y label"/></div>
-                <div class="field"><label>Y Min</label><input type="number" id="ymin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
-                <div class="field"><label>Y Max</label><input type="number" id="ymax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
-              </div>
+                </div>
+              </details>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-top:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xGrid" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">X Grid Lines</label>
                 <label class="toggle-item"><input type="checkbox" id="yGrid" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Y Grid Lines</label>
@@ -802,12 +812,17 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 
         </div><div class="panel-actions">
           <button class="btn btn-primary" onclick="plotSpectrum()" style="flex:1">▶ Plot</button>
-          <div class="download-group">
-            <button class="btn btn-secondary" onclick="downloadPlot()">↓ Image</button>
-            <select id="downloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
-          </div>
-          <button class="btn btn-green btn-sm" onclick="downloadPlottedData()">↓ Plotted CSV</button>
-          <button class="btn btn-green btn-sm" onclick="downloadProcessingStages()" title="One CSV per file: Raw, Despiked, Baseline, Baseline-Corrected, Smoothed, Normalized">↓ Stage-by-Stage Data</button>
+          <details class="rx-menu">
+            <summary class="btn btn-secondary" title="Download the figure or its data">↓ Export ▾</summary>
+            <div class="rx-menu-pop">
+              <div class="download-group">
+                <button class="btn btn-secondary" onclick="downloadPlot()">↓ Image</button>
+                <select id="downloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
+              </div>
+              <button class="btn btn-green btn-sm" onclick="downloadPlottedData()">↓ Plotted CSV</button>
+              <button class="btn btn-green btn-sm" onclick="downloadProcessingStages()" title="One CSV per file: Raw, Despiked, Baseline, Baseline-Corrected, Smoothed, Normalized">↓ Stage-by-Stage Data</button>
+            </div>
+          </details>
         </div>
 
       </div><div class="plot-panel" id="oceanPlotPanel">
@@ -1263,6 +1278,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   <span id="xyLegendY_val">0.98</span>
                 </div>
               </div>
+              <details class="adv-fold">
+                <summary>Legend box style</summary>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">▢ Legend Box Style</div>
               <div class="grid">
                 <div class="field"><label>Box Type</label>
@@ -1284,6 +1301,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Border Color</label><input type="color" id="xyLegendBorderColor" value="#94a3b8" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Border Width</label><input type="number" id="xyLegendBorderWidth" value="1" min="0" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
               </div>
+              </details>
               <div style="font-size:11px;color:var(--hint);margin-top:10px;line-height:1.5;">
                 ✎ Click directly on a legend entry's <b>text</b> (not its color swatch) to rename it in place, or drag the whole legend box to reposition it. Clicking the swatch/line still toggles that trace's visibility. The plot title and axis labels are click-to-edit too — click right on the text on the chart.
               </div>
@@ -1322,10 +1340,14 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
                 <div class="field"><label>Axis Line Width (px)</label><input type="number" id="xyAxisLineWidth" value="2" min="0.5" max="8" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')" title="Thickness of the axis lines / frame (“bold axes”)"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="xyAxisBoldTicks" data-mirror="xyBoldTick" onchange="document.getElementById('xyBoldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Bold tick numbers</label></div>
+              </div>
+              <details class="adv-fold">
+                <summary>Ticks, colours, label spacing &amp; notation</summary>
+                <div class="grid">
                 <div class="field"><label>Tick Width (px)</label><input type="number" id="xyTickWidth" value="1" min="0.5" max="6" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Tick Length (px)</label><input type="number" id="xyTickLen" value="5" min="0" max="20" step="1" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Axis Colour</label><input type="color" id="xyAxisColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
-                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="xyAxisBoldTicks" data-mirror="xyBoldTick" onchange="document.getElementById('xyBoldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Bold tick numbers</label></div>
                 <div class="field"><label>Grid Color</label><input type="color" id="xyGridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xyXStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="xyYStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
@@ -1348,7 +1370,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
                 <div class="field"><label>Y Scale Divisor</label><input type="number" id="xyYDivisor" value="1" min="0.0001" step="any" onchange="if(document.getElementById('xy-plot-wrapper').data) plotXY();"/></div>
-              </div>
+                </div>
+              </details>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;margin-top:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xyXGrid" checked onchange="triggerInteractiveReplotStyleOnly('xy')">X Grid Lines</label>
                 <label class="toggle-item"><input type="checkbox" id="xyYGrid" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Y Grid Lines</label>
@@ -1472,12 +1495,17 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 
         </div><div class="panel-actions">
           <button class="btn btn-primary" onclick="plotXY()" style="flex:1">▶ Plot</button>
-          <div class="download-group">
-            <button class="btn btn-secondary" onclick="downloadXYPlot()">↓ Image</button>
-            <select id="xyDownloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
-          </div>
-          <button class="btn btn-green btn-sm" onclick="downloadXYData()">↓ CSV</button>
-          <button class="btn btn-green btn-sm" onclick="downloadFitParams()">↓ Fit</button>
+          <details class="rx-menu">
+            <summary class="btn btn-secondary" title="Download the figure, its data or the fit report">↓ Export ▾</summary>
+            <div class="rx-menu-pop">
+              <div class="download-group">
+                <button class="btn btn-secondary" onclick="downloadXYPlot()">↓ Image</button>
+                <select id="xyDownloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
+              </div>
+              <button class="btn btn-green btn-sm" onclick="downloadXYData()">↓ CSV</button>
+              <button class="btn btn-green btn-sm" onclick="downloadFitParams()">↓ Fit</button>
+            </div>
+          </details>
         </div>
 
       </div><div class="plot-panel" id="xyPlotPanel">
@@ -1547,36 +1575,37 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610212010"></script>
-<script src="js/core/state.js?v=202610212010"></script>
-<script src="js/core/utils.js?v=202610212010"></script>
-<script src="js/core/advancedLayout.js?v=202610212010"></script>
-<script src="js/ui/annotations.js?v=202610212010"></script>
-<script src="js/io/parser.js?v=202610212010"></script>
-<script src="js/io/fileLoader.js?v=202610212010"></script>
-<script src="js/io/exporter.js?v=202610212010"></script>
+</div><script src="js/config.js?v=202610212024"></script>
+<script src="js/core/state.js?v=202610212024"></script>
+<script src="js/core/utils.js?v=202610212024"></script>
+<script src="js/core/advancedLayout.js?v=202610212024"></script>
+<script src="js/ui/annotations.js?v=202610212024"></script>
+<script src="js/io/parser.js?v=202610212024"></script>
+<script src="js/io/fileLoader.js?v=202610212024"></script>
+<script src="js/io/exporter.js?v=202610212024"></script>
 
-<script src="js/processing/despike.js?v=202610212010"></script>
-<script src="js/processing/baseline.js?v=202610212010"></script>
-<script src="js/processing/spectralExtras.js?v=202610212010"></script>
-<script src="js/processing/smoothing.js?v=202610212010"></script>
-<script src="js/plotting/averaging.js?v=202610212010"></script>
-<script src="js/plotting/plotting.js?v=202610212010"></script>
-<script src="js/plotting/xyPlot.js?v=202610212010"></script>
-<script src="js/plotting/comparison.js?v=202610212010"></script>
-<script src="js/analysis/peaks.js?v=202610212010"></script>
-<script src="js/analysis/fitting.js?v=202610212010"></script>
-<script src="js/analysis/resonance.js?v=202610212010"></script>
-<script src="js/analysis/stats.js?v=202610212010"></script>
-<script src="js/analysis/ramanTools.js?v=202610212010"></script>
-<script src="js/analysis/identify.js?v=202610212010"></script>
-<script src="js/ui/sidebar.js?v=202610212010"></script>
-<script src="js/ui/layout.js?v=202610212010"></script>
-<script src="js/ui/theme.js?v=202610212010"></script>
-<script src="js/ui/workspaceExtras.js?v=202610212010"></script>
-<script src="js/ui/project.js?v=202610212010"></script>
-<script src="js/ui/session.js?v=202610212010"></script>
-<script src="js/app.js?v=202610212010"></script>
+<script src="js/processing/despike.js?v=202610212024"></script>
+<script src="js/processing/baseline.js?v=202610212024"></script>
+<script src="js/processing/spectralExtras.js?v=202610212024"></script>
+<script src="js/processing/smoothing.js?v=202610212024"></script>
+<script src="js/plotting/averaging.js?v=202610212024"></script>
+<script src="js/plotting/plotting.js?v=202610212024"></script>
+<script src="js/plotting/xyPlot.js?v=202610212024"></script>
+<script src="js/plotting/comparison.js?v=202610212024"></script>
+<script src="js/analysis/peaks.js?v=202610212024"></script>
+<script src="js/analysis/fitting.js?v=202610212024"></script>
+<script src="js/analysis/resonance.js?v=202610212024"></script>
+<script src="js/analysis/stats.js?v=202610212024"></script>
+<script src="js/analysis/ramanTools.js?v=202610212024"></script>
+<script src="js/analysis/identify.js?v=202610212024"></script>
+<script src="js/ui/sidebar.js?v=202610212024"></script>
+<script src="js/ui/layout.js?v=202610212024"></script>
+<script src="js/ui/theme.js?v=202610212024"></script>
+<script src="js/ui/workspaceExtras.js?v=202610212024"></script>
+<script src="js/ui/project.js?v=202610212024"></script>
+<script src="js/ui/resultTabs.js?v=202610212024"></script>
+<script src="js/ui/session.js?v=202610212024"></script>
+<script src="js/app.js?v=202610212024"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

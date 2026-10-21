@@ -85,6 +85,7 @@ function rtAxis(title, extra) {
 function rtShowSection(title) {
   const sec = document.getElementById("rtSection");
   sec.style.display = "block";
+  if (window.rxShowResult) rxShowResult("rtSection");
   document.getElementById("rtTitle").textContent = title;
   document.getElementById("rtPlot2").style.display = "none";
   document.getElementById("rtDlLoadings").style.display = "none";

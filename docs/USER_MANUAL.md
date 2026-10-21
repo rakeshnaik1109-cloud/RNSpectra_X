@@ -304,10 +304,10 @@ maxima that occur in every file and those unique to some files. The match window
 
 ## 4. Exporting Your Work
 
-RNSpectraX™ features sticky action buttons pinned to the bottom of the control panel for rapid extraction of processed data.
-* **▶ Plot:** Renders the canvas based on current parameters.
-* **↓ Image:** Downloads a high-resolution snapshot of the Plotly canvas in your chosen format (`.png`, `.jpg`, `.svg`).
-* **↓ CSV:** Downloads the *processed* array matrices (post-smoothing, post-baseline correction) for external use.
+The action bar of the control panel holds **▶ Plot** and an **↓ Export ▾** menu:
+* **↓ Image:** Downloads a high-resolution snapshot of the figure in the format chosen beside it (`.png`, `.jpg`, `.tiff`, `.svg`).
+* **↓ Plotted CSV** (Raman) / **↓ CSV** (XY): The *processed* data exactly as plotted.
+* **↓ Stage-by-Stage Data** (Raman): One CSV per file with every processing stage.
 * **↓ Fit (XY Mode):** Exports a `.txt` and a `.csv` report of every fitted parameter with its standard error and the goodness-of-fit statistics.
 * **↓ PDF (Peak Tables):** Each data table contains independent export buttons to generate cleanly formatted PDF matrices of your peak assignments and comparison data.
 
@@ -315,20 +315,31 @@ RNSpectraX™ features sticky action buttons pinned to the bottom of the control
 
 ## 5. Working faster
 
+### Finding your way around
+* **Results under the plot** (peak table, Identify, Analysis, Compare,
+  Resonance) are shown one at a time. When more than one exists, a row of tabs
+  appears above them; a newly produced result opens its own tab.
+* **Fine-tuning controls** that are rarely changed sit in folds marked ▸ inside
+  their section (e.g. *Baseline overlay style*, *Legend box style*, *Ticks,
+  colours, label spacing & notation*). Click the fold to open it; everything
+  works exactly as before.
+* **File ▾** in the header holds *Save project*, *Open project* and *Methods
+  text*.
+
 ### Drag and drop
 Drop spectrum files anywhere on the window. Whichever mode is active receives
 them, so switch to XY mode first if you are loading XY data.
 
 ### Project files (Save / Open)
-**Save** in the header downloads one `.rnsx` file holding every loaded spectrum
+**File ▾ → Save project** downloads one `.rnsx` file holding every loaded spectrum
 and XY dataset, the labels, colours and groups typed on the file cards, every
-setting, renamed legend entries and your annotations. **Open** loads it back
+setting, renamed legend entries and your annotations. **File ▾ → Open project** loads it back
 and redraws the figure exactly, on any computer, so a figure can be revised
 months later or sent to a co-author or supervisor. The file stays on your
 computer; nothing is uploaded.
 
 ### Methods text
-**Methods** in the header writes a paragraph for the Methods section of a paper
+**File ▾ → Methods text** writes a paragraph for the Methods section of a paper
 from the settings in use: number of spectra and groups, shift calibration,
 excluded regions, despiking, baseline, smoothing, normalisation and derivative
 with their parameters, the averaging, and the last analysis run (peak fit, band

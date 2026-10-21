@@ -155,6 +155,7 @@ function runResonanceAnalysis() {
   buildResonanceTable();
   renderResonancePlot();
   document.getElementById("xyDipSection").style.display = "block";
+  if (window.rxShowResult) rxShowResult("xyDipSection");
   if (failed) rxNotify(`${failed} dataset${failed === 1 ? "" : "s"} had fewer than 3 points inside the search window.`);
   else if (edge) rxNotify(`${edge} resonance${edge === 1 ? " lies" : "s lie"} at the edge of the search window — widen the window if the ${opts.type} is cut off.`);
 }

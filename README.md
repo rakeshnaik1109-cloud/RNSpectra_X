@@ -102,7 +102,7 @@ nothing about your files or spectra.
 - Processed data as CSV (exactly what was plotted), fit reports as `.txt` and
   `.csv`, and PDF / `.txt` peak and comparison tables.
 - Project files (`.rnsx`) that save and reopen everything — data, settings,
-  groups, annotations — and a **Methods** button that writes the Methods
+  groups, annotations — and a **Methods text** generator (File menu) that writes the Methods
   paragraph, with references, from the settings in use.
 
 The mathematics behind every processing and fitting step is written out in

@@ -178,6 +178,7 @@ function renderIdentifyResults(sel) {
   const esc = v => String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
   const methodName = { hqi: "Correlation HQI", deriv: "Derivative HQI", peaks: "Peak match" }[R.method];
   document.getElementById("idSection").style.display = "block";
+  if (window.rxShowResult) rxShowResult("idSection");
   document.getElementById("idSummary").innerHTML =
     `<b>${esc(R.query.label)}</b> compared over ${Math.round(R.lo)}–${Math.round(R.hi)} cm⁻¹ with ${refLibrary.entries.length} reference spectra` +
     (R.cls !== "all" ? ` (class: ${esc(R.cls)})` : "") + ` · score: ${methodName}`;

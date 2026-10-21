@@ -482,7 +482,7 @@ For reproducibility, a methods section should state:
 7. Fit model, whether it was weighted, the parameters with their standard errors, and R² (or reduced χ²).
 8. Any shift correction, excluded regions and derivative order/window.
 
-The **Methods** button writes most of this from the settings in use.
+**File ▾ → Methods text** writes most of this from the settings in use.
 
 ---
 

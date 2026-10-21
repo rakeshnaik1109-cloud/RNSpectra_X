@@ -602,3 +602,42 @@ h1.app-logo { font-size: 19px; line-height: 1; margin: 0; }
 
 /* header buttons that are <button> rather than <a> */
 button.chrome-link { cursor: pointer; font-family: inherit; }
+
+/* Advanced folds inside a settings section */
+details.adv-fold { margin-top: 10px; border: 1px dashed var(--border); border-radius: 8px; padding: 0 10px; }
+details.adv-fold > summary { cursor: pointer; list-style: none; padding: 7px 0; font-size: 11.5px; font-weight: 700; color: var(--muted); user-select: none; }
+details.adv-fold > summary::-webkit-details-marker { display: none; }
+details.adv-fold > summary::before { content: "▸"; display: inline-block; width: 14px; transition: transform .15s; }
+details.adv-fold[open] > summary::before { transform: rotate(90deg); }
+details.adv-fold[open] { padding-bottom: 10px; }
+details.adv-fold > summary:hover { color: var(--accent); }
+
+/* Drop-down menus (Export, File) */
+details.rx-menu { position: relative; }
+details.rx-menu > summary { list-style: none; cursor: pointer; user-select: none; }
+details.rx-menu > summary::-webkit-details-marker { display: none; }
+.rx-menu-pop {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 900; min-width: 220px;
+  display: flex; flex-direction: column; gap: 6px; padding: 8px;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: 0 12px 30px rgba(0,0,0,.18);
+}
+.rx-menu-pop .btn, .rx-menu-pop .download-group { width: 100%; }
+.rx-menu-pop .download-group .btn { flex: 1; }
+.rx-menu-item {
+  text-align: left; background: none; border: none; border-radius: 7px; padding: 8px 10px;
+  font: inherit; font-size: 13px; color: var(--text); cursor: pointer; white-space: nowrap;
+}
+.rx-menu-item:hover, .rx-menu-item:focus-visible { background: var(--accent-soft); color: var(--accent); }
+
+/* Result tabs under the plot */
+.rx-result-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: -6px; }
+.rx-tab {
+  border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+  border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.rx-tab:hover { color: var(--accent); border-color: var(--accent-soft-border); }
+.rx-tab.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.rx-tab-hidden { display: none !important; }
+/* when the action bar sits at the bottom of the panel, menus open upwards */
+.layout-top .panel-actions .rx-menu-pop, .layout-bottom .panel-actions .rx-menu-pop { top: auto; bottom: calc(100% + 6px); }
