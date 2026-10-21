@@ -304,34 +304,54 @@ function buildAnnotToolbar(mode) {
   const id = n => annotFieldId(mode, n), m = `'${mode}'`;
   const sel = 'font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);';
   const SYMBOLS = ['cm⁻¹', '⁻¹', '²', '³', '°', '±', '×', '·', 'µ', 'λ', 'Δ', 'σ', 'θ', 'α', 'β', 'γ', 'ν', 'π', 'Ω', 'Å', '→', '←', '↑', '↓', '≈', '≤', '≥', '∞', '<sub>…</sub>', '<sup>…</sup>'];
+  // one row of everyday actions; symbols, marker lines, regions, styling and
+  // Clear all sit in the "More" row, opened with ⋯ More (remembered per browser)
+  let moreOpen = false; try { moreOpen = localStorage.getItem('rnspx_annot_more') === '1'; } catch (e) {}
   bar.innerHTML = `
     <div class="annot-row">
-      <input type="text" id="${id('Text')}" placeholder="Text for new labels (optional)" title="Text used by 🅣 Text and ↗ Arrow. Supports <b>bold</b>, <i>italic</i>, H<sub>2</sub>O, cm<sup>-1</sup>." style="${sel}min-width:170px;flex:1 1 170px;">
-      <select title="Insert a symbol into the text" onchange="insertAnnotSymbol(${m}, this)" style="${sel}width:auto;"><option value="">Ω Symbol</option>${SYMBOLS.map(s => `<option value="${s.replace(/…/, '').replace(/"/g, '&quot;')}">${s.replace(/</g, '&lt;')}</option>`).join('')}</select>
+      <input type="text" id="${id('Text')}" placeholder="Label text (optional)" title="Text used by 🅣 Text and ↗ Arrow. Supports <b>bold</b>, <i>italic</i>, H<sub>2</sub>O, cm<sup>-1</sup>." style="${sel}min-width:140px;flex:1 1 140px;">
       <button class="btn btn-outline btn-sm" onclick="addTextAnnotation(${m})" title="Add a draggable text box">🅣 Text</button>
       <button class="btn btn-outline btn-sm" onclick="addArrowAnnotation(${m})" title="Add a draggable arrow (drag the head or tail)">↗ Arrow</button>
       <button class="btn btn-outline btn-sm" id="${id('PickBtn')}" onclick="startPointLabel(${m})" title="Then click a point on a curve: an arrow with its X value is placed there, pinned to the data">📍 Label point</button>
-      <button class="btn btn-outline btn-sm" onclick="addMarkerLines(${m})" title="Dashed vertical line(s) at X values you type, each labelled">┆ Marker line</button>
-      <button class="btn btn-outline btn-sm" onclick="addShadedRegion(${m})" title="Translucent band between two X values (e.g. a spectral region)">▥ Region</button>
-      <span style="font-size:11px;color:var(--hint);">Box / circle / line: ▭ ○ ╱ in the chart's toolbar</span>
-    </div>
-    <div class="annot-row">
-      <select id="${id('FontFamily')}" title="Font" style="${sel}">
-        <option value="auto">Font: Auto</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option>
-      </select>
-      <input type="number" id="${id('FontSize')}" value="13" min="6" max="72" title="Font size (px)" style="width:52px;${sel}">
-      <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Bold')}"><b>B</b></label>
-      <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Italic')}"><i>I</i></label>
-      <select id="${id('BoxStyle')}" title="Text box background" style="${sel}"><option value="filled">Filled box</option><option value="transparent">No box</option></select>
-      <input type="color" id="${id('Color')}" value="#dc2626" title="Colour for new items (and Apply style)">
       <span class="annot-sep"></span>
-      <span id="${id('SelStatus')}" style="font-size:11px;color:var(--accent,#7c3aed);font-weight:600;"></span>
-      <button class="btn btn-outline btn-sm" onclick="applyStyleToSelected(${m})" title="Give the selected item the font, size, colour and box set here (and the text, if typed)">🎨 Apply style</button>
-      <button class="btn btn-outline btn-sm" onclick="duplicateSelectedAnnotation(${m})" title="Copy the selected item">⧉ Duplicate</button>
       <button class="btn btn-outline btn-sm" onclick="deleteSelectedAnnotation(${m})" title="Delete the selected item (or press Delete)">🗑 Delete</button>
       <button class="btn btn-outline btn-sm" onclick="undoAnnotation(${m})" title="Undo (Ctrl/Cmd+Z)">↶ Undo</button>
-      <button class="btn btn-secondary btn-sm" onclick="clearCustomAnnotations(${m})" title="Remove everything you added">Clear all</button>
+      <button class="btn btn-outline btn-sm annot-more-btn${moreOpen ? ' is-armed' : ''}" id="${id('MoreBtn')}" onclick="toggleAnnotMore(${m})" aria-expanded="${moreOpen}" title="Symbols, marker lines, shaded regions, font and colour, duplicate, clear all">⋯ More</button>
+      <span id="${id('SelStatus')}" class="annot-status"></span>
     </div>
-    <div style="font-size:11px;color:var(--hint);width:100%;">Click an item on the plot to select it · double-click text to edit · drag to move · <kbd>Delete</kbd> removes the selected item · <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> cancel</div>`;
+    <div class="annot-more" id="${id('MoreRow')}"${moreOpen ? '' : ' hidden'}>
+      <div class="annot-row">
+        <select title="Insert a symbol into the label text" onchange="insertAnnotSymbol(${m}, this)" style="${sel}width:auto;"><option value="">Ω Symbol</option>${SYMBOLS.map(s => `<option value="${s.replace(/…/, '').replace(/"/g, '&quot;')}">${s.replace(/</g, '&lt;')}</option>`).join('')}</select>
+        <button class="btn btn-outline btn-sm" onclick="addMarkerLines(${m})" title="Dashed vertical line(s) at X values you type, each labelled">┆ Marker line</button>
+        <button class="btn btn-outline btn-sm" onclick="addShadedRegion(${m})" title="Translucent band between two X values (e.g. a spectral region)">▥ Region</button>
+        <button class="btn btn-outline btn-sm" onclick="duplicateSelectedAnnotation(${m})" title="Copy the selected item">⧉ Duplicate</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearCustomAnnotations(${m})" title="Remove everything you added">Clear all</button>
+      </div>
+      <div class="annot-row">
+        <select id="${id('FontFamily')}" title="Font" style="${sel}">
+          <option value="auto">Font: Auto</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option>
+        </select>
+        <input type="number" id="${id('FontSize')}" value="13" min="6" max="72" title="Font size (px)" style="width:52px;${sel}">
+        <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Bold')}"><b>B</b></label>
+        <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Italic')}"><i>I</i></label>
+        <select id="${id('BoxStyle')}" title="Text box background" style="${sel}"><option value="filled">Filled box</option><option value="transparent">No box</option></select>
+        <input type="color" id="${id('Color')}" value="#dc2626" title="Colour for new items (and Apply style)">
+        <button class="btn btn-outline btn-sm" onclick="applyStyleToSelected(${m})" title="Give the selected item the font, size, colour and box set here (and the text, if typed)">🎨 Apply style</button>
+      </div>
+      <div class="annot-hint">Click an item on the plot to select it · double-click text to edit · drag to move · <kbd>Delete</kbd> removes the selected item · <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> cancel · box / circle / line: ▭ ○ ╱ in the chart's toolbar</div>
+    </div>`;
+}
+
+function toggleAnnotMore(mode, open) {
+  const row = document.getElementById(annotFieldId(mode, 'MoreRow')), btn = document.getElementById(annotFieldId(mode, 'MoreBtn'));
+  if (!row) return;
+  const show = open === undefined ? row.hidden : open;
+  // both workspaces follow the same choice
+  ['ocean', 'xy'].forEach(md => {
+    const r = document.getElementById(annotFieldId(md, 'MoreRow')), b = document.getElementById(annotFieldId(md, 'MoreBtn'));
+    if (r) r.hidden = !show;
+    if (b) { b.classList.toggle('is-armed', show); b.setAttribute('aria-expanded', String(show)); }
+  });
+  try { localStorage.setItem('rnspx_annot_more', show ? '1' : '0'); } catch (e) {}
 }
 document.addEventListener('DOMContentLoaded', () => { buildAnnotToolbar('ocean'); buildAnnotToolbar('xy'); });

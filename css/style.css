@@ -341,7 +341,10 @@ table.peak-table td input:focus { border-color: var(--accent); box-shadow: 0 0 0
 .annot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
 .annot-row select, .annot-row input[type="number"], .annot-row input[type="text"] { font-size: 12px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 .annot-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
-.annot-status { font-size: 11px; color: var(--hint); margin-left: auto; }
+.annot-status { font-size: 11px; color: var(--accent, #7c3aed); font-weight: 600; margin-left: auto; }
+.annot-more { display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 6px; border-top: 1px dashed var(--border); }
+.annot-more[hidden] { display: none; }
+.annot-hint { font-size: 11px; color: var(--hint); width: 100%; }
 .btn.is-armed { background: #2563eb !important; color: #fff !important; border-color: #2563eb !important; }
 g.annotation.rx-ann-selected rect.bg { stroke: #2563eb !important; stroke-width: 2px !important; stroke-dasharray: 4 3; }
 g.annotation.rx-ann-selected { filter: drop-shadow(0 0 2px #2563eb); }
@@ -641,3 +644,11 @@ details.rx-menu > summary::-webkit-details-marker { display: none; }
 .rx-tab-hidden { display: none !important; }
 /* when the action bar sits at the bottom of the panel, menus open upwards */
 .layout-top .panel-actions .rx-menu-pop, .layout-bottom .panel-actions .rx-menu-pop { top: auto; bottom: calc(100% + 6px); }
+
+/* Step guide: ✓ on quick-nav steps already used, a pulse on the next one */
+.quick-nav-pill.is-done { border-color: rgba(22,163,74,.45); color: #15803d; background: rgba(22,163,74,.08); }
+.quick-nav-pill.is-done::after { content: " ✓"; font-weight: 800; }
+:root[data-theme="dark"] .quick-nav-pill.is-done { color: #4ade80; border-color: rgba(74,222,128,.4); background: rgba(74,222,128,.08); }
+.quick-nav-pill.is-next, .btn.is-next { animation: rx-next-pulse 1.8s ease-in-out infinite; }
+@keyframes rx-next-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 0 4px rgba(124,58,237,.35); } }
+@media (prefers-reduced-motion: reduce) { .quick-nav-pill.is-next, .btn.is-next { animation: none; outline: 2px solid var(--accent); outline-offset: 2px; } }

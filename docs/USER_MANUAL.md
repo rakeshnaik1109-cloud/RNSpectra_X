@@ -319,6 +319,10 @@ The action bar of the control panel holds **▶ Plot** and an **↓ Export ▾**
 * **Results under the plot** (peak table, Identify, Analysis, Compare,
   Resonance) are shown one at a time. When more than one exists, a row of tabs
   appears above them; a newly produced result opens its own tab.
+* **Step guide:** the buttons at the top of each control panel (① Data,
+  ② Process, …) get a ✓ once that step is in use; hover one to see what was
+  done. Before any data is loaded *① Data* pulses, and after loading *▶ Plot*
+  pulses until the first plot is drawn.
 * **Fine-tuning controls** that are rarely changed sit in folds marked ▸ inside
   their section (e.g. *Baseline overlay style*, *Legend box style*, *Ticks,
   colours, label spacing & notation*). Click the fold to open it; everything
@@ -385,7 +389,11 @@ under **Figure Size & Font → Bold**.
 
 ### Annotating the plot
 The bar above each plot adds labels that are saved with the session and appear
-in every export.
+in every export. Its single row holds the everyday actions — label text,
+**🅣 Text**, **↗ Arrow**, **📍 Label point**, **🗑 Delete**, **↶ Undo** — and
+**⋯ More** opens a second row with symbols, marker lines, regions, font and
+colour, **🎨 Apply style**, **⧉ Duplicate** and **Clear all** (it stays open
+or closed as you left it).
 
 - **🅣 Text / ↗ Arrow**: type the text in the box first (or leave it empty for
   a bare arrow). **Ω Symbol** inserts cm⁻¹, ±, °, µ, λ, Δ, Å and similar;

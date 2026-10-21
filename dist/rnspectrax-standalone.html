@@ -381,7 +381,10 @@ table.peak-table td input:focus { border-color: var(--accent); box-shadow: 0 0 0
 .annot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; }
 .annot-row select, .annot-row input[type="number"], .annot-row input[type="text"] { font-size: 12px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
 .annot-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
-.annot-status { font-size: 11px; color: var(--hint); margin-left: auto; }
+.annot-status { font-size: 11px; color: var(--accent, #7c3aed); font-weight: 600; margin-left: auto; }
+.annot-more { display: flex; flex-direction: column; gap: 6px; width: 100%; padding-top: 6px; border-top: 1px dashed var(--border); }
+.annot-more[hidden] { display: none; }
+.annot-hint { font-size: 11px; color: var(--hint); width: 100%; }
 .btn.is-armed { background: #2563eb !important; color: #fff !important; border-color: #2563eb !important; }
 g.annotation.rx-ann-selected rect.bg { stroke: #2563eb !important; stroke-width: 2px !important; stroke-dasharray: 4 3; }
 g.annotation.rx-ann-selected { filter: drop-shadow(0 0 2px #2563eb); }
@@ -681,6 +684,14 @@ details.rx-menu > summary::-webkit-details-marker { display: none; }
 .rx-tab-hidden { display: none !important; }
 /* when the action bar sits at the bottom of the panel, menus open upwards */
 .layout-top .panel-actions .rx-menu-pop, .layout-bottom .panel-actions .rx-menu-pop { top: auto; bottom: calc(100% + 6px); }
+
+/* Step guide: ✓ on quick-nav steps already used, a pulse on the next one */
+.quick-nav-pill.is-done { border-color: rgba(22,163,74,.45); color: #15803d; background: rgba(22,163,74,.08); }
+.quick-nav-pill.is-done::after { content: " ✓"; font-weight: 800; }
+:root[data-theme="dark"] .quick-nav-pill.is-done { color: #4ade80; border-color: rgba(74,222,128,.4); background: rgba(74,222,128,.08); }
+.quick-nav-pill.is-next, .btn.is-next { animation: rx-next-pulse 1.8s ease-in-out infinite; }
+@keyframes rx-next-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); } 50% { box-shadow: 0 0 0 4px rgba(124,58,237,.35); } }
+@media (prefers-reduced-motion: reduce) { .quick-nav-pill.is-next, .btn.is-next { animation: none; outline: 2px solid var(--accent); outline-offset: 2px; } }
 
 </style>
 <style>
@@ -3595,35 +3606,55 @@ function buildAnnotToolbar(mode) {
   const id = n => annotFieldId(mode, n), m = `'${mode}'`;
   const sel = 'font-size:12px;padding:4px 6px;border-radius:6px;border:1px solid var(--border);';
   const SYMBOLS = ['cm⁻¹', '⁻¹', '²', '³', '°', '±', '×', '·', 'µ', 'λ', 'Δ', 'σ', 'θ', 'α', 'β', 'γ', 'ν', 'π', 'Ω', 'Å', '→', '←', '↑', '↓', '≈', '≤', '≥', '∞', '<sub>…</sub>', '<sup>…</sup>'];
+  // one row of everyday actions; symbols, marker lines, regions, styling and
+  // Clear all sit in the "More" row, opened with ⋯ More (remembered per browser)
+  let moreOpen = false; try { moreOpen = localStorage.getItem('rnspx_annot_more') === '1'; } catch (e) {}
   bar.innerHTML = `
     <div class="annot-row">
-      <input type="text" id="${id('Text')}" placeholder="Text for new labels (optional)" title="Text used by 🅣 Text and ↗ Arrow. Supports <b>bold</b>, <i>italic</i>, H<sub>2</sub>O, cm<sup>-1</sup>." style="${sel}min-width:170px;flex:1 1 170px;">
-      <select title="Insert a symbol into the text" onchange="insertAnnotSymbol(${m}, this)" style="${sel}width:auto;"><option value="">Ω Symbol</option>${SYMBOLS.map(s => `<option value="${s.replace(/…/, '').replace(/"/g, '&quot;')}">${s.replace(/</g, '&lt;')}</option>`).join('')}</select>
+      <input type="text" id="${id('Text')}" placeholder="Label text (optional)" title="Text used by 🅣 Text and ↗ Arrow. Supports <b>bold</b>, <i>italic</i>, H<sub>2</sub>O, cm<sup>-1</sup>." style="${sel}min-width:140px;flex:1 1 140px;">
       <button class="btn btn-outline btn-sm" onclick="addTextAnnotation(${m})" title="Add a draggable text box">🅣 Text</button>
       <button class="btn btn-outline btn-sm" onclick="addArrowAnnotation(${m})" title="Add a draggable arrow (drag the head or tail)">↗ Arrow</button>
       <button class="btn btn-outline btn-sm" id="${id('PickBtn')}" onclick="startPointLabel(${m})" title="Then click a point on a curve: an arrow with its X value is placed there, pinned to the data">📍 Label point</button>
-      <button class="btn btn-outline btn-sm" onclick="addMarkerLines(${m})" title="Dashed vertical line(s) at X values you type, each labelled">┆ Marker line</button>
-      <button class="btn btn-outline btn-sm" onclick="addShadedRegion(${m})" title="Translucent band between two X values (e.g. a spectral region)">▥ Region</button>
-      <span style="font-size:11px;color:var(--hint);">Box / circle / line: ▭ ○ ╱ in the chart's toolbar</span>
-    </div>
-    <div class="annot-row">
-      <select id="${id('FontFamily')}" title="Font" style="${sel}">
-        <option value="auto">Font: Auto</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option>
-      </select>
-      <input type="number" id="${id('FontSize')}" value="13" min="6" max="72" title="Font size (px)" style="width:52px;${sel}">
-      <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Bold')}"><b>B</b></label>
-      <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Italic')}"><i>I</i></label>
-      <select id="${id('BoxStyle')}" title="Text box background" style="${sel}"><option value="filled">Filled box</option><option value="transparent">No box</option></select>
-      <input type="color" id="${id('Color')}" value="#dc2626" title="Colour for new items (and Apply style)">
       <span class="annot-sep"></span>
-      <span id="${id('SelStatus')}" style="font-size:11px;color:var(--accent,#7c3aed);font-weight:600;"></span>
-      <button class="btn btn-outline btn-sm" onclick="applyStyleToSelected(${m})" title="Give the selected item the font, size, colour and box set here (and the text, if typed)">🎨 Apply style</button>
-      <button class="btn btn-outline btn-sm" onclick="duplicateSelectedAnnotation(${m})" title="Copy the selected item">⧉ Duplicate</button>
       <button class="btn btn-outline btn-sm" onclick="deleteSelectedAnnotation(${m})" title="Delete the selected item (or press Delete)">🗑 Delete</button>
       <button class="btn btn-outline btn-sm" onclick="undoAnnotation(${m})" title="Undo (Ctrl/Cmd+Z)">↶ Undo</button>
-      <button class="btn btn-secondary btn-sm" onclick="clearCustomAnnotations(${m})" title="Remove everything you added">Clear all</button>
+      <button class="btn btn-outline btn-sm annot-more-btn${moreOpen ? ' is-armed' : ''}" id="${id('MoreBtn')}" onclick="toggleAnnotMore(${m})" aria-expanded="${moreOpen}" title="Symbols, marker lines, shaded regions, font and colour, duplicate, clear all">⋯ More</button>
+      <span id="${id('SelStatus')}" class="annot-status"></span>
     </div>
-    <div style="font-size:11px;color:var(--hint);width:100%;">Click an item on the plot to select it · double-click text to edit · drag to move · <kbd>Delete</kbd> removes the selected item · <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> cancel</div>`;
+    <div class="annot-more" id="${id('MoreRow')}"${moreOpen ? '' : ' hidden'}>
+      <div class="annot-row">
+        <select title="Insert a symbol into the label text" onchange="insertAnnotSymbol(${m}, this)" style="${sel}width:auto;"><option value="">Ω Symbol</option>${SYMBOLS.map(s => `<option value="${s.replace(/…/, '').replace(/"/g, '&quot;')}">${s.replace(/</g, '&lt;')}</option>`).join('')}</select>
+        <button class="btn btn-outline btn-sm" onclick="addMarkerLines(${m})" title="Dashed vertical line(s) at X values you type, each labelled">┆ Marker line</button>
+        <button class="btn btn-outline btn-sm" onclick="addShadedRegion(${m})" title="Translucent band between two X values (e.g. a spectral region)">▥ Region</button>
+        <button class="btn btn-outline btn-sm" onclick="duplicateSelectedAnnotation(${m})" title="Copy the selected item">⧉ Duplicate</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearCustomAnnotations(${m})" title="Remove everything you added">Clear all</button>
+      </div>
+      <div class="annot-row">
+        <select id="${id('FontFamily')}" title="Font" style="${sel}">
+          <option value="auto">Font: Auto</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option>
+        </select>
+        <input type="number" id="${id('FontSize')}" value="13" min="6" max="72" title="Font size (px)" style="width:52px;${sel}">
+        <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Bold')}"><b>B</b></label>
+        <label class="toggle-item" style="font-size:12px;"><input type="checkbox" id="${id('Italic')}"><i>I</i></label>
+        <select id="${id('BoxStyle')}" title="Text box background" style="${sel}"><option value="filled">Filled box</option><option value="transparent">No box</option></select>
+        <input type="color" id="${id('Color')}" value="#dc2626" title="Colour for new items (and Apply style)">
+        <button class="btn btn-outline btn-sm" onclick="applyStyleToSelected(${m})" title="Give the selected item the font, size, colour and box set here (and the text, if typed)">🎨 Apply style</button>
+      </div>
+      <div class="annot-hint">Click an item on the plot to select it · double-click text to edit · drag to move · <kbd>Delete</kbd> removes the selected item · <kbd>Ctrl</kbd>/<kbd>⌘</kbd>+<kbd>Z</kbd> undo · <kbd>Esc</kbd> cancel · box / circle / line: ▭ ○ ╱ in the chart's toolbar</div>
+    </div>`;
+}
+
+function toggleAnnotMore(mode, open) {
+  const row = document.getElementById(annotFieldId(mode, 'MoreRow')), btn = document.getElementById(annotFieldId(mode, 'MoreBtn'));
+  if (!row) return;
+  const show = open === undefined ? row.hidden : open;
+  // both workspaces follow the same choice
+  ['ocean', 'xy'].forEach(md => {
+    const r = document.getElementById(annotFieldId(md, 'MoreRow')), b = document.getElementById(annotFieldId(md, 'MoreBtn'));
+    if (r) r.hidden = !show;
+    if (b) { b.classList.toggle('is-armed', show); b.setAttribute('aria-expanded', String(show)); }
+  });
+  try { localStorage.setItem('rnspx_annot_more', show ? '1' : '0'); } catch (e) {}
 }
 document.addEventListener('DOMContentLoaded', () => { buildAnnotToolbar('ocean'); buildAnnotToolbar('xy'); });
 
@@ -8543,6 +8574,99 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeMethods
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') document.querySelectorAll('details.rx-menu[open]').forEach(function (m) { m.removeAttribute('open'); });
     });
+  });
+})();
+
+</script>
+<script>
+/* js/ui/stepGuide.js */
+/* ═══════════════════════════════════════════════════════════
+   STEP GUIDE
+   The quick-nav buttons at the top of each control panel get a ✓ once
+   that step has been used (data loaded, a processing step chosen, a plot
+   drawn, a result produced), and the next thing to do is highlighted:
+   "① Data" before anything is loaded, then "▶ Plot" until a plot exists.
+   Purely visual — it reads the controls, never changes them.
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var val = function (id) { var el = document.getElementById(id); return el ? el.value : ''; };
+  var shown = function (id) { var el = document.getElementById(id); return !!el && el.style.display !== 'none'; };
+  var plotted = function (id) { var el = document.getElementById(id); return !!(el && el.data && el.data.length); };
+
+  var STEPS = {
+    ocean: {
+      panel: 'oceanControlPanel', plotWrap: 'plot-wrapper', plotFn: 'plotSpectrum()',
+      steps: {
+        oceanSecData: function () { var n = spectra.filter(Boolean).length; return n ? n + ' spectr' + (n === 1 ? 'um' : 'a') + ' loaded' : ''; },
+        oceanSecProcess: function () {
+          var used = [['despikeType', 'despiking'], ['baselineType', 'baseline'], ['smoothType', 'smoothing'], ['normType', 'normalisation']]
+            .filter(function (p) { return val(p[0]) && val(p[0]) !== 'none'; }).map(function (p) { return p[1]; });
+          if ((parseInt(val('rsDeriv')) || 0) > 0) used.push('derivative');
+          if (parseFloat(val('rsShift'))) used.push('shift correction');
+          if (val('rsExclude').trim()) used.push('excluded regions');
+          return used.join(', ');
+        },
+        oceanSecAverage: function () { return val('avgMode') !== 'individual' ? (val('avgMode') === 'groups' ? 'group averages' : 'grand average') : ''; },
+        oceanSecStyle: function () { return plotted('plot-wrapper') ? 'plot drawn' : ''; },
+        oceanSecIdentify: function () { return shown('idSection') ? 'library match done' : ''; },
+        oceanSecAnalysis: function () { return shown('rtSection') ? 'analysis run' : ''; }
+      }
+    },
+    xy: {
+      panel: 'xyControlPanel', plotWrap: 'xy-plot-wrapper', plotFn: 'plotXY()',
+      steps: {
+        xySecData: function () { try { var n = gatherXYDatasets().filter(function (d) { return d.x.length && d.y.length; }).length; return n ? n + ' dataset' + (n === 1 ? '' : 's') + ' ready' : ''; } catch (e) { return ''; } },
+        xySecProcess: function () {
+          var used = [];
+          if (val('xySmoothType') && val('xySmoothType') !== 'none') used.push('smoothing');
+          if (val('xyNorm') && val('xyNorm') !== 'none') used.push('normalisation');
+          return used.join(', ');
+        },
+        xySecFit: function () { return val('fitModel') && val('fitModel') !== 'none' ? 'fit model chosen' : ''; },
+        xySecStyle: function () { return plotted('xy-plot-wrapper') ? 'plot drawn' : ''; },
+        xySecDip: function () { return shown('xyDipSection') ? 'resonances found' : ''; }
+      }
+    }
+  };
+
+  function update() {
+    Object.keys(STEPS).forEach(function (mode) {
+      var cfg = STEPS[mode], panel = document.getElementById(cfg.panel); if (!panel) return;
+      var hasData = false;
+      panel.querySelectorAll('.quick-nav-pill').forEach(function (pill) {
+        var m = (pill.getAttribute('onclick') || '').match(/jumpToSection\('[^']+','([^']+)'\)/);
+        var fn = m && cfg.steps[m[1]]; if (!fn) return;
+        var done = '';
+        try { done = fn(); } catch (e) { done = ''; }
+        if (/SecData$/.test(m[1])) hasData = !!done;
+        pill.classList.toggle('is-done', !!done);
+        pill.title = done ? '✓ ' + done : '';
+      });
+      // what to do next: load data, then plot
+      var dataPill = panel.querySelector('.quick-nav-pill[onclick*="SecData\'"]');
+      if (dataPill) dataPill.classList.toggle('is-next', !hasData);
+      var plotBtn = panel.querySelector('.panel-actions .btn-primary[onclick="' + cfg.plotFn + '"]');
+      if (plotBtn) plotBtn.classList.toggle('is-next', hasData && !plotted(cfg.plotWrap));
+    });
+  }
+
+  var timer = null;
+  function schedule() { clearTimeout(timer); timer = setTimeout(update, 120); }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('change', schedule, true);
+    document.addEventListener('input', schedule, true);
+    // plots drawn, files added or removed, results shown
+    var mo = new MutationObserver(schedule);
+    ['plot-wrapper', 'xy-plot-wrapper', 'oceanFileChips', 'xyFileCards'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) mo.observe(el, { childList: true });
+    });
+    ['idSection', 'rtSection', 'xyDipSection'].forEach(function (id) {
+      var el = document.getElementById(id); if (el) mo.observe(el, { attributes: true, attributeFilter: ['style'] });
+    });
+    setTimeout(update, 200);   // after the saved session has been restored
   });
 })();
 
