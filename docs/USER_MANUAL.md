@@ -276,8 +276,10 @@ Press `?` for the full sheet. The essentials:
 ### Axis lines and tick marks
 In **Axis Frame, Grid & Notation** (both workspaces): **Axis Line Width** makes
 the axes / frame bold, **Tick Width** and **Tick Length** style the tick marks,
-and **Axis Colour** sets the colour of both. Text boldness (title, axis labels,
-tick labels, legend) is set separately under **Figure Size & Font → Bold**.
+and **Axis Colour** sets the colour of both. **Bold tick numbers** makes the
+axis numbers bold (the same setting as **Figure Size & Font → Bold → Tick
+Labels**; the two boxes stay linked). Title, axis-label and legend boldness are
+under **Figure Size & Font → Bold**.
 
 ---
 

@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610211905" rel="stylesheet"/>
-<link href="css/layout.css?v=202610211905" rel="stylesheet"/>
+<link href="css/style.css?v=202610211906" rel="stylesheet"/>
+<link href="css/layout.css?v=202610211906" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -400,7 +400,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
                 <label class="toggle-item"><input type="checkbox" id="boldTitle" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Title</label>
                 <label class="toggle-item"><input type="checkbox" id="boldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Axis Labels</label>
-                <label class="toggle-item"><input type="checkbox" id="boldTick" onchange="triggerInteractiveReplotStyleOnly('ocean')">Tick Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="boldTick" onchange="document.getElementById('axisBoldTicks').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Tick Labels</label>
                 <label class="toggle-item"><input type="checkbox" id="boldLegend" onchange="triggerInteractiveReplotStyleOnly('ocean')">Legend</label>
               </div>
               <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
@@ -489,6 +489,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Tick Width (px)</label><input type="number" id="tickWidth" value="1" min="0.5" max="6" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Tick Length (px)</label><input type="number" id="tickLen" value="5" min="0" max="20" step="1" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Axis Colour</label><input type="color" id="axisColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="axisBoldTicks" data-mirror="boldTick" onchange="document.getElementById('boldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Bold tick numbers</label></div>
                 <div class="field"><label>Grid Color</label><input type="color" id="gridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="yStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
@@ -1101,7 +1102,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xyBoldTitle" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Title</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBoldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Axis Labels</label>
-                <label class="toggle-item"><input type="checkbox" id="xyBoldTick" onchange="triggerInteractiveReplotStyleOnly('xy')">Tick Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBoldTick" onchange="document.getElementById('xyAxisBoldTicks').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Tick Labels</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBoldLegend" onchange="triggerInteractiveReplotStyleOnly('xy')">Legend</label>
               </div>
             </div>
@@ -1187,6 +1188,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Tick Width (px)</label><input type="number" id="xyTickWidth" value="1" min="0.5" max="6" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Tick Length (px)</label><input type="number" id="xyTickLen" value="5" min="0" max="20" step="1" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Axis Colour</label><input type="color" id="xyAxisColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="xyAxisBoldTicks" data-mirror="xyBoldTick" onchange="document.getElementById('xyBoldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Bold tick numbers</label></div>
                 <div class="field"><label>Grid Color</label><input type="color" id="xyGridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xyXStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="xyYStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
@@ -1429,31 +1431,31 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610211905"></script>
-<script src="js/core/state.js?v=202610211905"></script>
-<script src="js/core/utils.js?v=202610211905"></script>
-<script src="js/core/advancedLayout.js?v=202610211905"></script>
-<script src="js/io/parser.js?v=202610211905"></script>
-<script src="js/io/fileLoader.js?v=202610211905"></script>
-<script src="js/io/exporter.js?v=202610211905"></script>
+</div><script src="js/config.js?v=202610211906"></script>
+<script src="js/core/state.js?v=202610211906"></script>
+<script src="js/core/utils.js?v=202610211906"></script>
+<script src="js/core/advancedLayout.js?v=202610211906"></script>
+<script src="js/io/parser.js?v=202610211906"></script>
+<script src="js/io/fileLoader.js?v=202610211906"></script>
+<script src="js/io/exporter.js?v=202610211906"></script>
 
-<script src="js/processing/despike.js?v=202610211905"></script>
-<script src="js/processing/baseline.js?v=202610211905"></script>
-<script src="js/processing/smoothing.js?v=202610211905"></script>
-<script src="js/plotting/averaging.js?v=202610211905"></script>
-<script src="js/plotting/plotting.js?v=202610211905"></script>
-<script src="js/plotting/xyPlot.js?v=202610211905"></script>
-<script src="js/plotting/comparison.js?v=202610211905"></script>
-<script src="js/analysis/peaks.js?v=202610211905"></script>
-<script src="js/analysis/fitting.js?v=202610211905"></script>
-<script src="js/analysis/resonance.js?v=202610211905"></script>
-<script src="js/analysis/identify.js?v=202610211905"></script>
-<script src="js/ui/sidebar.js?v=202610211905"></script>
-<script src="js/ui/layout.js?v=202610211905"></script>
-<script src="js/ui/theme.js?v=202610211905"></script>
-<script src="js/ui/workspaceExtras.js?v=202610211905"></script>
-<script src="js/ui/session.js?v=202610211905"></script>
-<script src="js/app.js?v=202610211905"></script>
+<script src="js/processing/despike.js?v=202610211906"></script>
+<script src="js/processing/baseline.js?v=202610211906"></script>
+<script src="js/processing/smoothing.js?v=202610211906"></script>
+<script src="js/plotting/averaging.js?v=202610211906"></script>
+<script src="js/plotting/plotting.js?v=202610211906"></script>
+<script src="js/plotting/xyPlot.js?v=202610211906"></script>
+<script src="js/plotting/comparison.js?v=202610211906"></script>
+<script src="js/analysis/peaks.js?v=202610211906"></script>
+<script src="js/analysis/fitting.js?v=202610211906"></script>
+<script src="js/analysis/resonance.js?v=202610211906"></script>
+<script src="js/analysis/identify.js?v=202610211906"></script>
+<script src="js/ui/sidebar.js?v=202610211906"></script>
+<script src="js/ui/layout.js?v=202610211906"></script>
+<script src="js/ui/theme.js?v=202610211906"></script>
+<script src="js/ui/workspaceExtras.js?v=202610211906"></script>
+<script src="js/ui/session.js?v=202610211906"></script>
+<script src="js/app.js?v=202610211906"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

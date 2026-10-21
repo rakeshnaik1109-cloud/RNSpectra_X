@@ -1408,7 +1408,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
                 <label class="toggle-item"><input type="checkbox" id="boldTitle" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Title</label>
                 <label class="toggle-item"><input type="checkbox" id="boldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Axis Labels</label>
-                <label class="toggle-item"><input type="checkbox" id="boldTick" onchange="triggerInteractiveReplotStyleOnly('ocean')">Tick Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="boldTick" onchange="document.getElementById('axisBoldTicks').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Tick Labels</label>
                 <label class="toggle-item"><input type="checkbox" id="boldLegend" onchange="triggerInteractiveReplotStyleOnly('ocean')">Legend</label>
               </div>
               <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
@@ -1497,6 +1497,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Tick Width (px)</label><input type="number" id="tickWidth" value="1" min="0.5" max="6" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Tick Length (px)</label><input type="number" id="tickLen" value="5" min="0" max="20" step="1" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Axis Colour</label><input type="color" id="axisColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="axisBoldTicks" data-mirror="boldTick" onchange="document.getElementById('boldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Bold tick numbers</label></div>
                 <div class="field"><label>Grid Color</label><input type="color" id="gridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="yStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
@@ -2109,7 +2110,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
                 <label class="toggle-item"><input type="checkbox" id="xyBoldTitle" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Title</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBoldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Axis Labels</label>
-                <label class="toggle-item"><input type="checkbox" id="xyBoldTick" onchange="triggerInteractiveReplotStyleOnly('xy')">Tick Labels</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBoldTick" onchange="document.getElementById('xyAxisBoldTicks').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Tick Labels</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBoldLegend" onchange="triggerInteractiveReplotStyleOnly('xy')">Legend</label>
               </div>
             </div>
@@ -2195,6 +2196,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Tick Width (px)</label><input type="number" id="xyTickWidth" value="1" min="0.5" max="6" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Tick Length (px)</label><input type="number" id="xyTickLen" value="5" min="0" max="20" step="1" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Axis Colour</label><input type="color" id="xyAxisColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="xyAxisBoldTicks" data-mirror="xyBoldTick" onchange="document.getElementById('xyBoldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Bold tick numbers</label></div>
                 <div class="field"><label>Grid Color</label><input type="color" id="xyGridColor" value="#e5e7eb" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>X Label Standoff (px)</label><input type="number" id="xyXStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
                 <div class="field"><label>Y Label Standoff (px)</label><input type="number" id="xyYStandoff" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
@@ -6774,6 +6776,7 @@ document.addEventListener('DOMContentLoaded', initWorkspaceLayout);
     if (!el.id || TRANSIENT.test(el.id)) return false;
     if (el.type === 'file' || el.type === 'button' || el.type === 'submit') return false;
     if (el.closest && el.closest('#spectrumControls')) return false;
+    if (el.hasAttribute && el.hasAttribute('data-mirror')) return false;
     return true;
   }
 
@@ -6818,6 +6821,11 @@ document.addEventListener('DOMContentLoaded', initWorkspaceLayout);
       }
       restored++;
       el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    // tick-boxes that mirror another one (e.g. "Bold tick numbers") follow it
+    document.querySelectorAll('[data-mirror]').forEach(function (m) {
+      var src = document.getElementById(m.getAttribute('data-mirror'));
+      if (src) m.checked = src.checked;
     });
     return restored;
   }

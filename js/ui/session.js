@@ -22,6 +22,7 @@
     if (!el.id || TRANSIENT.test(el.id)) return false;
     if (el.type === 'file' || el.type === 'button' || el.type === 'submit') return false;
     if (el.closest && el.closest('#spectrumControls')) return false;
+    if (el.hasAttribute && el.hasAttribute('data-mirror')) return false;
     return true;
   }
 
@@ -66,6 +67,11 @@
       }
       restored++;
       el.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    // tick-boxes that mirror another one (e.g. "Bold tick numbers") follow it
+    document.querySelectorAll('[data-mirror]').forEach(function (m) {
+      var src = document.getElementById(m.getAttribute('data-mirror'));
+      if (src) m.checked = src.checked;
     });
     return restored;
   }
