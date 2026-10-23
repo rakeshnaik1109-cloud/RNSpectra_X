@@ -160,6 +160,7 @@ time).
 | Min–Max | rescaled so its minimum is 0 and its maximum is 1 |
 | Area | $\int \lvert y \rvert\,dx$, by the trapezoidal rule over its own $x$ values |
 | Vector | its Euclidean norm $\sqrt{\sum y_i^2}$ |
+| SNV (standard normal variate) | its own standard deviation after subtracting its own mean: $(y_i - \bar y)/s_y$, with $s_y$ the sample SD ($N-1$). Removes multiplicative scaling and offset differences between spectra (Barnes et al., 1989) |
 | Reference band | its maximum within $\pm\Delta$ of a chosen band position, e.g. 1003 cm⁻¹ (phenylalanine), 1450 cm⁻¹ (CH₂) or 520.7 cm⁻¹ (silicon). Spectra with no positive signal there are left unscaled |
 
 In XY mode the normalised curve can then be multiplied by a constant
@@ -496,6 +497,7 @@ For reproducibility, a methods section should state:
 - Eilers, P. H. C. & Boelens, H. F. M. (2005). *Baseline correction with asymmetric least squares smoothing*. Leiden University Medical Centre report.
 - Welch, B. L. (1947). The generalization of 'Student's' problem when several different population variances are involved. *Biometrika*, 34(1–2), 28–35.
 - ICH Q2(R1) (2005). *Validation of analytical procedures: text and methodology*. International Council for Harmonisation.
+- Barnes, R. J., Dhanoa, M. S. & Lister, S. J. (1989). Standard normal variate transformation and de-trending of near-infrared diffuse reflectance spectra. *Applied Spectroscopy*, 43(5), 772–777.
 - Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. *Applied Spectroscopy*, 57(11), 1363–1367.
 - Movasaghi, Z., Rehman, S. & Rehman, I. U. (2007). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 42(5), 493–541.
 - Talari, A. C. S., Movasaghi, Z., Rehman, S. & Rehman, I. U. (2015). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 50(1), 46–111.

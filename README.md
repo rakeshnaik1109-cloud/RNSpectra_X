@@ -66,7 +66,7 @@ nothing about your files or spectra.
 | Despiking | Cosmic-ray removal that only treats narrow, isolated jumps as spikes, so strong sharp bands are preserved; Modified Z-score (interpolation) or Whitaker–Hayes (neighbour mean) repair |
 | Baseline correction | Linear (2-point), iterative polynomial (ModPoly), rubber band (lower convex hull), rolling ball, asymmetric least squares (ALS), with an optional overlay of the estimated baseline |
 | Smoothing | Moving average, Savitzky–Golay, Gaussian, median |
-| Normalisation | Max, min–max, area, vector, or a chosen reference band (e.g. 1003 cm⁻¹ phenylalanine, 520.7 cm⁻¹ silicon); in XY mode the result can be scaled, e.g. to 0–100 |
+| Normalisation | Max, min–max, area, vector, SNV (standard normal variate), or a chosen reference band (e.g. 1003 cm⁻¹ phenylalanine, 520.7 cm⁻¹ silicon); in XY mode the result can be scaled, e.g. to 0–100 |
 | Group statistics | Group averages and grand average with SD or SEM, drawn as capped bars or shaded bands, over the range shared by all spectra |
 | Peak detection | Topographic prominence with an adjustable threshold; every band listed in the peak table and matched against a ~35-band Raman reference library (proteins, nucleic acids, lipids, carotenoids, silicon) |
 | Identify (library match) | Ranks the closest of 202 reference spectra (141 biomolecules, RamanBiolib) by correlation HQI, derivative HQI or peak matching, with an overlay, and cites the RamanBiolib library and the publication each reference spectrum comes from |

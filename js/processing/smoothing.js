@@ -47,6 +47,12 @@ function normalizeData(y, type, x, opts) {
     else s = y.reduce((a,b)=>a+Math.abs(b),0);
     return s?y.map(v=>v/s):y;
   }
+  if (type === "snv") {
+    // standard normal variate: centre on the spectrum's own mean, divide by its own SD
+    const n = y.length, m = y.reduce((a, b) => a + b, 0) / n;
+    const sd = n > 1 ? Math.sqrt(y.reduce((a, v) => a + (v - m) * (v - m), 0) / (n - 1)) : 0;
+    return sd ? y.map(v => (v - m) / sd) : y;
+  }
   if (type === "vector") { const nm=Math.sqrt(y.reduce((a,b)=>a+b*b,0)); return nm?y.map(v=>v/nm):y; }
   if (type === "ref" && x && opts) {
     // Divide by the band maximum found within ±window of the reference position

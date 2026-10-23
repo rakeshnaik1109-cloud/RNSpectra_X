@@ -43,7 +43,9 @@ order: despiking → baseline → smoothing → normalisation.
 * **Smoothing:** *Moving Average*, *Savitzky–Golay* (recommended: keeps band
   positions and heights), *Gaussian* (set σ in points) or *Median*. Keep the
   window well below the width of your narrowest band.
-* **Normalisation:** *Max*, *Min–Max*, *Area*, *Vector*, or *Reference band*,
+* **Normalisation:** *Max*, *Min–Max*, *Area*, *Vector*, *SNV* (standard normal
+  variate: each spectrum minus its own mean, divided by its own standard
+  deviation, the usual choice before PCA or classification), or *Reference band*,
   which divides each spectrum by its intensity at a band you choose (e.g.
   1003 cm⁻¹ phenylalanine, 1450 cm⁻¹ CH₂, or 520.7 cm⁻¹ silicon).
 * **Calibration, Regions & Derivative:**

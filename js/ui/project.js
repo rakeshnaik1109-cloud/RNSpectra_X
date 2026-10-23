@@ -135,7 +135,7 @@ function smoothingSentence(type, w, poly, sigma) {
 }
 
 function normalisationSentence(type, scale) {
-  const s = { max: "to their maximum intensity", minmax: "to the range 0–1 (min–max)", area: "to unit area (trapezoidal integral)", vector: "to unit vector length (Euclidean norm)" }[type];
+  const s = { max: "to their maximum intensity", minmax: "to the range 0–1 (min–max)", area: "to unit area (trapezoidal integral)", vector: "to unit vector length (Euclidean norm)", snv: "by standard normal variate (SNV: each spectrum centred on its own mean and divided by its own standard deviation)" }[type];
   if (type === "ref") return `normalised to the maximum of the reference band at ${mtNum("normRefX")} ± ${mtNum("normRefWin")} cm⁻¹`;
   if (!s) return null;
   return `normalised ${s}` + (scale && scale !== 1 ? `${type === "minmax" ? ` and scaled to 0–${scale}` : ` and multiplied by ${scale}`}` : "");
@@ -162,6 +162,7 @@ const MT_REFS = {
   lm: "Marquardt, D. W. (1963). An algorithm for least-squares estimation of nonlinear parameters. Journal of the Society for Industrial and Applied Mathematics, 11(2), 431–441.",
   welch: "Welch, B. L. (1947). The generalization of 'Student's' problem when several different population variances are involved. Biometrika, 34(1–2), 28–35.",
   ich: "ICH Q2(R1) (2005). Validation of analytical procedures: text and methodology. International Council for Harmonisation.",
+  snv: "Barnes, R. J., Dhanoa, M. S. & Lister, S. J. (1989). Standard normal variate transformation and de-trending of near-infrared diffuse reflectance spectra. Applied Spectroscopy, 43(5), 772–777.",
   biolib: "RamanBiolib reference library (Open Database License): see the citation listed with each match."
 };
 
@@ -190,7 +191,7 @@ function buildRamanMethods() {
   const sm = smoothingSentence(mtVal("smoothType"), mtNum("smParam1"), mtNum("smParam2"), mtNum("smParam3"));
   if (sm) { steps.push(`spectra were ${sm.t}`); if (sm.ref) refs.add(sm.ref); }
   const nm = normalisationSentence(mtVal("normType"));
-  if (nm) steps.push(`spectra were ${nm}`);
+  if (nm) { steps.push(`spectra were ${nm}`); if (mtVal("normType") === "snv") refs.add("snv"); }
   const dv = parseInt(mtVal("rsDeriv")) || 0;
   if (dv) { steps.push(`${dv === 1 ? "first" : "second"}-derivative spectra were computed with a Savitzky–Golay filter (window ${mtNum("rsDerivWin")} points, order ${mtNum("rsDerivOrder")})`); refs.add("sg"); }
   if (steps.length) parts.push(steps.map((s, i) => i === 0 ? s[0].toUpperCase() + s.slice(1) : s).join("; then ") + ", in that order.");
@@ -210,7 +211,7 @@ function buildXYMethods() {
   const sm = smoothingSentence(mtVal("xySmoothType"), mtNum("xySmP1"), mtNum("xySmP2"), mtNum("xySmP1"));
   if (sm) { parts.push(`Data were ${sm.t}.`); if (sm.ref) refs.add(sm.ref); }
   const nm = normalisationSentence(mtVal("xyNorm"), mtNum("xyNormScale"));
-  if (nm) parts.push(`Each dataset was ${nm}.`);
+  if (nm) { parts.push(`Each dataset was ${nm}.`); if (mtVal("xyNorm") === "snv") refs.add("snv"); }
   if (mtVal("xyGroupMode") === "groups" && groups.length) parts.push(`Replicates sharing a group name were averaged point by point and shown as mean ± ${mtVal("xyGroupErr") === "sem" ? "SEM" : "SD"}.`);
   const fm = mtVal("fitModel");
   if (fm && fm !== "none") { parts.push(`A ${mtSel("fitModel").toLowerCase()} model was fitted by ${/linear|poly/.test(fm) ? "weighted linear" : "non-linear (Levenberg–Marquardt)"} least squares; parameter uncertainties are 1σ standard errors from the covariance matrix scaled by the reduced χ².`); if (!/linear|poly/.test(fm)) refs.add("lm"); }
