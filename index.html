@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610230449" rel="stylesheet"/>
-<link href="css/layout.css?v=202610230449" rel="stylesheet"/>
+<link href="css/style.css?v=202610230500" rel="stylesheet"/>
+<link href="css/layout.css?v=202610230500" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -455,7 +455,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Export DPI</label><input type="number" id="exportDPI" value="300" min="72" step="50" title="Physical figure size stays the same; higher DPI raises exported pixel resolution for print."/></div>
                 <div class="field"><label>Title Size</label><input type="number" id="titleSize" value="22" min="8"/></div>
                 <div class="field"><label>Axis Label</label><input type="number" id="labelSize" value="18" min="8"/></div>
-                <div class="field"><label>Tick Size</label><input type="number" id="tickSize" value="13" min="6"/></div>
+                <div class="field"><label>Tick Size</label><input type="number" id="tickSize" value="13" min="6" oninput="document.getElementById('tickTextSize').value=this.value"/></div>
                 <div class="field"><label>Legend Size</label><input type="number" id="legendSize" value="12" min="6" oninput="document.getElementById('legendTextSize').value=this.value"/></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
@@ -463,7 +463,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <label class="toggle-item"><input type="checkbox" id="boldTitle" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Title</label>
                 <label class="toggle-item"><input type="checkbox" id="boldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('ocean')">Axis Labels</label>
                 <label class="toggle-item"><input type="checkbox" id="boldTick" onchange="document.getElementById('axisBoldTicks').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Tick Labels</label>
-                <label class="toggle-item"><input type="checkbox" id="boldLegend" onchange="triggerInteractiveReplotStyleOnly('ocean')">Legend</label>
+                <label class="toggle-item"><input type="checkbox" id="boldLegend" onchange="document.getElementById('legendTextBold').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Legend</label>
               </div>
               <div style="font-size:10.5px;color:var(--hint);margin-top:8px;line-height:1.4;">
                 Font Family applies everywhere for consistency; Bold is independent per element. Title/Axis Labels/Legend get true bold text; Tick Labels use a heavier typeface since Plotly auto-generates their text (no bold property available there).
@@ -479,6 +479,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Font</label><select id="legendFont" onchange="triggerInteractiveReplotStyleOnly('ocean')" title="Typeface of the legend entries"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
                 <div class="field"><label>Size</label><input type="number" id="legendTextSize" data-mirror="legendSize" value="12" min="6" max="48" oninput="document.getElementById('legendSize').value=this.value;triggerInteractiveReplotStyleOnly('ocean')" title="Same setting as Figure Size &amp; Font → Legend Size"/></div>
                 <div class="field"><label>Colour</label><input type="color" id="legendFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Legend"><input type="checkbox" id="legendTextBold" data-mirror="boldLegend" onchange="document.getElementById('boldLegend').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')"><b>Bold</b></label></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
               <div class="field">
@@ -559,7 +560,13 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Axis Line Width (px)</label><input type="number" id="axisLineWidth" value="2" min="0.5" max="8" step="0.5" oninput="triggerInteractiveReplotStyleOnly('ocean')" title="Thickness of the axis lines / frame (“bold axes”)"/></div>
                 <div class="field"><label>Y Min</label><input type="number" id="ymin" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
                 <div class="field"><label>Y Max</label><input type="number" id="ymax" placeholder="Auto" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
-                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="axisBoldTicks" data-mirror="boldTick" onchange="document.getElementById('boldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')">Bold tick numbers</label></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">🔢 Axis Numbers</div>
+              <div class="grid">
+                <div class="field"><label>Font</label><select id="tickFont" onchange="triggerInteractiveReplotStyleOnly('ocean')" title="Typeface of the numbers on both axes"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
+                <div class="field"><label>Size</label><input type="number" id="tickTextSize" data-mirror="tickSize" value="13" min="6" max="48" oninput="document.getElementById('tickSize').value=this.value;triggerInteractiveReplotStyleOnly('ocean')" title="Same setting as Figure Size &amp; Font → Tick Size"/></div>
+                <div class="field"><label>Colour</label><input type="color" id="tickFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="axisBoldTicks" data-mirror="boldTick" onchange="document.getElementById('boldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('ocean')"><b>Bold</b></label></div>
               </div>
               <details class="adv-fold">
                 <summary>Ticks, colours, label spacing &amp; notation</summary>
@@ -1253,7 +1260,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Export DPI</label><input type="number" id="xyExportDPI" value="300" min="72" step="50"/></div>
                 <div class="field"><label>Title Size</label><input type="number" id="xyTitleSize" value="22" min="8"/></div>
                 <div class="field"><label>Axis Label</label><input type="number" id="xyLabelSize" value="18" min="8"/></div>
-                <div class="field"><label>Tick Size</label><input type="number" id="xyTickSize" value="13" min="6"/></div>
+                <div class="field"><label>Tick Size</label><input type="number" id="xyTickSize" value="13" min="6" oninput="document.getElementById('xyTickTextSize').value=this.value"/></div>
                 <div class="field"><label>Legend Size</label><input type="number" id="xyLegendSize" value="12" min="6" oninput="document.getElementById('xyLegendTextSize').value=this.value"/></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
@@ -1261,7 +1268,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <label class="toggle-item"><input type="checkbox" id="xyBoldTitle" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Title</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBoldAxisLabel" checked onchange="triggerInteractiveReplotStyleOnly('xy')">Axis Labels</label>
                 <label class="toggle-item"><input type="checkbox" id="xyBoldTick" onchange="document.getElementById('xyAxisBoldTicks').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Tick Labels</label>
-                <label class="toggle-item"><input type="checkbox" id="xyBoldLegend" onchange="triggerInteractiveReplotStyleOnly('xy')">Legend</label>
+                <label class="toggle-item"><input type="checkbox" id="xyBoldLegend" onchange="document.getElementById('xyLegendTextBold').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Legend</label>
               </div>
             </div>
 
@@ -1274,6 +1281,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Font</label><select id="xyLegendFont" onchange="triggerInteractiveReplotStyleOnly('xy')" title="Typeface of the legend entries"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
                 <div class="field"><label>Size</label><input type="number" id="xyLegendTextSize" data-mirror="xyLegendSize" value="12" min="6" max="48" oninput="document.getElementById('xyLegendSize').value=this.value;triggerInteractiveReplotStyleOnly('xy')" title="Same setting as Figure Size &amp; Font → Legend Size"/></div>
                 <div class="field"><label>Colour</label><input type="color" id="xyLegendFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Legend"><input type="checkbox" id="xyLegendTextBold" data-mirror="xyBoldLegend" onchange="document.getElementById('xyBoldLegend').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')"><b>Bold</b></label></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
               <div class="field">
@@ -1352,7 +1360,13 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                   </select>
                 </div>
                 <div class="field"><label>Axis Line Width (px)</label><input type="number" id="xyAxisLineWidth" value="2" min="0.5" max="8" step="0.5" oninput="triggerInteractiveReplotStyleOnly('xy')" title="Thickness of the axis lines / frame (“bold axes”)"/></div>
-                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="xyAxisBoldTicks" data-mirror="xyBoldTick" onchange="document.getElementById('xyBoldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')">Bold tick numbers</label></div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">🔢 Axis Numbers</div>
+              <div class="grid">
+                <div class="field"><label>Font</label><select id="xyTickFont" onchange="triggerInteractiveReplotStyleOnly('xy')" title="Typeface of the numbers on both axes"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
+                <div class="field"><label>Size</label><input type="number" id="xyTickTextSize" data-mirror="xyTickSize" value="13" min="6" max="48" oninput="document.getElementById('xyTickSize').value=this.value;triggerInteractiveReplotStyleOnly('xy')" title="Same setting as Figure Size &amp; Font → Tick Size"/></div>
+                <div class="field"><label>Colour</label><input type="color" id="xyTickFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+                <div class="field" style="justify-content:flex-end;"><label class="toggle-item" style="margin-top:auto;" title="Same setting as Figure Size &amp; Font → Bold → Tick Labels"><input type="checkbox" id="xyAxisBoldTicks" data-mirror="xyBoldTick" onchange="document.getElementById('xyBoldTick').checked=this.checked;triggerInteractiveReplotStyleOnly('xy')"><b>Bold</b></label></div>
               </div>
               <details class="adv-fold">
                 <summary>Ticks, colours, label spacing &amp; notation</summary>
@@ -1587,38 +1601,38 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610230449"></script>
-<script src="js/core/state.js?v=202610230449"></script>
-<script src="js/core/utils.js?v=202610230449"></script>
-<script src="js/core/advancedLayout.js?v=202610230449"></script>
-<script src="js/ui/annotations.js?v=202610230449"></script>
-<script src="js/io/parser.js?v=202610230449"></script>
-<script src="js/io/fileLoader.js?v=202610230449"></script>
-<script src="js/io/exporter.js?v=202610230449"></script>
+</div><script src="js/config.js?v=202610230500"></script>
+<script src="js/core/state.js?v=202610230500"></script>
+<script src="js/core/utils.js?v=202610230500"></script>
+<script src="js/core/advancedLayout.js?v=202610230500"></script>
+<script src="js/ui/annotations.js?v=202610230500"></script>
+<script src="js/io/parser.js?v=202610230500"></script>
+<script src="js/io/fileLoader.js?v=202610230500"></script>
+<script src="js/io/exporter.js?v=202610230500"></script>
 
-<script src="js/processing/despike.js?v=202610230449"></script>
-<script src="js/processing/baseline.js?v=202610230449"></script>
-<script src="js/processing/spectralExtras.js?v=202610230449"></script>
-<script src="js/processing/smoothing.js?v=202610230449"></script>
-<script src="js/plotting/averaging.js?v=202610230449"></script>
-<script src="js/plotting/plotting.js?v=202610230449"></script>
-<script src="js/plotting/xyPlot.js?v=202610230449"></script>
-<script src="js/plotting/comparison.js?v=202610230449"></script>
-<script src="js/analysis/peaks.js?v=202610230449"></script>
-<script src="js/analysis/fitting.js?v=202610230449"></script>
-<script src="js/analysis/resonance.js?v=202610230449"></script>
-<script src="js/analysis/stats.js?v=202610230449"></script>
-<script src="js/analysis/ramanTools.js?v=202610230449"></script>
-<script src="js/analysis/identify.js?v=202610230449"></script>
-<script src="js/ui/sidebar.js?v=202610230449"></script>
-<script src="js/ui/layout.js?v=202610230449"></script>
-<script src="js/ui/theme.js?v=202610230449"></script>
-<script src="js/ui/workspaceExtras.js?v=202610230449"></script>
-<script src="js/ui/project.js?v=202610230449"></script>
-<script src="js/ui/resultTabs.js?v=202610230449"></script>
-<script src="js/ui/stepGuide.js?v=202610230449"></script>
-<script src="js/ui/session.js?v=202610230449"></script>
-<script src="js/app.js?v=202610230449"></script>
+<script src="js/processing/despike.js?v=202610230500"></script>
+<script src="js/processing/baseline.js?v=202610230500"></script>
+<script src="js/processing/spectralExtras.js?v=202610230500"></script>
+<script src="js/processing/smoothing.js?v=202610230500"></script>
+<script src="js/plotting/averaging.js?v=202610230500"></script>
+<script src="js/plotting/plotting.js?v=202610230500"></script>
+<script src="js/plotting/xyPlot.js?v=202610230500"></script>
+<script src="js/plotting/comparison.js?v=202610230500"></script>
+<script src="js/analysis/peaks.js?v=202610230500"></script>
+<script src="js/analysis/fitting.js?v=202610230500"></script>
+<script src="js/analysis/resonance.js?v=202610230500"></script>
+<script src="js/analysis/stats.js?v=202610230500"></script>
+<script src="js/analysis/ramanTools.js?v=202610230500"></script>
+<script src="js/analysis/identify.js?v=202610230500"></script>
+<script src="js/ui/sidebar.js?v=202610230500"></script>
+<script src="js/ui/layout.js?v=202610230500"></script>
+<script src="js/ui/theme.js?v=202610230500"></script>
+<script src="js/ui/workspaceExtras.js?v=202610230500"></script>
+<script src="js/ui/project.js?v=202610230500"></script>
+<script src="js/ui/resultTabs.js?v=202610230500"></script>
+<script src="js/ui/stepGuide.js?v=202610230500"></script>
+<script src="js/ui/session.js?v=202610230500"></script>
+<script src="js/app.js?v=202610230500"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

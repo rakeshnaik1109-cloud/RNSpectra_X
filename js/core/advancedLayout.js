@@ -160,6 +160,7 @@ function applyJournalPreset(prefix) {
   setVal(fid(prefix, 'TickSize'), p.tick);
   setVal(fid(prefix, 'LegendSize'), p.legend);
   setVal(fid(prefix, 'LegendTextSize'), p.legend);   // the Legend Text box shows the same setting
+  setVal(fid(prefix, 'TickTextSize'), p.tick);        // and the Axis Numbers box
   const fontSel = document.getElementById(fid(prefix, 'FontFamily'));
   if (fontSel) fontSel.value = p.font;
 

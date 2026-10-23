@@ -381,13 +381,20 @@ Press `?` for the full sheet. The essentials:
 In the **Legend** panel (both workspaces), **🔤 Legend Text** sets the legend's
 **Font** (*Same as figure*, or its own typeface), **Size** (the same setting
 as *Figure Size & Font → Legend Size*; the two boxes stay linked) and
-**Colour**. Bold legend text is under *Figure Size & Font → Bold → Legend*.
-Changes apply to the plot at once.
+**Colour**, and **Bold** (the same setting as *Figure Size & Font → Bold →
+Legend*). Changes apply to the plot at once.
+
+### Axis numbers
+In **Axis Frame, Grid & Notation** (both workspaces), **🔢 Axis Numbers** sets
+the **Font** of the numbers on both axes (*Same as figure*, or its own
+typeface), their **Size** (linked to *Figure Size & Font → Tick Size*),
+**Colour** and **Bold**. Their number format (scientific, SI prefix, plain) is
+under the *Ticks, colours, label spacing & notation* fold below.
 
 ### Axis lines and tick marks
 In **Axis Frame, Grid & Notation** (both workspaces): **Axis Line Width** makes
 the axes / frame bold, **Tick Width** and **Tick Length** style the tick marks,
-and **Axis Colour** sets the colour of both. **Bold tick numbers** makes the
+and **Axis Colour** sets the colour of both. **Bold** under *🔢 Axis Numbers* makes the
 axis numbers bold (the same setting as **Figure Size & Font → Bold → Tick
 Labels**; the two boxes stay linked). Title, axis-label and legend boldness are
 under **Figure Size & Font → Bold**.
