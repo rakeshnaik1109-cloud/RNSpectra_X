@@ -327,8 +327,8 @@ and mathematics behind it, when to use which method, and how to read each result
 — including the parts of a peak-fit plot and the residual.
 
 ### Restore default settings
-**File ▾ → ↺ Restore default settings** puts every setting back to its default in
-one click (after a confirmation). Loaded spectra, file labels and groups, pasted
+**⟲ Default settings** (in the layout bar, after *Collapse*) puts every setting
+back to its default in one click (after a confirmation). Loaded spectra, file labels and groups, pasted
 data and annotations are kept, the plot is redrawn, and **Ctrl+Z** brings your
 previous settings back if you change your mind. The next visit then starts from
 the defaults too.

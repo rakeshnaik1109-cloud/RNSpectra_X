@@ -1191,7 +1191,6 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
           <button type="button" class="rx-menu-item" onclick="saveProject()" title="Save everything — spectra, settings, groups, annotations — as one .rnsx project file">💾 Save project (.rnsx)</button>
           <button type="button" class="rx-menu-item" onclick="openProjectDialog()" title="Open a .rnsx project file">📂 Open project…</button>
           <button type="button" class="rx-menu-item" onclick="showMethodsText()" title="Write a Methods paragraph from the current settings">📝 Methods text</button>
-          <button type="button" class="rx-menu-item" onclick="rxRestoreDefaults()" title="Put every setting back to its default in one click (loaded data and annotations are kept; Ctrl+Z undoes it)">↺ Restore default settings</button>
           <button type="button" class="rx-menu-item" onclick="showCitation()" title="How to cite RNSpectraX: APA and BibTeX with the DOI">📑 Cite RNSpectraX</button>
         </div>
       </details>
@@ -9123,6 +9122,10 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
   document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('change', schedule, true);
     document.addEventListener('click', function () { setTimeout(schedule, 0); });   // after the button's own work
+    // "Default settings" right after Collapse in the layout bar
+    var collapse = document.getElementById('collapseBtn');
+    if (collapse) collapse.insertAdjacentHTML('afterend',
+      '<button class="rx-hist-btn" id="rxDefaultsBtn" onclick="rxRestoreDefaults()" style="margin-left:6px" title="Put every setting back to its default in one click. Loaded data, file labels/groups and annotations are kept; Ctrl+Z undoes it.">⟲ Default settings</button>');
     // the ↶ ↷ buttons in the layout bar, before Reset
     var reset = document.querySelector('#layoutToolbar .layout-reset-btn');
     if (reset) {

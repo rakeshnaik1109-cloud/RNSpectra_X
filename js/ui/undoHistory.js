@@ -192,6 +192,10 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('change', schedule, true);
     document.addEventListener('click', function () { setTimeout(schedule, 0); });   // after the button's own work
+    // "Default settings" right after Collapse in the layout bar
+    var collapse = document.getElementById('collapseBtn');
+    if (collapse) collapse.insertAdjacentHTML('afterend',
+      '<button class="rx-hist-btn" id="rxDefaultsBtn" onclick="rxRestoreDefaults()" style="margin-left:6px" title="Put every setting back to its default in one click. Loaded data, file labels/groups and annotations are kept; Ctrl+Z undoes it.">⟲ Default settings</button>');
     // the ↶ ↷ buttons in the layout bar, before Reset
     var reset = document.querySelector('#layoutToolbar .layout-reset-btn');
     if (reset) {
