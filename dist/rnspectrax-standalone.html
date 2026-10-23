@@ -4,6 +4,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>window.RNSX_GUIDE_URL = "https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html";</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>RNSpectraX (Spectral Plotter and Analytics Suite)</title>
@@ -701,6 +702,10 @@ details.rx-menu > summary::-webkit-details-marker { display: none; }
 #rxRedoBtn { margin-left: 6px; }
 #rxRedoBtn + .layout-reset-btn { margin-left: 6px; }
 
+/* ⓘ links from section titles to the methods guide */
+.rx-guide-link { margin-left: 6px; font-size: 13px; font-weight: 700; text-decoration: none; color: var(--hint); border-radius: 50%; padding: 0 3px; }
+.rx-guide-link:hover, .rx-guide-link:focus-visible { color: var(--accent); background: var(--accent-soft); }
+
 </style>
 <style>
 /* css/layout.css */
@@ -1186,10 +1191,15 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
           <button type="button" class="rx-menu-item" onclick="saveProject()" title="Save everything — spectra, settings, groups, annotations — as one .rnsx project file">💾 Save project (.rnsx)</button>
           <button type="button" class="rx-menu-item" onclick="openProjectDialog()" title="Open a .rnsx project file">📂 Open project…</button>
           <button type="button" class="rx-menu-item" onclick="showMethodsText()" title="Write a Methods paragraph from the current settings">📝 Methods text</button>
+          <button type="button" class="rx-menu-item" onclick="rxRestoreDefaults()" title="Put every setting back to its default in one click (loaded data and annotations are kept; Ctrl+Z undoes it)">↺ Restore default settings</button>
           <button type="button" class="rx-menu-item" onclick="showCitation()" title="How to cite RNSpectraX: APA and BibTeX with the DOI">📑 Cite RNSpectraX</button>
         </div>
       </details>
       <input type="file" id="projectFileInput" accept=".rnsx,.json" style="display:none" onchange="openProjectFile(event)"/>
+      <a class="chrome-link" href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank" rel="noopener noreferrer" title="Methods guide: what every step does, the physics and mathematics, and when to use it (opens in a new tab)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span class="chrome-link-text">Guide</span>
+      </a>
       <a class="chrome-link" href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md" title="User manual">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h6l4 4v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Manual</span>
@@ -2688,6 +2698,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
     · <a href="#" onclick="showCitation();return false;" title="APA and BibTeX for RNSpectraX">How to cite</a> (<a href="https://doi.org/10.5281/zenodo.23593680" target="_blank" rel="noopener noreferrer" title="Zenodo archive of RNSpectraX v3.4">DOI 10.5281/zenodo.23593680</a>)
     · <a href="https://scholar.google.com/citations?user=xDMzlr0AAAAJ&hl=en" target="_blank" rel="noopener noreferrer" title="Publications on Google Scholar">Google Scholar ↗</a>
     · <a data-home-link href="https://rakeshnaik1109-cloud.github.io/RakeshNaik/" target="_blank" rel="noopener noreferrer" title="Research, publications and other work by Rakesh Naik">Rakesh Naik — website ↗</a>
+    · <a href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank" rel="noopener noreferrer">Methods guide</a>
     · <a href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md">Manual</a>
     · © 2026 All rights reserved.
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
@@ -8940,7 +8951,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
   // never part of the history: dialogs, the label-text box, file pickers
   var SKIP_ID = /^(methodsTextBox|citeApa|citeBib|annotText|xyAnnotText|projectFileInput|fileInput|xyFileInput)$/;
   // handlers that would redo their own work (apply a preset, re-tick datasets)
-  var NO_REPLAY = /applyJournalPreset|setXYQuantity|openProjectFile|calibrateShift/;
+  var NO_REPLAY = /applyJournalPreset|setXYQuantity|openProjectFile|calibrateShift|updateXYHints/;
 
   function tracked(el) {
     if (!el.id || SKIP_ID.test(el.id)) return false;
@@ -8965,6 +8976,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
   }
   function describe(step) {
     if (step.kind === 'annot') return 'annotation';
+    if (step.label) return step.label;
     var ids = Object.keys(step.changes);
     return labelOf(ids[0]) + (ids.length > 1 ? ' (+' + (ids.length - 1) + ' more)' : '');
   }
@@ -9006,6 +9018,9 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
       var src = document.getElementById(m.getAttribute('data-mirror')); if (!src) return;
       if (m.type === 'checkbox') m.checked = src.checked; else m.value = src.value;
     });
+    // the XY data-type badge (its own handler would also rewrite the axis labels)
+    var dt = document.getElementById('xyDataType'), badge = document.getElementById('xyTypeBadge');
+    if (dt && badge && typeof XY_HINTS !== 'undefined' && XY_HINTS[dt.value]) badge.textContent = XY_HINTS[dt.value].badge;
     if (typeof updateLegendSlidersText === 'function') updateLegendSlidersText();
     if (typeof updateXYLegendSlidersText === 'function') updateXYLegendSlidersText();
     // redraw the workspace(s) whose settings changed, if they have a plot
@@ -9051,6 +9066,37 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
     if (r) { r.disabled = !redoStack.length; r.title = redoStack.length ? 'Redo: ' + describe(redoStack[redoStack.length - 1]) + ' (Ctrl+Y)' : 'Nothing to redo (Ctrl+Y)'; }
   }
 
+  // ↺ Restore default settings: every setting back to the value it has in a
+  // fresh copy of the app. Loaded data, pasted values, the labels / colours /
+  // groups on file cards and annotations are kept. One undoable step.
+  var DATA_ID = /^(xyXvals|xyYvals|xyYerr|xyXerr|xyName|xyColor|xyRight|xyColText|xyColName)\d*$/;
+  function defaultOf(el) {
+    if (el.type === 'checkbox' || el.type === 'radio') return el.defaultChecked;
+    if (el.tagName === 'SELECT') {
+      var d = Array.prototype.find.call(el.options, function (o) { return o.defaultSelected; }) || el.options[0];
+      return d ? d.value : '';
+    }
+    return el.defaultValue;
+  }
+  function restoreDefaults() {
+    commit();
+    var changes = {};
+    document.querySelectorAll('input[id], select[id], textarea[id]').forEach(function (el) {
+      if (!tracked(el) || DATA_ID.test(el.id) || el.closest('#spectrumControls, #xyFileCards, #extraXYDatasets')) return;
+      var d = defaultOf(el), now = val(el);
+      if (d !== now) changes[el.id] = { from: now, to: d };
+    });
+    var n = Object.keys(changes).length;
+    if (!n) { rxNotify('All settings are already at their defaults'); return; }
+    if (!confirm('Restore all ' + n + ' changed setting' + (n === 1 ? '' : 's') + ' to their defaults?\n\nYour loaded spectra, file labels/groups and annotations are kept. You can undo this with Ctrl+Z.')) return;
+    applySettings(changes, 'to');
+    push({ kind: 'settings', changes: changes, label: 'Restore default settings' });
+    if (typeof legendNameOverrides !== 'undefined') { legendNameOverrides.ocean = {}; legendNameOverrides.xy = {}; }
+    rxNotify('↺ ' + n + ' setting' + (n === 1 ? '' : 's') + ' restored to defaults (Ctrl+Z to undo)');
+    rxTrack('restore-defaults');
+  }
+  window.rxRestoreDefaults = restoreDefaults;
+
   window.rxUndo = undo;
   window.rxRedo = redo;
   window.rxHistory = {
@@ -9086,6 +9132,47 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
     }
     // start recording once the saved session has been restored
     setTimeout(function () { last = snapshot(); ready = true; updateButtons(); }, 300);
+  });
+})();
+
+</script>
+<script>
+/* js/ui/guideLinks.js */
+/* ═══════════════════════════════════════════════════════════
+   GUIDE LINKS
+   A small ⓘ next to each processing / analysis section title opens the
+   methods guide (guide.html) in a new tab at the matching explanation.
+═══════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var GUIDE = 'guide.html';
+  // section title (start of its text) → guide anchor
+  var MAP = [
+    [/^Despiking/, 'despike'], [/^Baseline Correction/, 'baseline'], [/^Smoothing/, 'smoothing'],
+    [/^Normalization/, 'normalisation'], [/^Calibration, Regions/, 'calibration'],
+    [/^③ Averaging/, 'averaging'], [/^🧬 Identify/, 'identify'], [/^🔬 Analysis/, 'peakfit'],
+    [/^③ Curve Fitting/, 'xyfit'], [/^⑤ Resonance/, 'resonance']
+  ];
+  window.rxGuideUrl = function (anchor) { return (window.RNSX_GUIDE_URL || GUIDE) + (anchor ? '#' + anchor : ''); };
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.collapsible-header .section-title').forEach(function (t) {
+      var text = t.textContent.trim(), hit = MAP.find(function (m) { return m[0].test(text); });
+      if (!hit) return;
+      var a = document.createElement('a');
+      a.className = 'rx-guide-link'; a.href = rxGuideUrl(hit[1]); a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.title = 'How this works — the physics and mathematics (opens the guide)'; a.setAttribute('aria-label', a.title);
+      a.textContent = 'ⓘ';
+      // the header toggles its section on click; the link must not
+      a.addEventListener('click', function (e) { e.stopPropagation(); });
+      t.appendChild(a);
+    });
+    // the Analysis tool selector points the ⓘ at the chosen tool
+    var tool = document.getElementById('rtTool');
+    if (tool) tool.addEventListener('change', function () {
+      var link = document.querySelector('#oceanSecAnalysis .rx-guide-link');
+      var to = { peakfit: 'peakfit', ratio: 'ratio', pca: 'pca', diff: 'difference' }[tool.value];
+      if (link && to) link.href = rxGuideUrl(to);
+    });
   });
 })();
 

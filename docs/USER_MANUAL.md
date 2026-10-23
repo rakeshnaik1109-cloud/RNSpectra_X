@@ -320,6 +320,19 @@ The action bar of the control panel holds **▶ Plot** and an **↓ Export ▾**
 
 ## 5. Working faster
 
+### Methods guide
+**Guide** in the header (and the small **ⓘ** next to each processing and analysis
+section) opens the methods guide in a new tab: what every step does, the physics
+and mathematics behind it, when to use which method, and how to read each result
+— including the parts of a peak-fit plot and the residual.
+
+### Restore default settings
+**File ▾ → ↺ Restore default settings** puts every setting back to its default in
+one click (after a confirmation). Loaded spectra, file labels and groups, pasted
+data and annotations are kept, the plot is redrawn, and **Ctrl+Z** brings your
+previous settings back if you change your mind. The next visit then starts from
+the defaults too.
+
 ### Undo and redo
 **Ctrl+Z** (⌘+Z on a Mac) undoes the last change and **Ctrl+Y** or
 **Ctrl+Shift+Z** redoes it; the **↶ Undo** and **↷ Redo** buttons in the layout

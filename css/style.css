@@ -660,3 +660,7 @@ details.rx-menu > summary::-webkit-details-marker { display: none; }
 #rxUndoBtn { margin-left: auto; }
 #rxRedoBtn { margin-left: 6px; }
 #rxRedoBtn + .layout-reset-btn { margin-left: 6px; }
+
+/* ⓘ links from section titles to the methods guide */
+.rx-guide-link { margin-left: 6px; font-size: 13px; font-weight: 700; text-decoration: none; color: var(--hint); border-radius: 50%; padding: 0 3px; }
+.rx-guide-link:hover, .rx-guide-link:focus-visible { color: var(--accent); background: var(--accent-soft); }

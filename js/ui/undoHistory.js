@@ -20,7 +20,7 @@
   // never part of the history: dialogs, the label-text box, file pickers
   var SKIP_ID = /^(methodsTextBox|citeApa|citeBib|annotText|xyAnnotText|projectFileInput|fileInput|xyFileInput)$/;
   // handlers that would redo their own work (apply a preset, re-tick datasets)
-  var NO_REPLAY = /applyJournalPreset|setXYQuantity|openProjectFile|calibrateShift/;
+  var NO_REPLAY = /applyJournalPreset|setXYQuantity|openProjectFile|calibrateShift|updateXYHints/;
 
   function tracked(el) {
     if (!el.id || SKIP_ID.test(el.id)) return false;
@@ -45,6 +45,7 @@
   }
   function describe(step) {
     if (step.kind === 'annot') return 'annotation';
+    if (step.label) return step.label;
     var ids = Object.keys(step.changes);
     return labelOf(ids[0]) + (ids.length > 1 ? ' (+' + (ids.length - 1) + ' more)' : '');
   }
@@ -86,6 +87,9 @@
       var src = document.getElementById(m.getAttribute('data-mirror')); if (!src) return;
       if (m.type === 'checkbox') m.checked = src.checked; else m.value = src.value;
     });
+    // the XY data-type badge (its own handler would also rewrite the axis labels)
+    var dt = document.getElementById('xyDataType'), badge = document.getElementById('xyTypeBadge');
+    if (dt && badge && typeof XY_HINTS !== 'undefined' && XY_HINTS[dt.value]) badge.textContent = XY_HINTS[dt.value].badge;
     if (typeof updateLegendSlidersText === 'function') updateLegendSlidersText();
     if (typeof updateXYLegendSlidersText === 'function') updateXYLegendSlidersText();
     // redraw the workspace(s) whose settings changed, if they have a plot
@@ -130,6 +134,37 @@
     if (u) { u.disabled = !undoStack.length; u.title = undoStack.length ? 'Undo: ' + describe(undoStack[undoStack.length - 1]) + ' (Ctrl+Z)' : 'Nothing to undo (Ctrl+Z)'; }
     if (r) { r.disabled = !redoStack.length; r.title = redoStack.length ? 'Redo: ' + describe(redoStack[redoStack.length - 1]) + ' (Ctrl+Y)' : 'Nothing to redo (Ctrl+Y)'; }
   }
+
+  // ↺ Restore default settings: every setting back to the value it has in a
+  // fresh copy of the app. Loaded data, pasted values, the labels / colours /
+  // groups on file cards and annotations are kept. One undoable step.
+  var DATA_ID = /^(xyXvals|xyYvals|xyYerr|xyXerr|xyName|xyColor|xyRight|xyColText|xyColName)\d*$/;
+  function defaultOf(el) {
+    if (el.type === 'checkbox' || el.type === 'radio') return el.defaultChecked;
+    if (el.tagName === 'SELECT') {
+      var d = Array.prototype.find.call(el.options, function (o) { return o.defaultSelected; }) || el.options[0];
+      return d ? d.value : '';
+    }
+    return el.defaultValue;
+  }
+  function restoreDefaults() {
+    commit();
+    var changes = {};
+    document.querySelectorAll('input[id], select[id], textarea[id]').forEach(function (el) {
+      if (!tracked(el) || DATA_ID.test(el.id) || el.closest('#spectrumControls, #xyFileCards, #extraXYDatasets')) return;
+      var d = defaultOf(el), now = val(el);
+      if (d !== now) changes[el.id] = { from: now, to: d };
+    });
+    var n = Object.keys(changes).length;
+    if (!n) { rxNotify('All settings are already at their defaults'); return; }
+    if (!confirm('Restore all ' + n + ' changed setting' + (n === 1 ? '' : 's') + ' to their defaults?\n\nYour loaded spectra, file labels/groups and annotations are kept. You can undo this with Ctrl+Z.')) return;
+    applySettings(changes, 'to');
+    push({ kind: 'settings', changes: changes, label: 'Restore default settings' });
+    if (typeof legendNameOverrides !== 'undefined') { legendNameOverrides.ocean = {}; legendNameOverrides.xy = {}; }
+    rxNotify('↺ ' + n + ' setting' + (n === 1 ? '' : 's') + ' restored to defaults (Ctrl+Z to undo)');
+    rxTrack('restore-defaults');
+  }
+  window.rxRestoreDefaults = restoreDefaults;
 
   window.rxUndo = undo;
   window.rxRedo = redo;

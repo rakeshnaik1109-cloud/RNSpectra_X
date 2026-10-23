@@ -42,6 +42,8 @@ src = re.sub(r'<script src="(js/[^"?]+)(?:\?v=[^"]*)?"></script>', inline_js, sr
 icon = base64.b64encode(open('assets/favicon.svg', encoding='utf-8').read().encode()).decode()
 src = src.replace('<link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>',
                   '<link rel="icon" href="data:image/svg+xml;base64,%s" type="image/svg+xml"/>' % icon)
+src = src.replace('href="guide.html"', 'href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html"')
+src = src.replace('<head>', '<head>\n<script>window.RNSX_GUIDE_URL = "https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html";</script>', 1)
 src = src.replace('href="docs/USER_MANUAL.md"',
                   'href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md"')
 

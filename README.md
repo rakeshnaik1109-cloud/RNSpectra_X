@@ -109,6 +109,10 @@ nothing about your files or spectra.
   groups, annotations — and a **Methods text** generator (File menu) that writes the Methods
   paragraph, with references, from the settings in use.
 
+A [**methods guide**](https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html)
+(also under **Guide** in the app) explains every step: what it does, the physics
+and mathematics behind it, when to use which method, and how to read each result.
+
 The mathematics behind every processing and fitting step is written out in
 [`docs/METHODS.md`](docs/METHODS.md), so the pipeline can be described exactly in
 a methods section. Step-by-step usage is in
