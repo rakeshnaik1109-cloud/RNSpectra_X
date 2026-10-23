@@ -9,19 +9,20 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css"/>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-<script>try{var t=localStorage.getItem('rnspx_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+<script>/* bright by default; dark only when chosen with the toggle (remembered for the guide) */try{if(localStorage.getItem('rnspx_guide_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 <style>
 :root{--bg:#f6f4fa;--surface:#fff;--text:#1d1b26;--muted:#5d5870;--hint:#837d96;--border:#e3dfec;--accent:#6d3fd1;--accent-soft:#f1ebff;--gold:#c8901a;--code:#f3f0f9;
 --c1:#1f77b4;--c2:#d62728;--c3:#2ca02c;--c4:#9467bd;--c5:#d62728;--c0:#64748b;}
 :root[data-theme="dark"]{--bg:#121019;--surface:#1b1824;--text:#ece9f4;--muted:#b3adc4;--hint:#8e88a3;--border:#2f2a3d;--accent:#a98bf5;--accent-soft:#2a2340;--gold:#e0a82e;--code:#24202f;
 --c1:#6cb4ff;--c2:#ff7a7a;--c3:#5fd17a;--c4:#c39bff;--c5:#ff7a7a;--c0:#9aa6b8;}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121019;--surface:#1b1824;--text:#ece9f4;--muted:#b3adc4;--hint:#8e88a3;--border:#2f2a3d;--accent:#a98bf5;--accent-soft:#2a2340;--gold:#e0a82e;--code:#24202f;--c1:#6cb4ff;--c2:#ff7a7a;--c3:#5fd17a;--c4:#c39bff;--c5:#ff7a7a;--c0:#9aa6b8;}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{position:sticky;top:0;z-index:10;background:#151020;color:#efeaf8;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 header .logo{font-weight:800;font-size:18px;letter-spacing:-.02em}header .logo span{color:#e0a82e}
 header .sub{font-size:12px;color:#b9b2cc;text-transform:uppercase;letter-spacing:.08em}
-header a{color:#efeaf8;margin-left:auto;font-size:13px;border:1px solid #3a3150;border-radius:8px;padding:5px 10px;text-decoration:none}
+header a,header button{color:#efeaf8;font:inherit;font-size:13px;border:1px solid #3a3150;border-radius:8px;padding:5px 10px;text-decoration:none;background:transparent;cursor:pointer}
+header a{margin-left:auto}
+header button:hover,header a:hover{background:rgba(255,255,255,.08)}
 .wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:250px minmax(0,1fr);gap:28px;padding:24px 20px 80px}
 nav.toc{position:sticky;top:70px;align-self:start;max-height:calc(100vh - 90px);overflow:auto;font-size:13.5px;padding-right:6px}
 nav.toc b{display:block;margin:14px 0 4px;color:var(--hint);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
@@ -76,6 +77,7 @@ footer{font-size:13px;color:var(--hint);border-top:1px solid var(--border);margi
   <div class="logo">RNSpectra<span>X</span>™</div>
   <div class="sub">Methods guide · the logic, physics and mathematics of every step</div>
   <a href="index.html">← Back to the app</a>
+  <button type="button" id="themeBtn" onclick="toggleGuideTheme()" aria-label="Switch between bright and dark mode">🌙 Dark</button>
 </header>
 
 <div class="wrap">
@@ -566,7 +568,18 @@ Centre for Photonics and Quantum Communication Technology, IIT Roorkee. © 2026 
 </main>
 </div>
 <script>
+function setThemeLabel() {
+  var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  var b = document.getElementById('themeBtn'); if (b) b.textContent = dark ? '☀️ Bright' : '🌙 Dark';
+}
+function toggleGuideTheme() {
+  var dark = document.documentElement.getAttribute('data-theme') !== 'dark';
+  if (dark) document.documentElement.setAttribute('data-theme', 'dark'); else document.documentElement.removeAttribute('data-theme');
+  try { localStorage.setItem('rnspx_guide_theme', dark ? 'dark' : 'light'); } catch (e) {}
+  setThemeLabel();
+}
 document.addEventListener('DOMContentLoaded', function () {
+  setThemeLabel();
   if (window.renderMathInElement) renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }], throwOnError: false });
 });
 </script>
