@@ -380,6 +380,13 @@ Press `?` for the full sheet. The essentials:
 
 ---
 
+### Moving the axis titles
+Drag the X or Y axis title on the plot to put it anywhere in the figure; click
+it (without dragging) to edit its text. A moved title can be dragged again, is
+kept after a reload and in `.rnsx` projects, and appears exactly there in every
+exported image. It always stays inside the figure so it cannot be cut off.
+**↺ Reset title positions** (under *Axes & Labels*) puts both titles back.
+
 ### Legend text
 In the **Legend** panel (both workspaces), **🔤 Legend Text** sets the legend's
 **Font** (*Same as figure*, or its own typeface), **Size** (the same setting
