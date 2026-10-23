@@ -377,6 +377,13 @@ Press `?` for the full sheet. The essentials:
 
 ---
 
+### Legend text
+In the **Legend** panel (both workspaces), **🔤 Legend Text** sets the legend's
+**Font** (*Same as figure*, or its own typeface), **Size** (the same setting
+as *Figure Size & Font → Legend Size*; the two boxes stay linked) and
+**Colour**. Bold legend text is under *Figure Size & Font → Bold → Legend*.
+Changes apply to the plot at once.
+
 ### Axis lines and tick marks
 In **Axis Frame, Grid & Notation** (both workspaces): **Axis Line Width** makes
 the axes / frame bold, **Tick Width** and **Tick Length** style the tick marks,

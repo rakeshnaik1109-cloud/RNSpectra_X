@@ -30,7 +30,7 @@ function projectApplySettings(values) {
     n++;
     el.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  document.querySelectorAll("[data-mirror]").forEach(m => { const src = document.getElementById(m.getAttribute("data-mirror")); if (src) m.checked = src.checked; });
+  document.querySelectorAll("[data-mirror]").forEach(m => { const src = document.getElementById(m.getAttribute("data-mirror")); if (!src) return; if (m.type === "checkbox") m.checked = src.checked; else m.value = src.value; });
   return n;
 }
 

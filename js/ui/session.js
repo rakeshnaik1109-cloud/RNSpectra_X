@@ -71,7 +71,8 @@
     // tick-boxes that mirror another one (e.g. "Bold tick numbers") follow it
     document.querySelectorAll('[data-mirror]').forEach(function (m) {
       var src = document.getElementById(m.getAttribute('data-mirror'));
-      if (src) m.checked = src.checked;
+      if (!src) return;
+      if (m.type === 'checkbox') m.checked = src.checked; else m.value = src.value;
     });
     return restored;
   }

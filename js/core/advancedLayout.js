@@ -159,6 +159,7 @@ function applyJournalPreset(prefix) {
   setVal(fid(prefix, 'LabelSize'), p.axis);
   setVal(fid(prefix, 'TickSize'), p.tick);
   setVal(fid(prefix, 'LegendSize'), p.legend);
+  setVal(fid(prefix, 'LegendTextSize'), p.legend);   // the Legend Text box shows the same setting
   const fontSel = document.getElementById(fid(prefix, 'FontFamily'));
   if (fontSel) fontSel.value = p.font;
 

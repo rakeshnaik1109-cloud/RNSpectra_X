@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610212106" rel="stylesheet"/>
-<link href="css/layout.css?v=202610212106" rel="stylesheet"/>
+<link href="css/style.css?v=202610230449" rel="stylesheet"/>
+<link href="css/layout.css?v=202610230449" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -456,7 +456,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Title Size</label><input type="number" id="titleSize" value="22" min="8"/></div>
                 <div class="field"><label>Axis Label</label><input type="number" id="labelSize" value="18" min="8"/></div>
                 <div class="field"><label>Tick Size</label><input type="number" id="tickSize" value="13" min="6"/></div>
-                <div class="field"><label>Legend Size</label><input type="number" id="legendSize" value="12" min="6"/></div>
+                <div class="field"><label>Legend Size</label><input type="number" id="legendSize" value="12" min="6" oninput="document.getElementById('legendTextSize').value=this.value"/></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
@@ -474,6 +474,12 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 
             <!-- Legend Position & Box Style -->
             <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin-top:4px;">
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:8px;">🔤 Legend Text</div>
+              <div class="grid" style="margin-bottom:12px;">
+                <div class="field"><label>Font</label><select id="legendFont" onchange="triggerInteractiveReplotStyleOnly('ocean')" title="Typeface of the legend entries"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
+                <div class="field"><label>Size</label><input type="number" id="legendTextSize" data-mirror="legendSize" value="12" min="6" max="48" oninput="document.getElementById('legendSize').value=this.value;triggerInteractiveReplotStyleOnly('ocean')" title="Same setting as Figure Size &amp; Font → Legend Size"/></div>
+                <div class="field"><label>Colour</label><input type="color" id="legendFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+              </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
               <div class="field">
                 <label>X (Left ↔ Right)</label>
@@ -1248,7 +1254,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <div class="field"><label>Title Size</label><input type="number" id="xyTitleSize" value="22" min="8"/></div>
                 <div class="field"><label>Axis Label</label><input type="number" id="xyLabelSize" value="18" min="8"/></div>
                 <div class="field"><label>Tick Size</label><input type="number" id="xyTickSize" value="13" min="6"/></div>
-                <div class="field"><label>Legend Size</label><input type="number" id="xyLegendSize" value="12" min="6"/></div>
+                <div class="field"><label>Legend Size</label><input type="number" id="xyLegendSize" value="12" min="6" oninput="document.getElementById('xyLegendTextSize').value=this.value"/></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
@@ -1263,6 +1269,12 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 
             <!-- Legend Position & Box Style -->
             <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin-top:4px;">
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:8px;">🔤 Legend Text</div>
+              <div class="grid" style="margin-bottom:12px;">
+                <div class="field"><label>Font</label><select id="xyLegendFont" onchange="triggerInteractiveReplotStyleOnly('xy')" title="Typeface of the legend entries"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
+                <div class="field"><label>Size</label><input type="number" id="xyLegendTextSize" data-mirror="xyLegendSize" value="12" min="6" max="48" oninput="document.getElementById('xyLegendSize').value=this.value;triggerInteractiveReplotStyleOnly('xy')" title="Same setting as Figure Size &amp; Font → Legend Size"/></div>
+                <div class="field"><label>Colour</label><input type="color" id="xyLegendFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+              </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
               <div class="field">
                 <label>X (Left ↔ Right)</label>
@@ -1575,38 +1587,38 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610212106"></script>
-<script src="js/core/state.js?v=202610212106"></script>
-<script src="js/core/utils.js?v=202610212106"></script>
-<script src="js/core/advancedLayout.js?v=202610212106"></script>
-<script src="js/ui/annotations.js?v=202610212106"></script>
-<script src="js/io/parser.js?v=202610212106"></script>
-<script src="js/io/fileLoader.js?v=202610212106"></script>
-<script src="js/io/exporter.js?v=202610212106"></script>
+</div><script src="js/config.js?v=202610230449"></script>
+<script src="js/core/state.js?v=202610230449"></script>
+<script src="js/core/utils.js?v=202610230449"></script>
+<script src="js/core/advancedLayout.js?v=202610230449"></script>
+<script src="js/ui/annotations.js?v=202610230449"></script>
+<script src="js/io/parser.js?v=202610230449"></script>
+<script src="js/io/fileLoader.js?v=202610230449"></script>
+<script src="js/io/exporter.js?v=202610230449"></script>
 
-<script src="js/processing/despike.js?v=202610212106"></script>
-<script src="js/processing/baseline.js?v=202610212106"></script>
-<script src="js/processing/spectralExtras.js?v=202610212106"></script>
-<script src="js/processing/smoothing.js?v=202610212106"></script>
-<script src="js/plotting/averaging.js?v=202610212106"></script>
-<script src="js/plotting/plotting.js?v=202610212106"></script>
-<script src="js/plotting/xyPlot.js?v=202610212106"></script>
-<script src="js/plotting/comparison.js?v=202610212106"></script>
-<script src="js/analysis/peaks.js?v=202610212106"></script>
-<script src="js/analysis/fitting.js?v=202610212106"></script>
-<script src="js/analysis/resonance.js?v=202610212106"></script>
-<script src="js/analysis/stats.js?v=202610212106"></script>
-<script src="js/analysis/ramanTools.js?v=202610212106"></script>
-<script src="js/analysis/identify.js?v=202610212106"></script>
-<script src="js/ui/sidebar.js?v=202610212106"></script>
-<script src="js/ui/layout.js?v=202610212106"></script>
-<script src="js/ui/theme.js?v=202610212106"></script>
-<script src="js/ui/workspaceExtras.js?v=202610212106"></script>
-<script src="js/ui/project.js?v=202610212106"></script>
-<script src="js/ui/resultTabs.js?v=202610212106"></script>
-<script src="js/ui/stepGuide.js?v=202610212106"></script>
-<script src="js/ui/session.js?v=202610212106"></script>
-<script src="js/app.js?v=202610212106"></script>
+<script src="js/processing/despike.js?v=202610230449"></script>
+<script src="js/processing/baseline.js?v=202610230449"></script>
+<script src="js/processing/spectralExtras.js?v=202610230449"></script>
+<script src="js/processing/smoothing.js?v=202610230449"></script>
+<script src="js/plotting/averaging.js?v=202610230449"></script>
+<script src="js/plotting/plotting.js?v=202610230449"></script>
+<script src="js/plotting/xyPlot.js?v=202610230449"></script>
+<script src="js/plotting/comparison.js?v=202610230449"></script>
+<script src="js/analysis/peaks.js?v=202610230449"></script>
+<script src="js/analysis/fitting.js?v=202610230449"></script>
+<script src="js/analysis/resonance.js?v=202610230449"></script>
+<script src="js/analysis/stats.js?v=202610230449"></script>
+<script src="js/analysis/ramanTools.js?v=202610230449"></script>
+<script src="js/analysis/identify.js?v=202610230449"></script>
+<script src="js/ui/sidebar.js?v=202610230449"></script>
+<script src="js/ui/layout.js?v=202610230449"></script>
+<script src="js/ui/theme.js?v=202610230449"></script>
+<script src="js/ui/workspaceExtras.js?v=202610230449"></script>
+<script src="js/ui/project.js?v=202610230449"></script>
+<script src="js/ui/resultTabs.js?v=202610230449"></script>
+<script src="js/ui/stepGuide.js?v=202610230449"></script>
+<script src="js/ui/session.js?v=202610230449"></script>
+<script src="js/app.js?v=202610230449"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

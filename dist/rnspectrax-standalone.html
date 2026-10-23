@@ -1525,7 +1525,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Title Size</label><input type="number" id="titleSize" value="22" min="8"/></div>
                 <div class="field"><label>Axis Label</label><input type="number" id="labelSize" value="18" min="8"/></div>
                 <div class="field"><label>Tick Size</label><input type="number" id="tickSize" value="13" min="6"/></div>
-                <div class="field"><label>Legend Size</label><input type="number" id="legendSize" value="12" min="6"/></div>
+                <div class="field"><label>Legend Size</label><input type="number" id="legendSize" value="12" min="6" oninput="document.getElementById('legendTextSize').value=this.value"/></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
@@ -1543,6 +1543,12 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
 
             <!-- Legend Position & Box Style -->
             <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin-top:4px;">
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:8px;">🔤 Legend Text</div>
+              <div class="grid" style="margin-bottom:12px;">
+                <div class="field"><label>Font</label><select id="legendFont" onchange="triggerInteractiveReplotStyleOnly('ocean')" title="Typeface of the legend entries"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
+                <div class="field"><label>Size</label><input type="number" id="legendTextSize" data-mirror="legendSize" value="12" min="6" max="48" oninput="document.getElementById('legendSize').value=this.value;triggerInteractiveReplotStyleOnly('ocean')" title="Same setting as Figure Size &amp; Font → Legend Size"/></div>
+                <div class="field"><label>Colour</label><input type="color" id="legendFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('ocean')"/></div>
+              </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
               <div class="field">
                 <label>X (Left ↔ Right)</label>
@@ -2317,7 +2323,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
                 <div class="field"><label>Title Size</label><input type="number" id="xyTitleSize" value="22" min="8"/></div>
                 <div class="field"><label>Axis Label</label><input type="number" id="xyLabelSize" value="18" min="8"/></div>
                 <div class="field"><label>Tick Size</label><input type="number" id="xyTickSize" value="13" min="6"/></div>
-                <div class="field"><label>Legend Size</label><input type="number" id="xyLegendSize" value="12" min="6"/></div>
+                <div class="field"><label>Legend Size</label><input type="number" id="xyLegendSize" value="12" min="6" oninput="document.getElementById('xyLegendTextSize').value=this.value"/></div>
               </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin:12px 0 8px;">Bold (independent per element)</div>
               <div class="toggles" style="flex-wrap:wrap;gap:10px;">
@@ -2332,6 +2338,12 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
 
             <!-- Legend Position & Box Style -->
             <div style="padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--inset);margin-top:4px;">
+              <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:8px;">🔤 Legend Text</div>
+              <div class="grid" style="margin-bottom:12px;">
+                <div class="field"><label>Font</label><select id="xyLegendFont" onchange="triggerInteractiveReplotStyleOnly('xy')" title="Typeface of the legend entries"><option value="same" selected>Same as figure</option><option value="times">Times New Roman</option><option value="arial">Arial</option><option value="helvetica">Helvetica</option><option value="calibri">Calibri</option><option value="cambria">Cambria</option><option value="georgia">Georgia</option><option value="liberation_serif">Liberation Serif</option><option value="liberation_sans">Liberation Sans</option><option value="cmu">Computer Modern (LaTeX-style)</option></select></div>
+                <div class="field"><label>Size</label><input type="number" id="xyLegendTextSize" data-mirror="xyLegendSize" value="12" min="6" max="48" oninput="document.getElementById('xyLegendSize').value=this.value;triggerInteractiveReplotStyleOnly('xy')" title="Same setting as Figure Size &amp; Font → Legend Size"/></div>
+                <div class="field"><label>Colour</label><input type="color" id="xyLegendFontColor" value="#444444" oninput="triggerInteractiveReplotStyleOnly('xy')"/></div>
+              </div>
               <div style="font-size:11px;font-weight:700;color:var(--label);margin-bottom:10px;">🎛 Legend Position</div>
               <div class="field">
                 <label>X (Left ↔ Right)</label>
@@ -2919,6 +2931,7 @@ function applyJournalPreset(prefix) {
   setVal(fid(prefix, 'LabelSize'), p.axis);
   setVal(fid(prefix, 'TickSize'), p.tick);
   setVal(fid(prefix, 'LegendSize'), p.legend);
+  setVal(fid(prefix, 'LegendTextSize'), p.legend);   // the Legend Text box shows the same setting
   const fontSel = document.getElementById(fid(prefix, 'FontFamily'));
   if (fontSel) fontSel.value = p.font;
 
@@ -5511,7 +5524,10 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   const boldTitleOn = $chk(fid(prefix, 'BoldTitle'), false);
   const boldAxisOn = $chk(fid(prefix, 'BoldAxisLabel'), false);
   const tickFont = resolveFont(prefix, fid(prefix, 'BoldTick'));
-  const legendFont = resolveFont(prefix, fid(prefix, 'BoldLegend'));
+  // the legend may have its own typeface ("Same as figure" keeps the figure's)
+  const legendKey = $val(fid(prefix, 'LegendFont'), 'same');
+  const legendFont = (legendKey && legendKey !== 'same' && FONT_FAMILIES[legendKey]) ? FONT_FAMILIES[legendKey] : resolveFont(prefix, fid(prefix, 'BoldLegend'));
+  const legendColor = $val(fid(prefix, 'LegendFontColor'), '#444444');
   const tickWeight = fontWeight(fid(prefix, 'BoldTick'));
   const legendWeight = fontWeight(fid(prefix, 'BoldLegend'));
 
@@ -5539,7 +5555,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
       title: { text: yLabelText, font: { size: parseInt(document.getElementById(isOcean ? "labelSize" : "xyLabelSize").value), family: familyOnly } },
       tickfont: { size: parseInt(document.getElementById(isOcean ? "tickSize" : "xyTickSize").value), family: tickFont, weight: tickWeight }
     }, yExtra),
-    legend: Object.assign({ x: legX, y: legY, xanchor: legX > 0.8 ? "right" : "left", yanchor: "top", font: { size: parseInt(document.getElementById(isOcean ? "legendSize" : "xyLegendSize").value), family: legendFont, weight: legendWeight } }, legendCfg)
+    legend: Object.assign({ x: legX, y: legY, xanchor: legX > 0.8 ? "right" : "left", yanchor: "top", font: { size: parseInt(document.getElementById(isOcean ? "legendSize" : "xyLegendSize").value), family: legendFont, weight: legendWeight, color: legendColor } }, legendCfg)
   };
 
   // Plotly expects axis label standoff nested under axis.title, not top-level
@@ -8258,7 +8274,7 @@ function projectApplySettings(values) {
     n++;
     el.dispatchEvent(new Event("change", { bubbles: true }));
   });
-  document.querySelectorAll("[data-mirror]").forEach(m => { const src = document.getElementById(m.getAttribute("data-mirror")); if (src) m.checked = src.checked; });
+  document.querySelectorAll("[data-mirror]").forEach(m => { const src = document.getElementById(m.getAttribute("data-mirror")); if (!src) return; if (m.type === "checkbox") m.checked = src.checked; else m.value = src.value; });
   return n;
 }
 
@@ -8746,7 +8762,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeMethods
     // tick-boxes that mirror another one (e.g. "Bold tick numbers") follow it
     document.querySelectorAll('[data-mirror]').forEach(function (m) {
       var src = document.getElementById(m.getAttribute('data-mirror'));
-      if (src) m.checked = src.checked;
+      if (!src) return;
+      if (m.type === 'checkbox') m.checked = src.checked; else m.value = src.value;
     });
     return restored;
   }

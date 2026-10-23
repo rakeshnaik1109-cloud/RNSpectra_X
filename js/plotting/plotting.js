@@ -374,7 +374,10 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
   const boldTitleOn = $chk(fid(prefix, 'BoldTitle'), false);
   const boldAxisOn = $chk(fid(prefix, 'BoldAxisLabel'), false);
   const tickFont = resolveFont(prefix, fid(prefix, 'BoldTick'));
-  const legendFont = resolveFont(prefix, fid(prefix, 'BoldLegend'));
+  // the legend may have its own typeface ("Same as figure" keeps the figure's)
+  const legendKey = $val(fid(prefix, 'LegendFont'), 'same');
+  const legendFont = (legendKey && legendKey !== 'same' && FONT_FAMILIES[legendKey]) ? FONT_FAMILIES[legendKey] : resolveFont(prefix, fid(prefix, 'BoldLegend'));
+  const legendColor = $val(fid(prefix, 'LegendFontColor'), '#444444');
   const tickWeight = fontWeight(fid(prefix, 'BoldTick'));
   const legendWeight = fontWeight(fid(prefix, 'BoldLegend'));
 
@@ -402,7 +405,7 @@ function renderCanvasTracesAndLayout(traces, peakDataMatrix, font, wrapper, mode
       title: { text: yLabelText, font: { size: parseInt(document.getElementById(isOcean ? "labelSize" : "xyLabelSize").value), family: familyOnly } },
       tickfont: { size: parseInt(document.getElementById(isOcean ? "tickSize" : "xyTickSize").value), family: tickFont, weight: tickWeight }
     }, yExtra),
-    legend: Object.assign({ x: legX, y: legY, xanchor: legX > 0.8 ? "right" : "left", yanchor: "top", font: { size: parseInt(document.getElementById(isOcean ? "legendSize" : "xyLegendSize").value), family: legendFont, weight: legendWeight } }, legendCfg)
+    legend: Object.assign({ x: legX, y: legY, xanchor: legX > 0.8 ? "right" : "left", yanchor: "top", font: { size: parseInt(document.getElementById(isOcean ? "legendSize" : "xyLegendSize").value), family: legendFont, weight: legendWeight, color: legendColor } }, legendCfg)
   };
 
   // Plotly expects axis label standoff nested under axis.title, not top-level
