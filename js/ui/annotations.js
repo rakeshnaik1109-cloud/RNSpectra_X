@@ -36,8 +36,11 @@ function replotCurrentMode(mode) {
 /* ---------- undo ---------- */
 function annotSnapshot(mode) {
   const h = annotHistory[mode];
-  h.push(JSON.stringify({ a: customAnnotations[mode], s: customShapesStore[mode] }));
+  const before = JSON.stringify({ a: customAnnotations[mode], s: customShapesStore[mode] });
+  h.push(before);
   if (h.length > 60) h.shift();
+  // the app-wide undo timeline (undoHistory.js) records the same step
+  if (window.rxHistory) rxHistory.noteAnnot(mode, before);
 }
 function undoAnnotation(mode) {
   const h = annotHistory[mode];
@@ -287,10 +290,7 @@ document.addEventListener('keydown', function (e) {
   const t = e.target, tag = (t.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable) return;
   const mode = (typeof currentMode !== 'undefined') ? currentMode : 'ocean';
-  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
-    if (annotHistory[mode].length) { e.preventDefault(); undoAnnotation(mode); }
-    return;
-  }
+  // Ctrl/⌘+Z is handled by the app-wide undo (undoHistory.js), annotations included
   if ((e.key === 'Delete' || e.key === 'Backspace') && currentSelection(mode)) { e.preventDefault(); deleteSelectedAnnotation(mode); return; }
   if (e.key === 'Escape') {
     if (annotPickMode[mode]) { annotPickMode[mode] = false; document.getElementById(annotFieldId(mode, 'PickBtn'))?.classList.remove('is-armed'); }
@@ -315,7 +315,7 @@ function buildAnnotToolbar(mode) {
       <button class="btn btn-outline btn-sm" id="${id('PickBtn')}" onclick="startPointLabel(${m})" title="Then click a point on a curve: an arrow with its X value is placed there, pinned to the data">📍 Label point</button>
       <span class="annot-sep"></span>
       <button class="btn btn-outline btn-sm" onclick="deleteSelectedAnnotation(${m})" title="Delete the selected item (or press Delete)">🗑 Delete</button>
-      <button class="btn btn-outline btn-sm" onclick="undoAnnotation(${m})" title="Undo (Ctrl/Cmd+Z)">↶ Undo</button>
+      <button class="btn btn-outline btn-sm" onclick="rxUndo()" title="Undo the last change — annotation or setting (Ctrl/Cmd+Z)">↶ Undo</button>
       <button class="btn btn-outline btn-sm annot-more-btn${moreOpen ? ' is-armed' : ''}" id="${id('MoreBtn')}" onclick="toggleAnnotMore(${m})" aria-expanded="${moreOpen}" title="Symbols, marker lines, shaded regions, font and colour, duplicate, clear all">⋯ More</button>
       <span id="${id('SelStatus')}" class="annot-status"></span>
     </div>

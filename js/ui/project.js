@@ -115,6 +115,7 @@ function loadProject(p) {
   setMode(p.mode === "xy" ? "xy" : "ocean");
   if (p.mode === "xy") { try { plotXY(); } catch (e) { /* nothing to plot yet */ } }
   else if ((p.raman || []).length) plotSpectrum();
+  if (window.rxHistory) setTimeout(() => rxHistory.reset(), 100);   // history starts again from the opened project
   rxNotify(`Project opened (saved ${p.saved ? new Date(p.saved).toLocaleString() : "earlier"}): ${(p.raman || []).length} spectra, ${(p.xy || []).length} XY datasets.`);
 }
 

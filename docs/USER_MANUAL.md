@@ -320,6 +320,18 @@ The action bar of the control panel holds **▶ Plot** and an **↓ Export ▾**
 
 ## 5. Working faster
 
+### Undo and redo
+**Ctrl+Z** (⌘+Z on a Mac) undoes the last change and **Ctrl+Y** or
+**Ctrl+Shift+Z** redoes it; the **↶ Undo** and **↷ Redo** buttons in the layout
+bar do the same, and their tooltips name the step. One timeline covers every
+setting (baseline, smoothing, normalisation, grouping, styles, figure size,
+axis-title positions, analysis options …) and every annotation. A button that
+changes several boxes at once, such as *Quick grouping* or a journal preset,
+is undone in one step. The plot is redrawn after each undo or redo. While you
+are typing in a text box, Ctrl+Z undoes the typing instead. Loading or
+removing files is not part of the history, and opening a project starts a new
+history.
+
 ### Finding your way around
 * **Results under the plot** (peak table, Identify, Analysis, Compare,
   Resonance) are shown one at a time. When more than one exists, a row of tabs
