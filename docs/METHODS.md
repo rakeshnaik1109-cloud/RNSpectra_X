@@ -488,6 +488,7 @@ For reproducibility, a methods section should state:
 
 ## References
 
+- Naik, R., & Srivastava, S. K. (2026). *RNSpectraX (Spectral Plotter and Analytics Suite)* (Version 3.4) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23593680
 - Whitaker, D. A. & Hayes, K. (2018). A simple algorithm for despiking Raman spectra. *Chemometrics and Intelligent Laboratory Systems*, 179, 82–84.
 - Savitzky, A. & Golay, M. J. E. (1964). Smoothing and differentiation of data by simplified least squares procedures. *Analytical Chemistry*, 36(8), 1627–1639.
 - Eilers, P. H. C. & Boelens, H. F. M. (2005). *Baseline correction with asymmetric least squares smoothing*. Leiden University Medical Centre report.

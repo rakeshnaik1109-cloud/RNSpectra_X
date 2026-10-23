@@ -141,7 +141,20 @@ function normalisationSentence(type, scale) {
   return `normalised ${s}` + (scale && scale !== 1 ? `${type === "minmax" ? ` and scaled to 0–${scale}` : ` and multiplied by ${scale}`}` : "");
 }
 
+const RNSX_DOI = "10.5281/zenodo.23593680";
+const RNSX_CITATION_APA = "Naik, R., & Srivastava, S. K. (2026). RNSpectraX (Spectral Plotter and Analytics Suite) (Version 3.4) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23593680";
+const RNSX_CITATION_BIB = `@software{naik_rnspectrax_2026,
+  author    = {Naik, Rakesh and Srivastava, Sachin Kumar},
+  title     = {{RNSpectraX (Spectral Plotter and Analytics Suite)}},
+  version   = {3.4},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23593680},
+  url       = {https://doi.org/10.5281/zenodo.23593680}
+}`;
+
 const MT_REFS = {
+  rnsx: RNSX_CITATION_APA,
   als: "Eilers, P. H. C. & Boelens, H. F. M. (2005). Baseline correction with asymmetric least squares smoothing. Leiden University Medical Centre report.",
   modpoly: "Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. Applied Spectroscopy, 57(11), 1363–1367.",
   sg: "Savitzky, A. & Golay, M. J. E. (1964). Smoothing and differentiation of data by simplified least squares procedures. Analytical Chemistry, 36(8), 1627–1639.",
@@ -160,7 +173,7 @@ function buildRamanMethods() {
   act.forEach(s => { const g = rtGroupOf(s); groups[g] = (groups[g] || 0) + 1; });
   const gNames = Object.keys(groups);
   const groupList = gNames.length > 1 ? ` (${gNames.map(g => `${g}, n = ${groups[g]}`).join("; ")})` : "";
-  parts.push(act.length === 1 ? "1 Raman spectrum was processed in RNSpectraX v3.4." : `${act.length} Raman spectra${groupList} were processed in RNSpectraX v3.4.`);
+  parts.push(act.length === 1 ? "1 Raman spectrum was processed in RNSpectraX v3.4 (Naik & Srivastava, 2026)." : `${act.length} Raman spectra${groupList} were processed in RNSpectraX v3.4 (Naik & Srivastava, 2026).`);
   const sh = mtNum("rsShift");
   if (sh) parts.push(`The Raman shift axis was corrected by ${sh > 0 ? "+" : ""}${sh} cm⁻¹ using the ${mtNum("rsCalRef")} cm⁻¹ band of a reference spectrum.`);
   const lo = mtNum("xmin"), hi = mtNum("xmax");
@@ -193,7 +206,7 @@ function buildXYMethods() {
   if (!ds.length) return null;
   const refs = new Set(), parts = [];
   const groups = [...new Set(ds.map(d => d.group).filter(Boolean))];
-  parts.push(`${mtPlural(ds.length, "dataset")}${groups.length ? ` in ${mtPlural(groups.length, "group")}` : ""} ${ds.length === 1 ? "was" : "were"} analysed in RNSpectraX v3.4.`);
+  parts.push(`${mtPlural(ds.length, "dataset")}${groups.length ? ` in ${mtPlural(groups.length, "group")}` : ""} ${ds.length === 1 ? "was" : "were"} analysed in RNSpectraX v3.4 (Naik & Srivastava, 2026).`);
   const sm = smoothingSentence(mtVal("xySmoothType"), mtNum("xySmP1"), mtNum("xySmP2"), mtNum("xySmP1"));
   if (sm) { parts.push(`Data were ${sm.t}.`); if (sm.ref) refs.add(sm.ref); }
   const nm = normalisationSentence(mtVal("xyNorm"), mtNum("xyNormScale"));
@@ -223,7 +236,8 @@ function showMethodsText() {
   rxTrack("methods-text");
   const m = currentMode === "xy" ? buildXYMethods() : buildRamanMethods();
   if (!m) { alert("Load and plot some data first: the text describes the settings used for it."); return; }
-  const refsTxt = m.refs.length ? "\n\nReferences\n" + m.refs.map(r => "• " + MT_REFS[r]).join("\n") : "";
+  // RNSpectraX itself is always cited first
+  const refsTxt = "\n\nReferences\n" + ["rnsx"].concat(m.refs).map(r => "• " + MT_REFS[r]).join("\n");
   let ov = document.getElementById("methodsOverlay");
   if (!ov) {
     ov = document.createElement("div"); ov.id = "methodsOverlay"; ov.className = "rx-modal";
@@ -249,3 +263,40 @@ function copyMethodsText() {
   (navigator.clipboard ? navigator.clipboard.writeText(box.value) : Promise.reject()).then(() => rxNotify("Methods text copied"), () => { document.execCommand("copy"); rxNotify("Methods text copied"); });
 }
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeMethodsText(); });
+
+
+/* ───────────────────────── CITE RNSpectraX ───────────────────────── */
+
+function showCitation() {
+  rxTrack("cite-dialog");
+  let ov = document.getElementById("citeOverlay");
+  if (!ov) {
+    ov = document.createElement("div"); ov.id = "citeOverlay"; ov.className = "rx-modal";
+    ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-labelledby", "citeTitle");
+    const esc = v => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    ov.innerHTML = `<div class="rx-modal-card" style="width:min(720px,100%)">
+      <div class="rx-modal-head"><h2 id="citeTitle">📑 Cite RNSpectraX</h2><button class="rx-modal-close" onclick="closeCitation()" aria-label="Close">✕</button></div>
+      <div class="rx-modal-body">
+        <p style="font-size:13px;margin:8px 0 10px;">If RNSpectraX contributes to published work, please cite it. DOI:
+          <a href="https://doi.org/${RNSX_DOI}" target="_blank" rel="noopener noreferrer">${RNSX_DOI}</a></p>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;">APA</div>
+        <textarea id="citeApa" readonly style="width:100%;min-height:70px;font-size:13px;line-height:1.5;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);">${esc(RNSX_CITATION_APA)}</textarea>
+        <div style="display:flex;justify-content:flex-end;margin:6px 0 12px;"><button class="btn btn-outline btn-sm" onclick="copyCitation('citeApa')">⧉ Copy APA</button></div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px;">BibTeX</div>
+        <textarea id="citeBib" readonly style="width:100%;min-height:170px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);">${esc(RNSX_CITATION_BIB)}</textarea>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+          <button class="btn btn-outline btn-sm" onclick="downloadBlob(RNSX_CITATION_BIB,'RNSpectraX.bib','application/x-bibtex')">↓ .bib</button>
+          <button class="btn btn-primary btn-sm" onclick="copyCitation('citeBib')">⧉ Copy BibTeX</button>
+        </div>
+      </div></div>`;
+    ov.addEventListener("click", ev => { if (ev.target === ov) closeCitation(); });
+    document.body.appendChild(ov);
+  }
+  ov.classList.add("is-open");
+}
+function closeCitation() { const ov = document.getElementById("citeOverlay"); if (ov) ov.classList.remove("is-open"); }
+function copyCitation(id) {
+  const box = document.getElementById(id); box.select();
+  (navigator.clipboard ? navigator.clipboard.writeText(box.value) : Promise.reject()).then(() => rxNotify("Citation copied"), () => { document.execCommand("copy"); rxNotify("Citation copied"); });
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitation(); });

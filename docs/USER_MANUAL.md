@@ -470,3 +470,25 @@ Band assignments are **suggestions from a reference table**, matched by position
 within a tolerance. Positions shift with environment, protonation state and
 plasmonic coupling. Treat every assignment as a hypothesis to confirm against
 reference spectra, not as an identification.
+
+---
+
+## 9. Citing RNSpectraX
+
+If RNSpectraX contributes to published work, please cite it. **File ▾ → 📑 Cite
+RNSpectraX** in the app shows these entries with copy buttons, and the
+**Methods text** includes the citation automatically.
+
+> Naik, R., & Srivastava, S. K. (2026). RNSpectraX (Spectral Plotter and Analytics Suite) (Version 3.4) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23593680
+
+```bibtex
+@software{naik_rnspectrax_2026,
+  author    = {Naik, Rakesh and Srivastava, Sachin Kumar},
+  title     = {{RNSpectraX (Spectral Plotter and Analytics Suite)}},
+  version   = {3.4},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.23593680},
+  url       = {https://doi.org/10.5281/zenodo.23593680}
+}
+```
