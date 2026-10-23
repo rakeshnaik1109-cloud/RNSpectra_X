@@ -76,7 +76,7 @@ footer{font-size:13px;color:var(--hint);border-top:1px solid var(--border);margi
 <header>
   <div class="logo">RNSpectra<span>X</span>™</div>
   <div class="sub">Methods guide · the logic, physics and mathematics of every step</div>
-  <a href="index.html">← Back to the app</a>
+  <a href="index.html" onclick="return backToApp()" title="Close the guide and return to your open app">← Back to the app</a>
   <button type="button" id="themeBtn" onclick="toggleGuideTheme()" aria-label="Switch between bright and dark mode">🌙 Dark</button>
 </header>
 
@@ -568,6 +568,12 @@ Centre for Photonics and Quantum Communication Technology, IIT Roorkee. © 2026 
 </main>
 </div>
 <script>
+// opened from the app: close this tab and return to it (your data stays there);
+// opened on its own: go to the app
+function backToApp() {
+  try { if (window.opener && !window.opener.closed) { window.opener.focus(); window.close(); return false; } } catch (e) {}
+  return true;
+}
 function setThemeLabel() {
   var dark = document.documentElement.getAttribute('data-theme') === 'dark';
   var b = document.getElementById('themeBtn'); if (b) b.textContent = dark ? '☀️ Bright' : '🌙 Dark';

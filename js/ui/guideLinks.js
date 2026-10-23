@@ -14,12 +14,23 @@
     [/^③ Curve Fitting/, 'xyfit'], [/^⑤ Resonance/, 'resonance']
   ];
   window.rxGuideUrl = function (anchor) { return (window.RNSX_GUIDE_URL || GUIDE) + (anchor ? '#' + anchor : ''); };
+  // Every guide link opens the same named tab, so the app is never left and
+  // repeated clicks reuse one guide tab (jumping to the new section) instead
+  // of piling up tabs. If the browser blocks it, the link's own target="_blank"
+  // still opens a new tab.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href*="guide.html"]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    var w = window.open(a.href, 'rnspx_guide');
+    if (w) { e.preventDefault(); try { w.focus(); } catch (err) {} }
+  }, true);
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.collapsible-header .section-title').forEach(function (t) {
       var text = t.textContent.trim(), hit = MAP.find(function (m) { return m[0].test(text); });
       if (!hit) return;
       var a = document.createElement('a');
-      a.className = 'rx-guide-link'; a.href = rxGuideUrl(hit[1]); a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.className = 'rx-guide-link'; a.href = rxGuideUrl(hit[1]); a.target = '_blank';
       a.title = 'How this works — the physics and mathematics (opens the guide)'; a.setAttribute('aria-label', a.title);
       a.textContent = 'ⓘ';
       // the header toggles its section on click; the link must not

@@ -1195,11 +1195,11 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
         </div>
       </details>
       <input type="file" id="projectFileInput" accept=".rnsx,.json" style="display:none" onchange="openProjectFile(event)"/>
-      <a class="chrome-link" href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank" rel="noopener noreferrer" title="Methods guide: what every step does, the physics and mathematics, and when to use it (opens in a new tab)">
+      <a class="chrome-link" href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank" title="Methods guide: what every step does, the physics and mathematics, and when to use it (opens in a new tab)">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4M8 4.9v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
         <span class="chrome-link-text">Guide</span>
       </a>
-      <a class="chrome-link" href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md" title="User manual">
+      <a class="chrome-link" href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md" target="_blank" rel="noopener noreferrer" title="User manual (opens in a new tab)">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h6l4 4v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 2.5v4h4" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Manual</span>
       </a>
@@ -2697,8 +2697,8 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
     · <a href="#" onclick="showCitation();return false;" title="APA and BibTeX for RNSpectraX">How to cite</a> (<a href="https://doi.org/10.5281/zenodo.23593680" target="_blank" rel="noopener noreferrer" title="Zenodo archive of RNSpectraX v3.4">DOI 10.5281/zenodo.23593680</a>)
     · <a href="https://scholar.google.com/citations?user=xDMzlr0AAAAJ&hl=en" target="_blank" rel="noopener noreferrer" title="Publications on Google Scholar">Google Scholar ↗</a>
     · <a data-home-link href="https://rakeshnaik1109-cloud.github.io/RakeshNaik/" target="_blank" rel="noopener noreferrer" title="Research, publications and other work by Rakesh Naik">Rakesh Naik — website ↗</a>
-    · <a href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank" rel="noopener noreferrer">Methods guide</a>
-    · <a href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md">Manual</a>
+    · <a href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank">Methods guide</a>
+    · <a href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md" target="_blank" rel="noopener noreferrer">Manual</a>
     · © 2026 All rights reserved.
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
@@ -9157,12 +9157,23 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeCitatio
     [/^③ Curve Fitting/, 'xyfit'], [/^⑤ Resonance/, 'resonance']
   ];
   window.rxGuideUrl = function (anchor) { return (window.RNSX_GUIDE_URL || GUIDE) + (anchor ? '#' + anchor : ''); };
+  // Every guide link opens the same named tab, so the app is never left and
+  // repeated clicks reuse one guide tab (jumping to the new section) instead
+  // of piling up tabs. If the browser blocks it, the link's own target="_blank"
+  // still opens a new tab.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href*="guide.html"]');
+    if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+    var w = window.open(a.href, 'rnspx_guide');
+    if (w) { e.preventDefault(); try { w.focus(); } catch (err) {} }
+  }, true);
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.collapsible-header .section-title').forEach(function (t) {
       var text = t.textContent.trim(), hit = MAP.find(function (m) { return m[0].test(text); });
       if (!hit) return;
       var a = document.createElement('a');
-      a.className = 'rx-guide-link'; a.href = rxGuideUrl(hit[1]); a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.className = 'rx-guide-link'; a.href = rxGuideUrl(hit[1]); a.target = '_blank';
       a.title = 'How this works — the physics and mathematics (opens the guide)'; a.setAttribute('aria-label', a.title);
       a.textContent = 'ⓘ';
       // the header toggles its section on click; the link must not
