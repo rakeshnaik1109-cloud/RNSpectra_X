@@ -3,6 +3,8 @@
 What each processing step actually computes, so a result from RNSpectraX can be
 described precisely in a manuscript.
 
+> **Cite the software as:** Naik, R., & Srivastava, S. K. (2026). *RNSpectraX (Spectral Plotter and Analytics Suite)* (Version 3.4) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23593680
+
 Throughout, a spectrum is a pair of vectors $(x_i, y_i)$ for $i = 1 \dots N$,
 with $x$ in cm⁻¹ (Raman shift), nm (wavelength) or degrees (2θ), and $y$ in
 counts or arbitrary intensity units.

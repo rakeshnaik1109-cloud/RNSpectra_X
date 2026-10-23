@@ -55,9 +55,15 @@ function downloadPlot() {
 
 
 
+// one line naming the software and how to cite it, for text and PDF reports
+function citationFooter() {
+  return "Generated with RNSpectraX v3.4. Cite as: " + (typeof RNSX_CITATION_APA !== "undefined" ? RNSX_CITATION_APA : "Naik, R., & Srivastava, S. K. (2026). RNSpectraX (Spectral Plotter and Analytics Suite) (Version 3.4). Zenodo. https://doi.org/10.5281/zenodo.23593680");
+}
+
 function downloadPeaksTxt() {
   syncOceanTableToMemory(); let txt = `Raman Band Report\nPlot: ${document.getElementById("title").value}\n\n#\tWavenumber\tIntensity\tMode\tAssignment\n` + "═".repeat(80) + "\n";
   lastPeaksData.forEach((r, i) => { txt += `${i + 1}\t${r.x.toFixed(1)}\t\t${r.y.toFixed(4)}\t\t${r.mode}\t\t${r.assign}\n`; });
+  txt += "\n" + citationFooter() + "\n";
   downloadBlob(txt, "Raman_Peaks.txt", "text/plain");
 }
 
@@ -65,7 +71,11 @@ function downloadPeaksTxt() {
 function downloadPeaksPdf() {
   syncOceanTableToMemory(); const { jsPDF } = window.jspdf; const doc = new jsPDF();
   let y = 35; doc.setFont("helvetica", "bold"); doc.text("Raman Assignments Matrix", 14, 20); doc.setFontSize(9);
-  lastPeaksData.forEach((r, i) => { doc.text(`${i + 1}. ${r.x.toFixed(1)} cm-1 | Intensity: ${r.y} | Mode: ${r.mode} | Group: ${r.assign}`, 14, y); y += 8; });
+  lastPeaksData.forEach((r, i) => { if (y > 270) { doc.addPage(); y = 20; } doc.text(`${i + 1}. ${r.x.toFixed(1)} cm-1 | Intensity: ${r.y} | Mode: ${r.mode} | Group: ${r.assign}`, 14, y); y += 8; });
+  doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
+  const cite = doc.splitTextToSize(citationFooter(), 182);
+  if (y + cite.length * 4 > 285) { doc.addPage(); y = 20; }
+  doc.text(cite, 14, y + 6);
   doc.save("RamanAssignments.pdf");
 }
 
@@ -83,6 +93,7 @@ function downloadComparisonReport(format, mode) {
   content += `\n2. DISTINCT / UNIQUE SPECTRAL PEAKS (Trace-isolated specific anomalies)\n-----------------------------------------------------------------\n`;
   if (analyzedDistinctPeaks.length) analyzedDistinctPeaks.forEach((p, i) => { content += `[Unique #${i + 1}] Coordinate: ${p.x.toFixed(1)}\tIntensity: ${p.y.toFixed(4)}\tOrigins: ${p.sourceTraces}\n`; });
   else content += `No standalone un-shared distinct anomalies identified.\n`;
+  content += `\n-----------------------------------------------------------------\n${citationFooter()}\n`;
   if (format === 'txt') { downloadBlob(content, "Comparative_Peak_Analysis_Report.txt", "text/plain"); }
   else {
     const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFont("monospace", "normal"); doc.setFontSize(10);
@@ -132,6 +143,7 @@ function downloadFitParams() {
     fit.derived.forEach(d => { txt += `   ${d.name} = ${d.value.toExponential(8)}  ±  ${Number.isFinite(d.se) ? d.se.toExponential(4) : "n/a"}\n`; });
     txt += "\n" + "-".repeat(60) + "\n\n";
   });
+  txt += citationFooter() + "\n";
   const q = s => `"${String(s).replace(/"/g, '""')}"`;
   let csv = "dataset,model,parameter,value,std_error\n";
   fits.forEach(fit => {

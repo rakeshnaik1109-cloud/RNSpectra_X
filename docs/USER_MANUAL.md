@@ -1,7 +1,10 @@
 # RNSpectraX™ (Spectral Plotter and Analytics Suite) — User Manual
 
-**Author:** Rakesh Naik
-**Date:** June 2026
+**Authors:** [Rakesh Naik](https://scholar.google.com/citations?user=xDMzlr0AAAAJ&hl=en) and Sachin Kumar Srivastava
+**Version:** 3.4 (October 2026)
+
+> **How to cite:** Naik, R., & Srivastava, S. K. (2026). *RNSpectraX (Spectral Plotter and Analytics Suite)* (Version 3.4) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23593680
+> BibTeX: see [§9](#9-citing-rnspectrax), or **File ▾ → 📑 Cite RNSpectraX** in the app.
 
 ---
 

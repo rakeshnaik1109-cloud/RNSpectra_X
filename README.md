@@ -18,10 +18,12 @@ It has two workspaces:
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23593680.svg)](https://doi.org/10.5281/zenodo.23593680)
 
-**Version 3.4** · **DOI:** [10.5281/zenodo.23593680](https://doi.org/10.5281/zenodo.23593680) · **Authors:** Rakesh Naik<sup>1</sup>, Sachin Kumar Srivastava<sup>1,2</sup>
+**Version 3.4** · **DOI:** [10.5281/zenodo.23593680](https://doi.org/10.5281/zenodo.23593680) · **Authors:** [Rakesh Naik](https://scholar.google.com/citations?user=xDMzlr0AAAAJ&hl=en "Google Scholar")<sup>1</sup>, Sachin Kumar Srivastava<sup>1,2</sup>
 <sup>1</sup>Centre for Photonics and Quantum Communication Technology, IIT Roorkee ·
 <sup>2</sup>Department of Physics, IIT Roorkee
 © 2026 Rakesh Naik and Sachin Kumar Srivastava. All rights reserved.
+
+**How to cite:** Naik, R., & Srivastava, S. K. (2026). *RNSpectraX (Spectral Plotter and Analytics Suite)* (Version 3.4) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23593680 — BibTeX in [Citing RNSpectraX](#citing-rnspectrax).
 
 ---
 
