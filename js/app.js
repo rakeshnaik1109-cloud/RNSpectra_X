@@ -1,1 +1,1 @@
-console.log("RNSpectraX v3.3  initialized");
+console.log("RNSpectraX v3.4  initialized");

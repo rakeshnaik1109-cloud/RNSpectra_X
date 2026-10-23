@@ -1,0 +1,40 @@
+{
+  "title": "RNSpectraX (Spectral Plotter and Analytics Suite)",
+  "upload_type": "software",
+  "version": "3.4",
+  "description": "<p>RNSpectraX is a browser-based suite for processing, analysing and plotting Raman/SERS spectra and general XY data. It provides despiking, baseline correction (ModPoly, rubber band, rolling ball, asymmetric least squares), smoothing, normalisation, shift calibration and derivative spectra; group statistics; peak detection and band assignment; reference-library identification; band fitting, band ratios with significance tests, PCA and difference spectra; least-squares curve fitting; and resonance tracking with calibration, LOD and LOQ for SPR/LSPR sensing. All calculations run locally in the browser.</p><p>Copyright © 2026 Rakesh Naik and Sachin Kumar Srivastava. All rights reserved; see LICENSE.</p>",
+  "creators": [
+    {
+      "name": "Naik, Rakesh",
+      "affiliation": "Centre for Photonics and Quantum Communication Technology, IIT Roorkee"
+    },
+    {
+      "name": "Srivastava, Sachin Kumar",
+      "affiliation": "Department of Physics and Centre for Photonics and Quantum Communication Technology, IIT Roorkee"
+    }
+  ],
+  "keywords": [
+    "Raman spectroscopy",
+    "SERS",
+    "spectral analysis",
+    "baseline correction",
+    "peak fitting",
+    "principal component analysis",
+    "curve fitting",
+    "surface plasmon resonance",
+    "scientific plotting",
+    "photonics"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/rakeshnaik1109-cloud/RNSpectra_X",
+      "relation": "isSupplementTo",
+      "scheme": "url"
+    },
+    {
+      "identifier": "https://rakeshnaik1109-cloud.github.io/RNSpectra_X/",
+      "relation": "isDocumentedBy",
+      "scheme": "url"
+    }
+  ]
+}

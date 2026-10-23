@@ -160,7 +160,7 @@ function buildRamanMethods() {
   act.forEach(s => { const g = rtGroupOf(s); groups[g] = (groups[g] || 0) + 1; });
   const gNames = Object.keys(groups);
   const groupList = gNames.length > 1 ? ` (${gNames.map(g => `${g}, n = ${groups[g]}`).join("; ")})` : "";
-  parts.push(act.length === 1 ? "1 Raman spectrum was processed in RNSpectraX v3.3." : `${act.length} Raman spectra${groupList} were processed in RNSpectraX v3.3.`);
+  parts.push(act.length === 1 ? "1 Raman spectrum was processed in RNSpectraX v3.4." : `${act.length} Raman spectra${groupList} were processed in RNSpectraX v3.4.`);
   const sh = mtNum("rsShift");
   if (sh) parts.push(`The Raman shift axis was corrected by ${sh > 0 ? "+" : ""}${sh} cm⁻¹ using the ${mtNum("rsCalRef")} cm⁻¹ band of a reference spectrum.`);
   const lo = mtNum("xmin"), hi = mtNum("xmax");
@@ -193,7 +193,7 @@ function buildXYMethods() {
   if (!ds.length) return null;
   const refs = new Set(), parts = [];
   const groups = [...new Set(ds.map(d => d.group).filter(Boolean))];
-  parts.push(`${mtPlural(ds.length, "dataset")}${groups.length ? ` in ${mtPlural(groups.length, "group")}` : ""} ${ds.length === 1 ? "was" : "were"} analysed in RNSpectraX v3.3.`);
+  parts.push(`${mtPlural(ds.length, "dataset")}${groups.length ? ` in ${mtPlural(groups.length, "group")}` : ""} ${ds.length === 1 ? "was" : "were"} analysed in RNSpectraX v3.4.`);
   const sm = smoothingSentence(mtVal("xySmoothType"), mtNum("xySmP1"), mtNum("xySmP2"), mtNum("xySmP1"));
   if (sm) { parts.push(`Data were ${sm.t}.`); if (sm.ref) refs.add(sm.ref); }
   const nm = normalisationSentence(mtVal("xyNorm"), mtNum("xyNormScale"));

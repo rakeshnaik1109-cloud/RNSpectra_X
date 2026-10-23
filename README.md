@@ -16,7 +16,7 @@ It has two workspaces:
    a simulation output), you can plot them with error bars and fit them with
    proper least-squares regression and parameter uncertainties.
 
-**Version 3.3** · **Authors:** Rakesh Naik<sup>1</sup>, Sachin Kumar Srivastava<sup>1,2</sup>
+**Version 3.4** · **Authors:** Rakesh Naik<sup>1</sup>, Sachin Kumar Srivastava<sup>1,2</sup>
 <sup>1</sup>Centre for Photonics and Quantum Communication Technology, IIT Roorkee ·
 <sup>2</sup>Department of Physics, IIT Roorkee
 © 2026 Rakesh Naik and Sachin Kumar Srivastava. All rights reserved.
@@ -111,6 +111,28 @@ a methods section. Step-by-step usage is in
 [`docs/USER_MANUAL.md`](docs/USER_MANUAL.md).
 
 ---
+
+## New in 3.4
+
+- **🔬 Analysis panel (Raman):** band fitting (Gaussian / Lorentzian /
+  pseudo-Voigt, with standard errors and per-group batch summaries), band
+  ratios and areas with Welch's t-test or one-way ANOVA, PCA with 95 %
+  confidence ellipses and loadings, and difference spectra.
+- **Processing:** asymmetric least squares (ALS) baseline; shift calibration
+  from a silicon / polystyrene / diamond reference band; excluded regions;
+  Savitzky–Golay 1st and 2nd derivatives.
+- **Grouping by name** ignores acquisition time stamps, spectrum indices and
+  words such as *RamanShift*.
+- **XY / sensing:** LOQ and ICH Q2 limits; resonance FWHM, Q factor and depth
+  vs concentration; a second Y axis; scaling of normalised data (e.g. 0–100).
+- **Annotations:** select, restyle, duplicate or delete one item with undo;
+  data-pinned point labels, marker lines, shaded regions, symbols.
+- **Project files (.rnsx)** that save and reopen everything, and a **Methods
+  text** generator with references.
+- **Figure styling:** legend font, size, colour and bold; axis-number font,
+  size, colour and bold.
+- **Tidier interface:** result tabs under the plot, Export and File menus,
+  folded fine-tuning options, a one-row annotation bar and a step guide.
 
 ## New in 3.3 — Raman mode corrections
 
@@ -246,6 +268,20 @@ source of any calculation directly.
 If RNSpectraX contributes to published work, please cite it. A
 [`CITATION.cff`](CITATION.cff) file is included, so GitHub shows a
 "Cite this repository" box with ready-made BibTeX and APA entries.
+
+> Naik, R., & Srivastava, S. K. (2026). *RNSpectraX (Spectral Plotter and
+> Analytics Suite)* (Version 3.4) [Computer software].
+> https://github.com/rakeshnaik1109-cloud/RNSpectra_X
+
+```bibtex
+@software{naik_rnspectrax_2026,
+  author  = {Naik, Rakesh and Srivastava, Sachin Kumar},
+  title   = {{RNSpectraX (Spectral Plotter and Analytics Suite)}},
+  version = {3.4},
+  year    = {2026},
+  url     = {https://github.com/rakeshnaik1109-cloud/RNSpectra_X}
+}
+```
 
 ---
 
