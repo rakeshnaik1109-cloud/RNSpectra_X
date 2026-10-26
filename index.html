@@ -33,8 +33,8 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<link href="css/style.css?v=202610261019" rel="stylesheet"/>
-<link href="css/layout.css?v=202610261019" rel="stylesheet"/>
+<link href="css/style.css?v=202610262022" rel="stylesheet"/>
+<link href="css/layout.css?v=202610262022" rel="stylesheet"/>
 
 <style>
 /* Panel-specific fine-tuning that isn't (and shouldn't be) in the shared
@@ -844,6 +844,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <select id="downloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
               </div>
               <button class="btn btn-green btn-sm" onclick="downloadPlottedData()">↓ Plotted CSV</button>
+              <button class="btn btn-secondary btn-sm" onclick="sendToRNBeamX('plot-wrapper')" title="Send this plot to RNBeamX to combine it with an optical-setup figure">→ RNBeamX</button>
               <button class="btn btn-green btn-sm" onclick="downloadProcessingStages()" title="One CSV per file: Raw, Despiked, Baseline, Baseline-Corrected, Smoothed, Normalized">↓ Stage-by-Stage Data</button>
             </div>
           </details>
@@ -1546,6 +1547,7 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
                 <select id="xyDownloadFormat"><option value="png">.png</option><option value="jpeg">.jpg</option><option value="tiff">.tiff</option><option value="svg">.svg</option></select>
               </div>
               <button class="btn btn-green btn-sm" onclick="downloadXYData()">↓ CSV</button>
+              <button class="btn btn-secondary btn-sm" onclick="sendToRNBeamX('xy-plot-wrapper')" title="Send this plot to RNBeamX to combine it with an optical-setup figure">→ RNBeamX</button>
               <button class="btn btn-green btn-sm" onclick="downloadFitParams()">↓ Fit</button>
             </div>
           </details>
@@ -1621,41 +1623,42 @@ document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
     <span data-visit-counter="/RNSpectra_X/" hidden title="Visitors to RNSpectraX (GoatCounter)"> · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="vertical-align:-2px"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg> <span data-count></span> visitors</span>
   </footer></div>
 
-</div><script src="js/config.js?v=202610261019"></script>
-<script src="js/core/state.js?v=202610261019"></script>
-<script src="js/core/utils.js?v=202610261019"></script>
-<script src="js/core/advancedLayout.js?v=202610261019"></script>
-<script src="js/ui/axisTitleDrag.js?v=202610261019"></script>
-<script src="js/ui/annotations.js?v=202610261019"></script>
-<script src="js/io/parser.js?v=202610261019"></script>
-<script src="js/io/fileLoader.js?v=202610261019"></script>
-<script src="js/io/exporter.js?v=202610261019"></script>
+</div><script src="js/config.js?v=202610262022"></script>
+<script src="js/core/state.js?v=202610262022"></script>
+<script src="js/core/utils.js?v=202610262022"></script>
+<script src="js/core/advancedLayout.js?v=202610262022"></script>
+<script src="js/ui/axisTitleDrag.js?v=202610262022"></script>
+<script src="js/ui/annotations.js?v=202610262022"></script>
+<script src="js/io/parser.js?v=202610262022"></script>
+<script src="js/io/fileLoader.js?v=202610262022"></script>
+<script src="js/io/exporter.js?v=202610262022"></script>
+<script src="js/io/bridge.js?v=202610262022"></script>
 
-<script src="js/processing/despike.js?v=202610261019"></script>
-<script src="js/processing/baseline.js?v=202610261019"></script>
-<script src="js/processing/spectralExtras.js?v=202610261019"></script>
-<script src="js/processing/smoothing.js?v=202610261019"></script>
-<script src="js/plotting/averaging.js?v=202610261019"></script>
-<script src="js/plotting/plotting.js?v=202610261019"></script>
-<script src="js/plotting/xyPlot.js?v=202610261019"></script>
-<script src="js/plotting/comparison.js?v=202610261019"></script>
-<script src="js/analysis/peaks.js?v=202610261019"></script>
-<script src="js/analysis/fitting.js?v=202610261019"></script>
-<script src="js/analysis/resonance.js?v=202610261019"></script>
-<script src="js/analysis/stats.js?v=202610261019"></script>
-<script src="js/analysis/ramanTools.js?v=202610261019"></script>
-<script src="js/analysis/identify.js?v=202610261019"></script>
-<script src="js/ui/sidebar.js?v=202610261019"></script>
-<script src="js/ui/layout.js?v=202610261019"></script>
-<script src="js/ui/theme.js?v=202610261019"></script>
-<script src="js/ui/workspaceExtras.js?v=202610261019"></script>
-<script src="js/ui/project.js?v=202610261019"></script>
-<script src="js/ui/resultTabs.js?v=202610261019"></script>
-<script src="js/ui/stepGuide.js?v=202610261019"></script>
-<script src="js/ui/undoHistory.js?v=202610261019"></script>
-<script src="js/ui/guideLinks.js?v=202610261019"></script>
-<script src="js/ui/session.js?v=202610261019"></script>
-<script src="js/app.js?v=202610261019"></script>
+<script src="js/processing/despike.js?v=202610262022"></script>
+<script src="js/processing/baseline.js?v=202610262022"></script>
+<script src="js/processing/spectralExtras.js?v=202610262022"></script>
+<script src="js/processing/smoothing.js?v=202610262022"></script>
+<script src="js/plotting/averaging.js?v=202610262022"></script>
+<script src="js/plotting/plotting.js?v=202610262022"></script>
+<script src="js/plotting/xyPlot.js?v=202610262022"></script>
+<script src="js/plotting/comparison.js?v=202610262022"></script>
+<script src="js/analysis/peaks.js?v=202610262022"></script>
+<script src="js/analysis/fitting.js?v=202610262022"></script>
+<script src="js/analysis/resonance.js?v=202610262022"></script>
+<script src="js/analysis/stats.js?v=202610262022"></script>
+<script src="js/analysis/ramanTools.js?v=202610262022"></script>
+<script src="js/analysis/identify.js?v=202610262022"></script>
+<script src="js/ui/sidebar.js?v=202610262022"></script>
+<script src="js/ui/layout.js?v=202610262022"></script>
+<script src="js/ui/theme.js?v=202610262022"></script>
+<script src="js/ui/workspaceExtras.js?v=202610262022"></script>
+<script src="js/ui/project.js?v=202610262022"></script>
+<script src="js/ui/resultTabs.js?v=202610262022"></script>
+<script src="js/ui/stepGuide.js?v=202610262022"></script>
+<script src="js/ui/undoHistory.js?v=202610262022"></script>
+<script src="js/ui/guideLinks.js?v=202610262022"></script>
+<script src="js/ui/session.js?v=202610262022"></script>
+<script src="js/app.js?v=202610262022"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
