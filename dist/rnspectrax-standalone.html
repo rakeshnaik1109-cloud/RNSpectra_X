@@ -1182,6 +1182,10 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 7l6-5 6 5v6.5a1 1 0 0 1-1 1H9.5V10h-3v4.5H3a1 1 0 0 1-1-1V7z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <span class="chrome-link-text">Homepage</span>
       </a>--->
+      <a class="chrome-link is-home" data-beamx-link href="https://rakeshnaik1109-cloud.github.io/RNBeamX/" target="_blank" rel="noopener noreferrer" title="RNBeamX: design the optical setup figure for these spectra (companion app)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M1.5 11.5L7 6h7.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 6l4.5 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="chrome-link-text">RNBeamX ↗</span>
+      </a>
       <details class="rx-menu rx-file-menu">
         <summary class="chrome-link" title="Save or open a project, or write the Methods text">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2h8l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 2v4h5V2M5 14V9h6v5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
@@ -2699,6 +2703,7 @@ body.resizing-v { cursor: ns-resize !important; user-select: none !important; }
     · <a href="#" onclick="showCitation();return false;" title="APA and BibTeX for RNSpectraX">How to cite</a> (<a href="https://doi.org/10.5281/zenodo.23593680" target="_blank" rel="noopener noreferrer" title="Zenodo archive of RNSpectraX v3.4">DOI 10.5281/zenodo.23593680</a>)
     · <a href="https://scholar.google.com/citations?user=xDMzlr0AAAAJ&hl=en" target="_blank" rel="noopener noreferrer" title="Publications on Google Scholar">Google Scholar ↗</a>
     · <a data-home-link href="https://rakeshnaik1109-cloud.github.io/RakeshNaik/" target="_blank" rel="noopener noreferrer" title="Research, publications and other work by Rakesh Naik">Rakesh Naik — website ↗</a>
+    · <a data-beamx-link href="https://rakeshnaik1109-cloud.github.io/RNBeamX/" target="_blank" rel="noopener noreferrer" title="Companion app: publication-ready optical setup figures">RNBeamX — setup designer ↗</a>
     · <a href="https://rakeshnaik1109-cloud.github.io/RNSpectra_X/guide.html" target="_blank">Methods guide</a>
     · <a href="https://github.com/rakeshnaik1109-cloud/RNSpectra_X/blob/main/docs/USER_MANUAL.md" target="_blank" rel="noopener noreferrer">Manual</a>
     · © 2026 All rights reserved.
@@ -4741,6 +4746,11 @@ function downloadFitParams() {
    RNBeamX instead: it reads the same format.
 ═══════════════════════════════════════════════════════════ */
 window.RNSPX_BEAMX_URL = window.RNSPX_BEAMX_URL || "https://rakeshnaik1109-cloud.github.io/RNBeamX/";
+
+/* keep every RNBeamX link pointing at the configured address */
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("[data-beamx-link]").forEach(function (a) { a.setAttribute("href", window.RNSPX_BEAMX_URL); });
+});
 
 function sendToRNBeamX(wrapperId) {
   var gd = document.getElementById(wrapperId);

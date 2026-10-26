@@ -271,6 +271,14 @@ source of any calculation directly.
 
 ---
 
+## Companion: RNBeamX
+
+[RNBeamX](https://rakeshnaik1109-cloud.github.io/RNBeamX/) is the optical
+setup designer from the same authors: it draws publication-ready experiment
+figures with the beams traced for real. In RNSpectraX, open **Export ▾** and
+press **→ RNBeamX** to send the plot on screen across; it becomes panel b next
+to your setup. ([source](https://github.com/rakeshnaik1109-cloud/RNBeamX))
+
 ## Citing RNSpectraX
 
 If RNSpectraX contributes to published work, please cite it. A

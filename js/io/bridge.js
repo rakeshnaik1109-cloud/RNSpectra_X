@@ -11,6 +11,11 @@
 ═══════════════════════════════════════════════════════════ */
 window.RNSPX_BEAMX_URL = window.RNSPX_BEAMX_URL || "https://rakeshnaik1109-cloud.github.io/RNBeamX/";
 
+/* keep every RNBeamX link pointing at the configured address */
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("[data-beamx-link]").forEach(function (a) { a.setAttribute("href", window.RNSPX_BEAMX_URL); });
+});
+
 function sendToRNBeamX(wrapperId) {
   var gd = document.getElementById(wrapperId);
   if (!gd || !gd.data || !gd.data.length) { alert("Plot something first, then send it to RNBeamX."); return; }
