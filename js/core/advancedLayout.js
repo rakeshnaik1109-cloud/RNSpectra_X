@@ -26,9 +26,33 @@ let legendNameOverrides = { ocean: {}, xy: {} };
 
 function legendKey(kind, idx) { return `${kind}:${idx}`; }
 
+// A renamed entry keeps the user's wording, but a replicate count "(n=…)" in
+// it always shows the current count, and a rename made for one group is not
+// shown on a different group that later takes the same position.
+const N_COUNT = /\(n\s*=\s*\d+\)/;
+const stripCount = s => String(s || "").replace(N_COUNT, "").replace(/\s+$/, "");
+let legendDefaultNames = { ocean: {}, xy: {} };   // default name each entry last had
+
+function withCurrentCount(text, defaultName) {
+  const m = String(defaultName).match(N_COUNT);
+  return m && N_COUNT.test(text) ? text.replace(N_COUNT, m[0]) : text;
+}
+
 function getDisplayName(mode, kind, idx, defaultName) {
-  const ov = legendNameOverrides[mode][legendKey(kind, idx)];
-  return (ov !== undefined && ov !== "") ? ov : defaultName;
+  const key = legendKey(kind, idx);
+  legendDefaultNames[mode][key] = defaultName;
+  const ov = legendNameOverrides[mode][key];
+  if (ov === undefined || ov === "") return defaultName;
+  const text = typeof ov === "string" ? ov : ov.text;
+  // made for another group (e.g. the groups changed): fall back to the default
+  if (typeof ov === "object" && ov.base !== undefined && ov.base !== stripCount(defaultName)) return defaultName;
+  return withCurrentCount(text, defaultName);
+}
+
+// store a rename together with the entry it was made for
+function setLegendOverride(mode, kind, idx, text) {
+  const key = legendKey(kind, idx), def = legendDefaultNames[mode][key];
+  legendNameOverrides[mode][key] = def !== undefined ? { text, base: stripCount(def) } : text;
 }
 
 function resetLegendNames(mode) {
@@ -83,7 +107,7 @@ function bindNativeEditSync(gd, mode) {
         const trace = gd.data && gd.data[traceIdx];
         if (trace && trace.meta && trace.meta.editable) {
           const newName = Array.isArray(upd.name) ? upd.name[i] : upd.name;
-          legendNameOverrides[mode][legendKey(trace.meta.kind, trace.meta.idx)] = newName;
+          setLegendOverride(mode, trace.meta.kind, trace.meta.idx, newName);
           // Best-effort: also reflect the rename in the sidebar field that drives it
           if (mode === 'ocean' && trace.meta.kind === 'file') {
             const el = document.getElementById('label' + trace.meta.idx);

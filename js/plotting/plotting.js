@@ -209,7 +209,8 @@ if (
 
     const avgNameField = (document.getElementById("avgLegendName")?.value || "").trim();
     pushSeries(
-        avgNameField || `Grand Average (n=${agg.n})`,
+        // a "(n=…)" typed in the Avg Legend Name always shows the current count
+        avgNameField ? withCurrentCount(avgNameField, `(n=${agg.n})`) : `Grand Average (n=${agg.n})`,
         agg.x,
         agg.mean,
         document.getElementById("avgColor").value,

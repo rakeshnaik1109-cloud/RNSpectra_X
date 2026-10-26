@@ -414,6 +414,14 @@ kept after a reload and in `.rnsx` projects, and appears exactly there in every
 exported image. It always stays inside the figure so it cannot be cut off.
 **↺ Reset title positions** (under *Axes & Labels*) puts both titles back.
 
+### Renaming legend entries
+Click a legend entry's text on the plot to rename it. A renamed group or average
+keeps your wording, but a count written as **(n=…)** always shows the current
+number of spectra — add or remove files and it updates on the next plot (leave
+"(n=…)" out of the new name if you don't want a count). A rename is tied to the
+group it was made for, so if the groups change it is not shown on a different
+group. **↺ Reset Legend Names** (Legend panel) removes all renames.
+
 ### Legend text
 In the **Legend** panel (both workspaces), **🔤 Legend Text** sets the legend's
 **Font** (*Same as figure*, or its own typeface), **Size** (the same setting
