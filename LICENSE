@@ -30,3 +30,7 @@ NO WARRANTY
   responsibility of the user.
 
 Enquiries: Rakesh Naik, IIT Roorkee.
+
+Third-party components (Plotly.js, jsPDF, MathJax, KaTeX, SheetJS and the
+RamanBiolib reference data) are not covered by this licence; they remain under
+their own licences, listed in THIRD_PARTY_NOTICES.md.

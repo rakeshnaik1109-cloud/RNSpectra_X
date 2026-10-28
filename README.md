@@ -262,9 +262,13 @@ That licence covers the data files only, not RNSpectraX itself.
 ## Built with
 
 HTML5 · CSS3 (custom flex/grid dock engine) · modular vanilla ES6 ·
-[Plotly.js](https://plotly.com/javascript/) for rendering ·
-[jsPDF](https://github.com/parallax/jsPDF) for PDF export ·
-MathJax for typeset notation.
+[Plotly.js](https://plotly.com/javascript/) 2.35.2 (MIT) for rendering ·
+[jsPDF](https://github.com/parallax/jsPDF) 2.5.1 (MIT) for PDF export ·
+[MathJax](https://www.mathjax.org) 2.7.9 (Apache 2.0) for LaTeX in plot labels ·
+[KaTeX](https://katex.org) 0.16.9 (MIT) for typeset equations ·
+[SheetJS CE](https://sheetjs.com) 0.18.5 (Apache 2.0) for Excel / OpenDocument import ·
+[RamanBiolib](https://github.com/mteranm/ramanbiolib) reference spectra (ODbL 1.0).
+Licences and copyright notices: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 There is no framework and no bundler, so a reviewer or collaborator can read the
 source of any calculation directly.
@@ -307,3 +311,5 @@ If RNSpectraX contributes to published work, please cite it. A
 
 Proprietary. Copying, modification, redistribution or commercial use in any
 medium requires the written consent of the authors. See [`LICENSE`](LICENSE).
+Third-party components keep their own licences; see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
