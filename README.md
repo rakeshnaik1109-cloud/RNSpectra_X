@@ -317,4 +317,6 @@ Suggestions, bug reports, feature requests or help with an analysis:
 Proprietary. Copying, modification, redistribution or commercial use in any
 medium requires the written consent of the authors. See [`LICENSE`](LICENSE).
 Third-party components keep their own licences; see
-[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). For permission to copy,
+redistribute or use RNSpectraX commercially, write to
+[rakesh_n@cpqct.iitr.ac.in](mailto:rakesh_n@cpqct.iitr.ac.in?subject=RNSpectraX%20licence).

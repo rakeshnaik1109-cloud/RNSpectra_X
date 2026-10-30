@@ -146,3 +146,7 @@ Intelligent Laboratory Systems **264**, 105476 (2025).
 Each reference spectrum was digitized by the RamanBiolib authors from a figure
 in a published article; that article's DOI is kept with the spectrum and shown
 with every match.
+
+---
+
+Questions about licensing or permission to use RNSpectraX: rakesh_n@cpqct.iitr.ac.in
