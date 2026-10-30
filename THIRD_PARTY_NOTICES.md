@@ -24,6 +24,10 @@ Visit counting uses the hosted [GoatCounter](https://www.goatcounter.com)
 service (its `count.js` is loaded from gc.zgo.at). It sets no cookies and
 receives no data from your files; it is a service, not part of the app's code.
 
+The live "using now" count connects to a hosted
+[Supabase Realtime](https://supabase.com) channel with a random per-tab number;
+it is a service, not part of the app's code.
+
 ---
 
 ## Plotly.js 2.35.2 — MIT License

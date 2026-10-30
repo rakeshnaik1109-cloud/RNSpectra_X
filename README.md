@@ -54,6 +54,12 @@ used (for example "XY plot" or "Identify"), sent with
 [GoatCounter](https://www.goatcounter.com): no cookies, no personal data, and
 nothing about your files or spectra.
 
+The "● N using now" count in the footer is live presence through
+[Supabase Realtime](https://supabase.com/docs/guides/realtime/presence): each open
+tab holds one connection identified only by a random number made when the tab
+opens and forgotten when it closes. Nothing else is sent, and no spectrum or file
+ever leaves the browser; if the service cannot be reached, the count stays hidden.
+
 ---
 
 ## What it does
