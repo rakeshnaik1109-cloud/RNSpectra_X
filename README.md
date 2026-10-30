@@ -307,6 +307,11 @@ If RNSpectraX contributes to published work, please cite it. A
 
 ---
 
+## Feedback and help
+
+Suggestions, bug reports, feature requests or help with an analysis:
+[rakesh_n@cpqct.iitr.ac.in](mailto:rakesh_n@cpqct.iitr.ac.in?subject=RNSpectraX%20feedback).
+
 ## Licence
 
 Proprietary. Copying, modification, redistribution or commercial use in any
