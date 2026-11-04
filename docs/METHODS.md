@@ -223,6 +223,19 @@ entry whose centre is nearest, provided it falls inside that half-width, and is
 otherwise reported as *Unassigned*. Positions follow Movasaghi *et al.* (2007)
 and Talari *et al.* (2015).
 
+A second, optional library (**Band Library → Human cell organelles**) holds the
+22 band positions of Table 1 in Nowakowska *et al.* (2025), *The Raman Map of
+the Human Cell* — marker bands of the nucleus and nucleoli, the ER-rich
+perinuclear area, mitochondria (cytochrome bands at 605, 753, 1131, 1307 and
+1584 cm⁻¹ under 532 nm excitation), lipid droplets and the cytoplasm of human
+aortic endothelial cells. Where the paper lists several assignments for one
+position they are combined, and the assignment column names the organelle(s).
+Positions closer than ~10 cm⁻¹ (1088/1095, 1340/1342, 1580/1584) are kept as
+separate entries with narrow windows, so a peak takes the nearest one.
+**Both** searches the two libraries together and tags organelle-library
+matches. The selected library's citation is printed under the peak table and in
+the .txt / PDF peak reports. The article is CC BY 4.0.
+
 **Assignments are suggestions, not identifications.** Band positions shift with
 environment, protonation state and substrate coupling. Confirm against reference
 spectra before reporting. Every assignment can be edited in the peak table.
@@ -501,4 +514,5 @@ For reproducibility, a methods section should state:
 - Lieber, C. A. & Mahadevan-Jansen, A. (2003). Automated method for subtraction of fluorescence from biological Raman spectra. *Applied Spectroscopy*, 57(11), 1363–1367.
 - Movasaghi, Z., Rehman, S. & Rehman, I. U. (2007). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 42(5), 493–541.
 - Talari, A. C. S., Movasaghi, Z., Rehman, S. & Rehman, I. U. (2015). Raman spectroscopy of biological tissues. *Applied Spectroscopy Reviews*, 50(1), 46–111.
+- Nowakowska, A. M., Pieczara, A., Korona, W., Borek-Dorosz, A., Adamczyk, A., Dawiec, P., Leszczenko, P., Orleanska, J., Machalska, E., Orzechowska, B., Orzechowska, S., Brzozowski, K., Krynicka, W., Majzner, K., Malek, K. & Baranska, M. (2025). The Raman map of the human cell. *Analytical Chemistry*, 97, 16374–16382. https://doi.org/10.1021/acs.analchem.5c02035 (CC BY 4.0)
 - Marquardt, D. W. (1963). An algorithm for least-squares estimation of nonlinear parameters. *Journal of the Society for Industrial and Applied Mathematics*, 11(2), 431–441.

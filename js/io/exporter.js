@@ -63,6 +63,7 @@ function citationFooter() {
 function downloadPeaksTxt() {
   syncOceanTableToMemory(); let txt = `Raman Band Report\nPlot: ${document.getElementById("title").value}\n\n#\tWavenumber\tIntensity\tMode\tAssignment\n` + "═".repeat(80) + "\n";
   lastPeaksData.forEach((r, i) => { txt += `${i + 1}\t${r.x.toFixed(1)}\t\t${r.y.toFixed(4)}\t\t${r.mode}\t\t${r.assign}\n`; });
+  if (typeof bandLibraryCitation === "function") txt += "\n" + bandLibraryCitation() + "\n";
   txt += "\n" + citationFooter() + "\n";
   downloadBlob(txt, "Raman_Peaks.txt", "text/plain");
 }
@@ -73,7 +74,7 @@ function downloadPeaksPdf() {
   let y = 35; doc.setFont("helvetica", "bold"); doc.text("Raman Assignments Matrix", 14, 20); doc.setFontSize(9);
   lastPeaksData.forEach((r, i) => { if (y > 270) { doc.addPage(); y = 20; } doc.text(`${i + 1}. ${r.x.toFixed(1)} cm-1 | Intensity: ${r.y} | Mode: ${r.mode} | Group: ${r.assign}`, 14, y); y += 8; });
   doc.setFont("helvetica", "normal"); doc.setFontSize(7.5);
-  const cite = doc.splitTextToSize(citationFooter(), 182);
+  const cite = doc.splitTextToSize(((typeof bandLibraryCitation === "function") ? bandLibraryCitation() + "\n" : "") + citationFooter(), 182);
   if (y + cite.length * 4 > 285) { doc.addPage(); y = 20; }
   doc.text(cite, 14, y + 6);
   doc.save("RamanAssignments.pdf");

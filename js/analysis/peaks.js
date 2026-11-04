@@ -3,7 +3,8 @@
 // centre with a matching half-width in cm⁻¹; a detected peak takes the entry
 // whose centre is nearest, provided it lies within that half-width.
 // Sources: Movasaghi, Rehman & Rehman, Appl. Spectrosc. Rev. 42, 493 (2007);
-// Talari et al., Appl. Spectrosc. Rev. 50, 46 (2015).
+// Talari et al., Appl. Spectrosc. Rev. 50, 46 (2015). This is the default
+// library; a subcellular library (Nowakowska et al. 2025) follows below.
 const RAMAN_BAND_LIBRARY = [
   { c: 510,  hw: 6,  mode: "S–S stretch",                         assign: "Disulfide bridges (proteins)" },
   { c: 520.7,hw: 3,  mode: "Si optical phonon",                   assign: "Silicon substrate / calibration line" },
@@ -41,17 +42,91 @@ const RAMAN_BAND_LIBRARY = [
   { c: 2935, hw: 10, mode: "CH₃ symmetric stretch",               assign: "Proteins" }
 ];
 
+// Subcellular band library: Table 1 of "The Raman Map of the Human Cell"
+// (Nowakowska et al., Anal. Chem. 97, 16374–16382, 2025; CC BY 4.0).
+// Bands of human aortic endothelial cells imaged at 532 nm, with the
+// organelle(s) in which each band is characteristic. Where the table lists
+// several assignments for one position they are joined with "; ". The
+// paper's own literature references are not repeated here — see Table 1.
+// Abbreviations as in the paper: ν stretch (s symmetric, as asymmetric),
+// δ deformation, α scissoring, ω wagging, τ twisting; pyr porphyrin ring;
+// cyt. cytochromes; A, C, G, T, U nucleobases; p phosphorylated; LDs lipid droplets.
+const RAMAN_CELL_MAP_LIBRARY = [
+  { c: 605,  hw: 8, mode: "Reduced cytochrome c",                                       assign: "Mitochondria" },
+  { c: 722,  hw: 8, mode: "νs(N⁺(CH₃)₃) of the choline group",                          assign: "Perinuclear area; lipid droplets (phospholipids)" },
+  { c: 753,  hw: 8, mode: "ν15 pyrrole breathing; ν(CαCβ) in cytochromes",                assign: "Perinuclear area; mitochondria (cytochromes) — key marker" },
+  { c: 788,  hw: 8, mode: "C, U ring breathing; νs(PO₂⁻) of the DNA backbone; pThr",      assign: "Nucleus & nucleoli (DNA) — key marker; cytoplasm (pThr)" },
+  { c: 1009, hw: 6, mode: "Phe ring breathing",                                         assign: "Nucleus & nucleoli; cytoplasm (phenylalanine) — key marker" },
+  { c: 1088, hw: 4, mode: "ν(P–O) in phospholipids; ν(C–C) in lipids; pThr, pSer",       assign: "Perinuclear area; lipid droplets; cytoplasm (pThr, pSer)" },
+  { c: 1095, hw: 4, mode: "νs(PO₂⁻) of the DNA backbone",                                assign: "Nucleus & nucleoli" },
+  { c: 1131, hw: 8, mode: "ν(C–C); ν22 pyrrole, νsym(pyr half ring), νas(CαN) in cytochromes", assign: "Perinuclear area; lipid droplets; mitochondria (cytochromes)" },
+  { c: 1255, hw: 6, mode: "A, C, G ring breathing, νas(PO₂⁻); amide III (albumin)",        assign: "Nucleus & nucleoli; cytoplasm (proteins)" },
+  { c: 1267, hw: 5, mode: "δ(=CH)",                                                     assign: "Lipid droplets (unsaturated lipids)" },
+  { c: 1307, hw: 8, mode: "A (B-, Z-DNA marker); τ(CH₂, CH₃) in fatty acids; ν21 pyrrole, δ(CmH) in cytochromes", assign: "Nucleus & nucleoli; perinuclear area; lipid droplets; mitochondria" },
+  { c: 1340, hw: 4, mode: "A (B-, Z-DNA marker), ω(CH₃, CH₂) in purines; Thr δ(C–H)",     assign: "Nucleus & nucleoli; perinuclear area (Thr)" },
+  { c: 1342, hw: 4, mode: "Ser, Thr δ(C–H)",                                             assign: "Cytoplasm" },
+  { c: 1449, hw: 10, mode: "δ(C–H) in deoxyribose; α(CH₂/CH₃), β(CH₂), δ(C–H) of albumin in lipids and proteins", assign: "Nucleus & nucleoli; perinuclear area; lipid droplets; cytoplasm" },
+  { c: 1580, hw: 4, mode: "G, A ring breathing",                                         assign: "Nucleus & nucleoli (DNA)" },
+  { c: 1584, hw: 4, mode: "ν19 pyrrole, νas(CαCm) in cytochromes",                        assign: "Perinuclear area; mitochondria" },
+  { c: 1658, hw: 10, mode: "T, G, C ring breathing; amide I (proteins); ν10 pyrrole, νas(CαCm) in cytochromes; ν(C=C)", assign: "Nucleus & nucleoli; perinuclear area; cytoplasm; mitochondria; lipid droplets" },
+  { c: 1742, hw: 8, mode: "ν(C=O) ester",                                                assign: "Perinuclear area; lipid droplets (esterified lipids)" },
+  { c: 2853, hw: 8, mode: "νs(CH₂)",                                                     assign: "Perinuclear area; lipid droplets — key marker" },
+  { c: 2890, hw: 8, mode: "νas(CH₂)",                                                    assign: "Lipid droplets" },
+  { c: 2932, hw: 10, mode: "νs(CH₃/CH₂)",                                                assign: "Perinuclear area; lipid droplets" },
+  { c: 3012, hw: 10, mode: "ν(=C–H)",                                                    assign: "Perinuclear area; lipid droplets (unsaturated lipids) — key marker" }
+];
+
+// The band libraries a user can choose from (Raman mode → Peak Detection).
+const BAND_LIBRARIES = {
+  tissue: {
+    label: "Biological tissue (Movasaghi 2007; Talari 2015)",
+    cite: "Z. Movasaghi, S. Rehman, I. U. Rehman, Appl. Spectrosc. Rev. 42, 493–541 (2007); A. C. S. Talari, Z. Movasaghi, S. Rehman, I. U. Rehman, Appl. Spectrosc. Rev. 50, 46–111 (2015).",
+    bands: () => RAMAN_BAND_LIBRARY
+  },
+  cell: {
+    label: "Human cell organelles (Nowakowska et al. 2025)",
+    cite: "A. M. Nowakowska, A. Pieczara, W. Korona, A. Borek-Dorosz, A. Adamczyk, P. Dawiec, P. Leszczenko, J. Orleanska, E. Machalska, B. Orzechowska, S. Orzechowska, K. Brzozowski, W. Krynicka, K. Majzner, K. Malek, M. Baranska, \"The Raman Map of the Human Cell\", Anal. Chem. 97, 16374–16382 (2025), https://doi.org/10.1021/acs.analchem.5c02035 — Table 1, CC BY 4.0.",
+    bands: () => RAMAN_CELL_MAP_LIBRARY
+  },
+  both: {
+    label: "Both (nearest band from either)",
+    cite: null,
+    bands: () => RAMAN_BAND_LIBRARY.map(b => ({ ...b, src: "tissue" })).concat(RAMAN_CELL_MAP_LIBRARY.map(b => ({ ...b, src: "cell" })))
+  }
+};
+
+function selectedBandLibrary() {
+  const v = document.getElementById("bandLibrary")?.value;
+  return BAND_LIBRARIES[v] ? v : "tissue";
+}
+
+// Citation line(s) for the library in use — shown under the peak table and
+// written into the .txt / PDF peak reports.
+function bandLibraryCitation() {
+  const k = selectedBandLibrary();
+  if (k === "both") return "Band assignments: " + BAND_LIBRARIES.tissue.cite + " Subcellular bands: " + BAND_LIBRARIES.cell.cite;
+  return "Band assignments: " + BAND_LIBRARIES[k].cite;
+}
+
 function lookUpDefaultBiomolecularAssignment(wavenumber) {
+  const k = selectedBandLibrary();
   let best = null, bestD = Infinity;
-  RAMAN_BAND_LIBRARY.forEach(b => {
+  BAND_LIBRARIES[k].bands().forEach(b => {
     const d = Math.abs(wavenumber - b.c);
     if (d <= b.hw && d < bestD) { best = b; bestD = d; }
   });
-  return best ? { mode: best.mode, assign: best.assign } : { mode: "Unassigned", assign: "—" };
+  if (!best) return { mode: "Unassigned", assign: "—" };
+  const tag = (k === "both" && best.src === "cell") ? " [Nowakowska 2025]" : "";
+  return { mode: best.mode, assign: best.assign + tag };
 }
 
-
-
+// Switching library relabels the peaks of the current plot.
+function onBandLibraryChange() {
+  const note = document.getElementById("bandLibraryCite");
+  if (note) note.textContent = bandLibraryCitation();
+  const wrapper = document.getElementById("plot-wrapper");
+  if (wrapper && wrapper.data && typeof plotSpectrum === "function") plotSpectrum();
+}
 
 function mergeNearbyPeaks(peaks, tolerance = 3) {
 
@@ -157,11 +232,13 @@ function buildOceanPeakTableHTML() {
         <td>${i + 1}</td>
         <td><input type="number" step="0.1" id="ocean-pk-x-${i}" value="${pk.x.toFixed(1)}" onchange="syncOceanTableToMemory()"></td>
         <td><input type="number" step="0.001" id="ocean-pk-y-${i}" value="${pk.y.toFixed(4)}" onchange="syncOceanTableToMemory()"></td>
-        <td><input type="text" id="ocean-pk-mode-${i}" value="${esc(pk.mode)}" onchange="syncOceanTableToMemory()"></td>
-        <td><input type="text" id="ocean-pk-assign-${i}" value="${esc(pk.assign)}" onchange="syncOceanTableToMemory()"></td>
+        <td><input type="text" id="ocean-pk-mode-${i}" value="${esc(pk.mode)}" title="${esc(pk.mode)}" onchange="this.title=this.value;syncOceanTableToMemory()"></td>
+        <td><input type="text" id="ocean-pk-assign-${i}" value="${esc(pk.assign)}" title="${esc(pk.assign)}" onchange="this.title=this.value;syncOceanTableToMemory()"></td>
         <td><button class="btn-danger-action" onclick="deleteOceanPeakRow(${i})">✕ Delete</button></td>
       </tr>`;
   });
+  const note = document.getElementById("bandLibraryCite");
+  if (note) note.textContent = bandLibraryCitation();
   document.getElementById("peakTableSection").style.display = "block";
 }
 

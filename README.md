@@ -83,6 +83,7 @@ ever leaves the browser; if the service cannot be reached, the count stays hidde
 | Difference spectra | Group A − group B with an uncertainty band and the strongest differences listed |
 | Cross-file analyser | Clusters peaks across all loaded spectra into common bands and sample-specific bands |
 | Editable peak table | Correct positions, retitle assignments, delete rows, and re-plot from the edited table |
+| Band libraries | Suggested assignments from a biological-tissue library or a subcellular (organelle) library — Nowakowska *et al.*, *Anal. Chem.* 2025 — or both; the library is cited in every report |
 
 ### ② XY plotting and fitting mode
 
@@ -128,6 +129,11 @@ a methods section. Step-by-step usage is in
 
 ## New in 3.4
 
+- **Subcellular band library:** peak assignments can now come from the
+  organelle marker bands of *The Raman Map of the Human Cell* (Nowakowska
+  *et al.*, Anal. Chem. 2025) — nucleus, nucleoli, ER, mitochondria, lipid
+  droplets, cytoplasm — chosen under Peak Detection → Band Library and cited
+  automatically in the peak table and reports.
 - **🔬 Analysis panel (Raman):** band fitting (Gaussian / Lorentzian /
   pseudo-Voigt, with standard errors and per-group batch summaries), band
   ratios and areas with Welch's t-test or one-way ANOVA, PCA with 95 %
@@ -262,6 +268,24 @@ The library data (`data/ramanbiolib.js`, an adapted, re-formatted copy) is
 licensed under the **Open Database License (ODbL) v1.0**. See
 [`data/README.md`](data/README.md) and [`data/LICENSE-ODbL`](data/LICENSE-ODbL).
 That licence covers the data files only, not RNSpectraX itself.
+
+**Peak assignment — band libraries** (Raman mode → Peak Detection → *Band
+Library*). The default library is compiled from Movasaghi *et al.* (2007) and
+Talari *et al.* (2015). The optional **Human cell organelles** library holds
+the characteristic bands of the nucleus and nucleoli, perinuclear area (ER),
+mitochondria, lipid droplets and cytoplasm from Table 1 of:
+
+> A. M. Nowakowska, A. Pieczara, W. Korona, A. Borek-Dorosz, A. Adamczyk,
+> P. Dawiec, P. Leszczenko, J. Orleanska, E. Machalska, B. Orzechowska,
+> S. Orzechowska, K. Brzozowski, W. Krynicka, K. Majzner, K. Malek,
+> M. Baranska. *The Raman Map of the Human Cell.* Analytical Chemistry **97**,
+> 16374–16382 (2025). <https://doi.org/10.1021/acs.analchem.5c02035>
+
+That article is published under the Creative Commons Attribution 4.0 licence
+(CC BY 4.0). Band positions and assignments are taken from its Table 1, with
+the wording condensed; the paper's own literature references for each band are
+listed there. The selected library's citation is shown under the peak table and
+written into every peak report.
 
 ---
 

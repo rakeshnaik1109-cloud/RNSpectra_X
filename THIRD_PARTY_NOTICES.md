@@ -19,6 +19,7 @@ License.
 | [KaTeX](https://github.com/KaTeX/KaTeX) | 0.16.9 | MIT | Typeset equations in the app and the methods guide | cdnjs |
 | [SheetJS Community Edition (xlsx)](https://git.sheetjs.com/sheetjs/sheetjs) | 0.18.5 | Apache 2.0 | Reading Excel / OpenDocument files (loaded only when one is opened) | cdnjs |
 | [RamanBiolib](https://github.com/mteranm/ramanbiolib) (data) | database files retrieved 21 Oct 2026 | ODbL 1.0 | Reference spectra for *Identify* | included: [`data/`](data/) |
+| Table 1 of Nowakowska *et al.*, “The Raman Map of the Human Cell”, *Anal. Chem.* 97, 16374–16382 (2025), [doi:10.1021/acs.analchem.5c02035](https://doi.org/10.1021/acs.analchem.5c02035) (data) | published 28 Jul 2025 | CC BY 4.0 | Organelle band library for peak assignment (positions and assignments, wording condensed) | included: [`js/analysis/peaks.js`](js/analysis/peaks.js) |
 
 Visit counting uses the hosted [GoatCounter](https://www.goatcounter.com)
 service (its `count.js` is loaded from gc.zgo.at). It sets no cookies and
